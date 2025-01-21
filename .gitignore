@@ -62,7 +62,6 @@
 capybara-*.html
 .rspec
 .rspec_status
-.ruby-version
 
 # Ignore compiled binaries.
 /byebug_history
