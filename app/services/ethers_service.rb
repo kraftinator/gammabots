@@ -25,4 +25,8 @@ class EthersService
   def self.get_transaction_count(address, provider_url)
     call_function('getTransactionCount', address, provider_url)
   end
+
+  def self.get_token_balance(wallet_address, token_address, provider_url)
+    call_function('getTokenBalance', wallet_address, token_address, provider_url)
+  end
 end
