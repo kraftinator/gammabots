@@ -29,4 +29,8 @@ class EthersService
   def self.get_token_balance(wallet_address, token_address, provider_url)
     call_function('getTokenBalance', wallet_address, token_address, provider_url) 
   end
+
+  def self.swap(private_key, amount, token_in, token_out, provider_url)
+    call_function('swap', private_key, amount, token_in, token_out, provider_url)
+  end
 end

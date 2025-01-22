@@ -1,5 +1,6 @@
 namespace :ethers_test do
 
+  PRIVATE_KEY = ENV['PRIVATE_KEY']
   PROVIDER_URL = "https://base-mainnet.infura.io/v3/#{ENV['INFURA_API_KEY']}"
 
   desc "Get balance"
@@ -37,5 +38,25 @@ namespace :ethers_test do
       PROVIDER_URL
     )
     puts balance
+  end
+
+  desc "Swap"
+  task :swap, [:amount, :token_in, :token_out] => :environment do |t, args|
+    if args[:amount].nil? || args[:token_in].nil? || args[:token_out].nil?
+      raise ArgumentError, "Missing parameters!"
+    end
+
+    puts "amount = #{args[:amount]}"
+    puts "token_in = #{args[:token_in]}"
+    puts "token_out = #{args[:token_out]}"
+    
+    result = EthersService.swap(
+      PRIVATE_KEY,
+      args[:amount], 
+      args[:token_in],
+      args[:token_out],
+      PROVIDER_URL
+    )
+    puts result
   end
 end
