@@ -27,6 +27,6 @@ class EthersService
   end
 
   def self.get_token_balance(wallet_address, token_address, provider_url)
-    call_function('getTokenBalance', wallet_address, token_address, provider_url)
+    call_function('getTokenBalance', wallet_address, token_address, provider_url) 
   end
 end

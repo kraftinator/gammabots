@@ -27,8 +27,10 @@ namespace :ethers_test do
     if args[:wallet].nil? || args[:token].nil?
       raise ArgumentError, "Missing parameters!"
     end
+
     puts "wallet = #{args[:wallet]}"
     puts "token = #{args[:token]}"
+    
     balance = EthersService.get_token_balance(
       args[:wallet], 
       args[:token],
