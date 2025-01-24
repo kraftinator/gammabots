@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_01_23_214738) do
+ActiveRecord::Schema[7.2].define(version: 2025_01_24_211441) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "chains", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "native_chain_id", null: false
+    t.string "rpc_url"
+    t.string "explorer_url"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_chains_on_name", unique: true
+    t.index ["native_chain_id"], name: "index_chains_on_native_chain_id", unique: true
+  end
 
   create_table "users", force: :cascade do |t|
     t.string "farcaster_id", null: false
