@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_01_24_214418) do
+ActiveRecord::Schema[7.2].define(version: 2025_01_25_001423) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -23,6 +23,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_24_214418) do
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_chains_on_name", unique: true
     t.index ["native_chain_id"], name: "index_chains_on_native_chain_id", unique: true
+  end
+
+  create_table "token_pairs", force: :cascade do |t|
+    t.bigint "chain_id", null: false
+    t.bigint "base_token_id", null: false
+    t.bigint "quote_token_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["base_token_id"], name: "index_token_pairs_on_base_token_id"
+    t.index ["chain_id", "base_token_id", "quote_token_id"], name: "idx_on_chain_id_base_token_id_quote_token_id_220cdf562c", unique: true
+    t.index ["chain_id"], name: "index_token_pairs_on_chain_id"
+    t.index ["quote_token_id"], name: "index_token_pairs_on_quote_token_id"
   end
 
   create_table "tokens", force: :cascade do |t|
@@ -46,5 +58,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_24_214418) do
     t.index ["farcaster_id"], name: "index_users_on_farcaster_id", unique: true
   end
 
+  add_foreign_key "token_pairs", "chains"
+  add_foreign_key "token_pairs", "tokens", column: "base_token_id"
+  add_foreign_key "token_pairs", "tokens", column: "quote_token_id"
   add_foreign_key "tokens", "chains"
 end

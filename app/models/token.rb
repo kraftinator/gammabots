@@ -1,6 +1,9 @@
 class Token < ApplicationRecord
   belongs_to :chain
 
+  has_many :base_token_pairs, class_name: "TokenPair", foreign_key: "base_token_id", dependent: :destroy
+  has_many :quote_token_pairs, class_name: "TokenPair", foreign_key: "quote_token_id", dependent: :destroy
+
   # Validations
   validates :symbol, presence: true
   validates :name, presence: true
