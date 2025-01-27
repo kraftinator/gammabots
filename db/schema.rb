@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_01_27_043134) do
+ActiveRecord::Schema[7.2].define(version: 2025_01_27_195126) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -18,13 +18,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_27_043134) do
     t.bigint "chain_id", null: false
     t.bigint "user_id", null: false
     t.bigint "token_pair_id", null: false
-    t.decimal "initial_base_token_amount", precision: 30, scale: 10, default: "0.0", null: false
+    t.decimal "initial_buy_amount", precision: 30, scale: 10, default: "0.0", null: false
     t.decimal "base_token_amount", precision: 30, scale: 10, default: "0.0", null: false
     t.decimal "quote_token_amount", precision: 30, scale: 10, default: "0.0", null: false
     t.boolean "active", default: true, null: false
     t.datetime "last_traded_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "initial_buy_price", precision: 30, scale: 18
+    t.decimal "highest_price_since_buy", precision: 30, scale: 18
+    t.decimal "lowest_price_since_buy", precision: 30, scale: 18
+    t.decimal "highest_price_since_last_trade", precision: 30, scale: 18
+    t.decimal "lowest_price_since_last_trade", precision: 30, scale: 18
     t.index ["chain_id"], name: "index_bots_on_chain_id"
     t.index ["last_traded_at"], name: "index_bots_on_last_traded_at"
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
@@ -48,6 +53,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_27_043134) do
     t.bigint "quote_token_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "current_price", precision: 30, scale: 18
+    t.datetime "price_updated_at"
     t.index ["base_token_id"], name: "index_token_pairs_on_base_token_id"
     t.index ["chain_id", "base_token_id", "quote_token_id"], name: "idx_on_chain_id_base_token_id_quote_token_id_220cdf562c", unique: true
     t.index ["chain_id"], name: "index_token_pairs_on_chain_id"
@@ -65,6 +72,23 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_27_043134) do
     t.index ["chain_id", "contract_address"], name: "index_tokens_on_chain_id_and_contract_address", unique: true
     t.index ["chain_id", "symbol"], name: "index_tokens_on_chain_id_and_symbol", unique: true
     t.index ["chain_id"], name: "index_tokens_on_chain_id"
+  end
+
+  create_table "trades", force: :cascade do |t|
+    t.bigint "bot_id", null: false
+    t.string "trade_type", null: false
+    t.decimal "price", precision: 18, scale: 8, null: false
+    t.decimal "amount", precision: 18, scale: 8, null: false
+    t.decimal "total_value", precision: 18, scale: 8, null: false
+    t.datetime "executed_at", null: false
+    t.string "tx_hash"
+    t.string "status", default: "completed"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bot_id"], name: "index_trades_on_bot_id"
+    t.index ["executed_at"], name: "index_trades_on_executed_at"
+    t.index ["trade_type"], name: "index_trades_on_trade_type"
+    t.index ["tx_hash"], name: "index_trades_on_tx_hash", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -93,6 +117,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_27_043134) do
   add_foreign_key "token_pairs", "tokens", column: "base_token_id"
   add_foreign_key "token_pairs", "tokens", column: "quote_token_id"
   add_foreign_key "tokens", "chains"
+  add_foreign_key "trades", "bots"
   add_foreign_key "wallets", "chains"
   add_foreign_key "wallets", "users"
 end

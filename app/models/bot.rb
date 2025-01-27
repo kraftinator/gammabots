@@ -3,6 +3,7 @@ class Bot < ApplicationRecord
   belongs_to :chain
   belongs_to :user
   belongs_to :token_pair
+  has_many :trades
 
   # Validations
   validates :initial_base_token_amount, numericality: { greater_than_or_equal_to: 0 }
