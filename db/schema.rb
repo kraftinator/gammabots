@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_01_26_185028) do
+ActiveRecord::Schema[7.2].define(version: 2025_01_27_043134) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -75,6 +75,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_26_185028) do
     t.index ["farcaster_id"], name: "index_users_on_farcaster_id", unique: true
   end
 
+  create_table "wallets", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "chain_id", null: false
+    t.string "private_key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chain_id"], name: "index_wallets_on_chain_id"
+    t.index ["user_id", "chain_id"], name: "index_wallets_on_user_id_and_chain_id", unique: true
+    t.index ["user_id"], name: "index_wallets_on_user_id"
+  end
+
   add_foreign_key "bots", "chains"
   add_foreign_key "bots", "token_pairs"
   add_foreign_key "bots", "users"
@@ -82,4 +93,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_26_185028) do
   add_foreign_key "token_pairs", "tokens", column: "base_token_id"
   add_foreign_key "token_pairs", "tokens", column: "quote_token_id"
   add_foreign_key "tokens", "chains"
+  add_foreign_key "wallets", "chains"
+  add_foreign_key "wallets", "users"
 end

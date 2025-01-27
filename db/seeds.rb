@@ -7,3 +7,10 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
+
+Chain.find_or_create_by!(
+  name: "Base",
+  native_chain_id: "8453",
+  rpc_url: "https://base-mainnet.infura.io/v3",
+  explorer_url: "https://basescan.org"
+)
