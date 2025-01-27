@@ -10,9 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_01_25_001423) do
+ActiveRecord::Schema[7.2].define(version: 2025_01_26_185028) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "bots", force: :cascade do |t|
+    t.bigint "chain_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "token_pair_id", null: false
+    t.decimal "initial_base_token_amount", precision: 30, scale: 10, default: "0.0", null: false
+    t.decimal "base_token_amount", precision: 30, scale: 10, default: "0.0", null: false
+    t.decimal "quote_token_amount", precision: 30, scale: 10, default: "0.0", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "last_traded_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chain_id"], name: "index_bots_on_chain_id"
+    t.index ["last_traded_at"], name: "index_bots_on_last_traded_at"
+    t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
+    t.index ["user_id"], name: "index_bots_on_user_id"
+  end
 
   create_table "chains", force: :cascade do |t|
     t.string "name", null: false
@@ -58,6 +75,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_25_001423) do
     t.index ["farcaster_id"], name: "index_users_on_farcaster_id", unique: true
   end
 
+  add_foreign_key "bots", "chains"
+  add_foreign_key "bots", "token_pairs"
+  add_foreign_key "bots", "users"
   add_foreign_key "token_pairs", "chains"
   add_foreign_key "token_pairs", "tokens", column: "base_token_id"
   add_foreign_key "token_pairs", "tokens", column: "quote_token_id"
