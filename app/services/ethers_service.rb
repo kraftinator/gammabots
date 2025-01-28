@@ -33,4 +33,19 @@ class EthersService
   def self.swap(private_key, amount, token_in, token_out, provider_url)
     call_function('swap', private_key, amount, token_in, token_out, provider_url)
   end
+
+  def self.get_token_price(trading_pair, provider_url)
+    call_function(
+      'getTokenPrice', 
+      trading_pair.base_token.contract_address, 
+      trading_pair.base_token.decimals, 
+      trading_pair.quote_token.contract_address, 
+      trading_pair.quote_token.decimals, 
+      provider_url
+    )
+  end
+
+  def self.get_token_price_with_params(token_0, token_0_decimals, token_1, token_1_decimals, provider_url)
+    call_function('getTokenPrice', token_0, token_0_decimals, token_1, token_1_decimals, provider_url)
+  end
 end

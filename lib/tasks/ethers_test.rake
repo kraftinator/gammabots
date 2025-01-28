@@ -59,4 +59,21 @@ namespace :ethers_test do
     )
     puts result
   end
+
+  desc "Update token price"
+  task :update_token_price, [:token_pair_id] => :environment do |t, args|
+    if args[:token_pair_id].nil?
+      raise ArgumentError, "Missing parameters!"
+    end
+
+    token_pair = TokenPair.find(args[:token_pair_id])
+    unless token_pair
+      raise ArgumentError, "Invalid token pair!"
+    end
+    
+    price = EthersService.get_token_price(token_pair, PROVIDER_URL)
+    token_pair.update(current_price: price.to_d, price_updated_at: Time.current)
+
+    puts "#{token_pair.name}: #{token_pair.current_price}"
+  end
 end
