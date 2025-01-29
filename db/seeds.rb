@@ -9,9 +9,8 @@
 #   end
 
 base_chain = Chain.find_or_create_by!(
-  name: "Base",
+  name: "base_mainnet",
   native_chain_id: "8453",
-  rpc_url: "https://base-mainnet.infura.io/v3",
   explorer_url: "https://basescan.org"
 )
 

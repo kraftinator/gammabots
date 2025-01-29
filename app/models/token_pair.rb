@@ -18,5 +18,21 @@ class TokenPair < ApplicationRecord
 
   def name
     "#{base_token.symbol}/#{quote_token.symbol}"
-  end   
+  end
+
+  def latest_price
+    update_price if price_stale?
+    current_price
+  end
+
+  private
+
+  def price_stale?
+    price_updated_at.nil? || price_updated_at < 1.minute.ago
+  end
+
+  def update_price
+    new_price = TokenPriceService.get_price(base_token, quote_token, chain)
+    update!(current_price: new_price.to_d, price_updated_at: Time.current)
+  end
 end

@@ -1,5 +1,5 @@
 class TradingStrategy
-  def initialize(bot, provider_url)
+  def initialize(bot, current_price, provider_url)
     @bot = bot
     @provider_url = provider_url
   end

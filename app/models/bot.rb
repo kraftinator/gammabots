@@ -6,7 +6,7 @@ class Bot < ApplicationRecord
   has_many :trades
 
   # Validations
-  validates :initial_base_token_amount, numericality: { greater_than_or_equal_to: 0 }
+  validates :initial_buy_amount, numericality: { greater_than_or_equal_to: 0 }
   validates :base_token_amount, numericality: { greater_than_or_equal_to: 0 }
   validates :quote_token_amount, numericality: { greater_than_or_equal_to: 0 }
   validates :last_traded_at, presence: true, allow_nil: true
