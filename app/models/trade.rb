@@ -8,7 +8,11 @@ class Trade < ApplicationRecord
   validates :total_value, numericality: { greater_than: 0 }
   validates :executed_at, presence: true
 
-  def trading_pair
+  def pending?
+    status == "pending"
+  end
+  
+  def token_pair
     bot.token_pair
   end
 end

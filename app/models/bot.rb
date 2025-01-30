@@ -14,4 +14,8 @@ class Bot < ApplicationRecord
   # Scopes
   scope :active, -> { where(active: true) }
   scope :inactive, -> { where(active: false) }
+
+  def initial_buy_made?
+    initial_buy_amount > 0
+  end
 end

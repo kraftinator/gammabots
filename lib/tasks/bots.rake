@@ -1,5 +1,21 @@
 namespace :bots do
 
+  desc "Run bot"
+  # Usage:
+  # rake bots:run["1"]
+  task :run, [:bot_id] => :environment do |t, args|
+    if args[:bot_id].nil?
+      raise ArgumentError, "Missing parameters!"
+    end
+
+    bot = Bot.find(args[:bot_id])
+    unless bot
+      raise ArgumentError, "Invalid bot!"
+    end
+
+    BotRunner.run(bot)
+  end
+
   desc "Create bot"
   # Usage:
   # rake bots:create["DEGEN","0.001","1","Base","1"]
