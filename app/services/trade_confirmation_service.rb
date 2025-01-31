@@ -1,25 +1,34 @@
 class TradeConfirmationService
-  def self.confirm_trade(trade)
+  def self.confirm_trade(trade, provider_url)
     return unless trade.pending?
 
-    transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash)
-    return unless transaction_receipt && transaction_receipt["blockNumber"]
+    transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, provider_url)
+    return unless transaction_receipt
 
-    base_token_amount_received = transaction_receipt["amount_out"].to_d
-    return unless base_token_amount_received.positive?
+    amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
+    status = transaction_receipt["status"]
+    block_number = transaction_receipt["blockNumber"]
+    gas_used = transaction_receipt["gasUsed"]
 
-    #trade.bot.with_lock do
-      #initial_buy_price = trade.bot.quote_token_amount / base_token_amount_received
+    # Ensure the trade was successful and amount_out is valid
+    return unless status == 1 && amount_out.positive?
 
-      #trade.bot.update!(
-      #  base_token_amount: trade.bot.base_token_amount + base_token_amount_received,
-      #  initial_buy_price: initial_buy_price,
-      #  last_traded_at: Time.current
-      #)
+    if trade.buy?
+      trade_price = trade.bot.quote_token_amount / amount_out
 
-      #trade.update!(status: :complete)
+      trade.update!(
+        amount: amount_out, 
+        price: trade_price,
+        total_value: amount_out * trade_price,
+        status: :completed,
+        block_number: block_number,
+        gas_used: gas_used
+      )
 
-      #puts "Trade #{trade.id} confirmed: Bought #{base_token_amount_received} #{trade.bot.token_pair.base_token.symbol} at price #{initial_buy_price} #{trade.bot.token_pair.quote_token.symbol}"
-    #end
+      trade.bot.process_trade(trade.reload)
+    else
+      # Do something else
+    end
+    
   end
 end

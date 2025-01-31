@@ -18,7 +18,7 @@ namespace :bots do
 
   desc "Create bot"
   # Usage:
-  # rake bots:create["DEGEN","0.001","1","Base","1"]
+  # rake bots:create["DEGEN","0.0005","1","base_mainnet","1"]
   task :create, [:token, :amount, :strategy, :chain_name, :user_id] => :environment do |t, args|
     if args[:token].nil? || args[:amount].nil? || args[:strategy].nil? || args[:chain_name].nil? || args[:user_id].nil?
       raise ArgumentError, "Missing parameters!"

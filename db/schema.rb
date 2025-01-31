@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_01_29_202939) do
+ActiveRecord::Schema[7.2].define(version: 2025_01_31_195054) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -76,14 +76,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_29_202939) do
   create_table "trades", force: :cascade do |t|
     t.bigint "bot_id", null: false
     t.string "trade_type", null: false
-    t.decimal "price", precision: 18, scale: 8, null: false
-    t.decimal "amount", precision: 18, scale: 8, null: false
-    t.decimal "total_value", precision: 18, scale: 8, null: false
+    t.decimal "price", precision: 18, scale: 8
+    t.decimal "amount", precision: 18, scale: 8
+    t.decimal "total_value", precision: 18, scale: 8
     t.datetime "executed_at", null: false
     t.string "tx_hash"
     t.string "status", default: "completed"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "block_number"
+    t.decimal "gas_used", precision: 30
+    t.index ["block_number"], name: "index_trades_on_block_number"
     t.index ["bot_id"], name: "index_trades_on_bot_id"
     t.index ["executed_at"], name: "index_trades_on_executed_at"
     t.index ["trade_type"], name: "index_trades_on_trade_type"
