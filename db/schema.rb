@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_02_01_190640) do
+ActiveRecord::Schema[7.2].define(version: 2025_02_01_225348) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -18,9 +18,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_01_190640) do
     t.bigint "chain_id", null: false
     t.bigint "user_id", null: false
     t.bigint "token_pair_id", null: false
-    t.decimal "initial_buy_amount", precision: 30, scale: 10, default: "0.0", null: false
-    t.decimal "base_token_amount", precision: 30, scale: 10, default: "0.0", null: false
-    t.decimal "quote_token_amount", precision: 30, scale: 10, default: "0.0", null: false
+    t.decimal "initial_buy_amount", precision: 30, scale: 18, default: "0.0", null: false
+    t.decimal "base_token_amount", precision: 30, scale: 18, default: "0.0", null: false
+    t.decimal "quote_token_amount", precision: 30, scale: 18, default: "0.0", null: false
     t.boolean "active", default: true, null: false
     t.datetime "last_traded_at"
     t.datetime "created_at", null: false
@@ -76,12 +76,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_01_190640) do
   create_table "trades", force: :cascade do |t|
     t.bigint "bot_id", null: false
     t.string "trade_type", null: false
-    t.decimal "price", precision: 18, scale: 8
-    t.decimal "amount", precision: 18, scale: 8
-    t.decimal "total_value", precision: 18, scale: 8
+    t.decimal "price", precision: 30, scale: 18
+    t.decimal "amount", precision: 30, scale: 18
+    t.decimal "total_value", precision: 30, scale: 18
     t.datetime "executed_at", null: false
-    t.string "tx_hash"
-    t.string "status", default: "completed"
+    t.string "tx_hash", null: false
+    t.string "status", default: "pending"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "block_number"

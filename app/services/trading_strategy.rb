@@ -7,7 +7,7 @@ class TradingStrategy
 
   def process
     if @bot.initial_buy_made?
-      # Run strategy
+      @bot.update_prices(@current_price)
     else
       perform_initial_buy
     end
