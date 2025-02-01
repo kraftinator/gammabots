@@ -22,7 +22,8 @@ class TradeConfirmationService
         total_value: amount_out * trade_price,
         status: :completed,
         block_number: block_number,
-        gas_used: gas_used
+        gas_used: gas_used,
+        confirmed_at: Time.current
       )
 
       trade.bot.process_trade(trade.reload)
