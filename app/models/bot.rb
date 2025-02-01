@@ -37,8 +37,8 @@ class Bot < ApplicationRecord
       quote_token_amount: 0,
       base_token_amount: trade.amount,
       initial_buy_price: trade_price,
-      highest_price_since_buy: trade_price,
-      lowest_price_since_buy: trade_price,
+      highest_price_since_initial_buy: trade_price,
+      lowest_price_since_initial_buy: trade_price,
       highest_price_since_last_trade: trade_price,
       lowest_price_since_last_trade: trade_price,
       last_traded_at: trade.created_at
