@@ -29,4 +29,8 @@ class Trade < ApplicationRecord
   def token_pair
     bot.token_pair
   end
+
+  def total_value
+    amount * price
+  end
 end

@@ -19,7 +19,6 @@ class TradeConfirmationService
       trade.update!(
         amount: amount_out, 
         price: trade_price,
-        total_value: amount_out * trade_price,
         status: :completed,
         block_number: block_number,
         gas_used: gas_used,
