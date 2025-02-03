@@ -2,7 +2,8 @@ class TradeConfirmationService
   def self.confirm_trade(trade, provider_url)
     return unless trade.pending?
 
-    transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, provider_url)
+    decimals = trade.bot.token_pair.base_token.decimals
+    transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, decimals, provider_url)
     return unless transaction_receipt
 
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)

@@ -53,7 +53,7 @@ class EthersService
     call_function('getTokenPrice', token_0, token_0_decimals, token_1, token_1_decimals, provider_url)
   end
 
-  def self.get_transaction_receipt(tx_hash, provider_url)
-    call_function('getTransactionReceipt', tx_hash, provider_url)
+  def self.get_transaction_receipt(tx_hash, decimals, provider_url)
+    call_function('getTransactionReceipt', tx_hash, decimals, provider_url)
   end
 end
