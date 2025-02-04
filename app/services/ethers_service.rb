@@ -38,6 +38,10 @@ class EthersService
     call_function('buy', private_key, quote_token_amount, base_token, quote_token, quote_token_decimals, provider_url)
   end
 
+  def self.sell(private_key, base_token_amount, base_token, quote_token, base_token_decimals, provider_url)
+    call_function('sell', private_key, base_token_amount, base_token, quote_token, base_token_decimals, provider_url)
+  end  
+
   def self.get_token_price(token_pair, provider_url)
     call_function(
       'getTokenPrice', 

@@ -82,4 +82,39 @@ namespace :bots do
     puts "highest_price_since_last_trade:  #{bot.highest_price_since_last_trade} #{symbol}"
     puts "lowest_price_since_last_trade:   #{bot.lowest_price_since_last_trade} #{symbol}"
   end
+
+  desc "Show"
+  # Usage:
+  # rake bots:show["2"]
+  task :show, [:bot_id] => :environment do |t, args|
+    if args[:bot_id].nil?
+      raise ArgumentError, "Missing parameters!"
+    end
+
+    bot = Bot.find(args[:bot_id])
+    unless bot
+      raise ArgumentError, "Invalid bot!"
+    end
+
+    symbol = bot.token_pair.quote_token.symbol
+    puts "\nBASIC"
+    puts "-----"
+    puts "id:         #{bot.id.to_s}"
+    puts "user:       #{bot.user.id.to_s}"
+    puts "chain:      #{bot.chain.name}"
+    puts "active:     #{bot.active}"
+    puts "token_pair: #{bot.token_pair.name}"
+    puts "\nHOLDINGS"
+    puts "---------"
+    puts "base_token_amount:  #{bot.base_token_amount} #{bot.token_pair.base_token.symbol}"
+    puts "quote_token_amount: #{bot.quote_token_amount} #{symbol}"
+    puts "\nSTRATEGY"
+    puts "--------"
+    puts "initial_buy_price:               #{bot.initial_buy_price} #{symbol}"
+    puts "highest_price_since_initial_buy: #{bot.highest_price_since_initial_buy} #{symbol}"
+    puts "lowest_price_since_initial_buy:  #{bot.lowest_price_since_initial_buy} #{symbol}"
+    puts "highest_price_since_last_trade:  #{bot.highest_price_since_last_trade} #{symbol}"
+    puts "lowest_price_since_last_trade:   #{bot.lowest_price_since_last_trade} #{symbol}"
+    puts ""
+  end
 end

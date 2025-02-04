@@ -5,7 +5,8 @@ class Trade < ApplicationRecord
   validates :status, presence: true, inclusion: { in: %w[pending completed failed] }
 
   validates :price, numericality: { greater_than: 0 }, if: -> { completed? }
-  validates :amount, numericality: { greater_than: 0 }, if: -> { completed? }
+  validates :amount_in, numericality: { greater_than: 0 }, if: -> { completed? }
+  validates :amount_out, numericality: { greater_than: 0 }, if: -> { completed? }
   validates :total_value, numericality: { greater_than: 0 }, if: -> { completed? }
 
   validates :executed_at, presence: true
@@ -31,6 +32,6 @@ class Trade < ApplicationRecord
   end
 
   def total_value
-    amount * price
+    amount_out * price
   end
 end

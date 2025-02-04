@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_02_01_235010) do
+ActiveRecord::Schema[7.2].define(version: 2025_02_04_203211) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -77,7 +77,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_01_235010) do
     t.bigint "bot_id", null: false
     t.string "trade_type", null: false
     t.decimal "price", precision: 30, scale: 18
-    t.decimal "amount", precision: 30, scale: 18
+    t.decimal "amount_out", precision: 30, scale: 18
     t.datetime "executed_at", null: false
     t.string "tx_hash", null: false
     t.string "status", default: "pending"
@@ -86,6 +86,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_01_235010) do
     t.bigint "block_number"
     t.decimal "gas_used", precision: 30
     t.datetime "confirmed_at"
+    t.decimal "amount_in", precision: 30, scale: 18
     t.index ["block_number"], name: "index_trades_on_block_number"
     t.index ["bot_id"], name: "index_trades_on_bot_id"
     t.index ["executed_at"], name: "index_trades_on_executed_at"
