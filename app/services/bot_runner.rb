@@ -1,7 +1,5 @@
 class BotRunner
   def self.run(bot)
-    return unless bot.active?
-
     provider_url = ProviderUrlService.get_provider_url(bot.chain.name)
     
     latest_trade = bot.latest_trade
@@ -11,6 +9,8 @@ class BotRunner
       latest_trade.reload
       return if latest_trade.pending? # If still pending, skip this run
     end
+
+    return unless bot.active?
 
     strategy = TradingStrategy.new(bot, provider_url)
     strategy.process
