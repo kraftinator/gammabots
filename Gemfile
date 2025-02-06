@@ -40,7 +40,7 @@ gem "bootsnap", require: false
 #gem 'execjs'
 
 group :development, :test do
-  gem 'rspec-rails', '~> 6.1.2'
+  gem 'rspec-rails', '~> 7.1.0'
 end
 
 group :development, :test do
