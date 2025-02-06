@@ -41,6 +41,22 @@ class Bot < ApplicationRecord
     )
   end
 
+  def provider_url
+    ProviderUrlService.get_provider_url(chain.name)
+  end
+
+  def strategy_variables
+    {
+      cp: token_pair.latest_price,
+      ib: initial_buy_price,
+      st: trades.where(trade_type: "sell").count,
+      ba: base_token_amount,
+      hib: highest_price_since_initial_buy,
+      bot: self,
+      provider_url: provider_url
+    }
+  end
+
   private
 
   def process_initial_buy(trade)
