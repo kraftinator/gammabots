@@ -38,8 +38,9 @@ class TradingStrategyInterpreter
         amount_expr = Regexp.last_match(1).strip
         amount = parse_amount(amount_expr)
         # Call your TradeExecutionService (assuming it exists)
-        #TradeExecutionService.sell(@variables[:bot], amount, @variables[:provider_url])
-        puts "Call TradeExecuationService"
+        TradeExecutionService.sell(@variables[:bot], amount, @variables[:provider_url])
+        #puts "Call TradeExecuationService"
+        #puts "********** FLAG A **********"
       when /\Adeact\z/i
         # Deactivate the bot
         @variables[:bot].update!(active: false)
