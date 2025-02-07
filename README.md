@@ -1,24 +1,8 @@
-# README
+# Gammabots
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Introduction
 
-Things you may want to cover:
+`Gammabots` is a platform for creating and managing trading bots on Base, an Ethereum Layer 2 (L2) chain. It utilizes `ethers.js` for blockchain interactions and is built with Ruby on Rails.
 
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+## Authors
+[@kraftinator](https://github.com/kraftinator) ([warpcast](https://warpcast.com/kraft))
