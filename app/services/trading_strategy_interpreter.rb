@@ -7,6 +7,7 @@ class TradingStrategyInterpreter
   end
 
   def execute
+    puts "***** Calling TradingStrategyInterpreter"
     @rules.each do |rule|
       # Evaluate the rule's condition.
       if evaluate_condition(rule['c'])

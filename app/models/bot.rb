@@ -68,6 +68,10 @@ class Bot < ApplicationRecord
     }
   end
 
+  def strategy_json
+    strategy.strategy_json
+  end
+
   private
 
   def process_initial_buy(trade)

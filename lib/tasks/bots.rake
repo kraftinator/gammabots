@@ -18,9 +18,9 @@ namespace :bots do
 
   desc "Create bot"
   # Usage:
-  # rake bots:create["DEGEN","0.0005","1","base_mainnet","1"]
-  task :create, [:token, :amount, :strategy, :chain_name, :user_id] => :environment do |t, args|
-    if args[:token].nil? || args[:amount].nil? || args[:strategy].nil? || args[:chain_name].nil? || args[:user_id].nil?
+  # rake bots:create["DEGEN","0.0005","4","base_mainnet","1"]
+  task :create, [:token, :amount, :strategy_id, :chain_name, :user_id] => :environment do |t, args|
+    if args[:token].nil? || args[:amount].nil? || args[:strategy_id].nil? || args[:chain_name].nil? || args[:user_id].nil?
       raise ArgumentError, "Missing parameters!"
     end
 
@@ -28,6 +28,12 @@ namespace :bots do
     chain = Chain.find_by(name: args[:chain_name])
     unless chain
       raise ArgumentError, "Invalid chain"
+    end
+
+    # Get Strategy
+    strategy = Strategy.find(args[:strategy_id])
+    unless strategy
+      raise ArgumentError, "Invalid strategy"
     end
 
     # Get User
@@ -54,6 +60,7 @@ namespace :bots do
 
     bot = Bot.create(
       chain: chain,
+      strategy: strategy,
       user: user,
       token_pair: token_pair,
       quote_token_amount: amount
@@ -104,6 +111,7 @@ namespace :bots do
     puts "chain:      #{bot.chain.name}"
     puts "active:     #{bot.active}"
     puts "token_pair: #{bot.token_pair.name}"
+    puts "strategy:   #{bot.strategy.id.to_s}"
     puts "\nHOLDINGS"
     puts "---------"
     puts "base_token_amount:  #{bot.base_token_amount} #{bot.token_pair.base_token.symbol}"

@@ -24,7 +24,7 @@ namespace :strategies do
   desc "Create strategy"
   # Usage:
   # rake strategies:create
-  task :create, [:chain_name, :contract_address, :nft_token_id, :strategy_json] => :environment do |t, args|
+  task :create => :environment do
 
     # Get Chain
     chain = Chain.find_by(name: "base_mainnet")
@@ -32,15 +32,21 @@ namespace :strategies do
       raise ArgumentError, "Invalid chain"
     end
 
-    strategy_json =     
-      '[{"c":"cp<=ib*0.8","a":["sell all","deact"]},' \
-      '{"c":"sc==0&&hib>=ib*2.0&&cp<=hib*0.90","a":["sell bta*0.50"]},' \
-      '{"c":"sc>0&&cp<=hlt*0.90","a":["sell bta*0.25"]}]'
+    #strategy_json =     
+    #  '[{"c":"cp<=ib*0.95","a":["sell all","deact"]},' \
+    #  '{"c":"sc==0&&hib>=ib*2.0&&cp<=hib*0.90","a":["sell bta*0.50"]},' \
+    #  '{"c":"sc>0&&cp<=hlt*0.90","a":["sell bta*0.25"]}]'
+
+    strategy_json = 
+      '[{"c":"cp<=ib*0.95","a":["sell all","deact"]},' \
+      '{"c":"cp>=ib*1.05&&sc==0","a":["sell bta*0.25"]},' \
+      '{"c":"cp>=ib*1.1&&sc==1","a":["sell bta*0.25"]},' \
+      '{"c":"cp<=hib*0.95&&sc==2","a":["sell all","deact"]}]'
 
     strategy = Strategy.create(
       chain: chain,
       contract_address: "abcdef123456",
-      nft_token_id: "2",
+      nft_token_id: "4",
       strategy_json: strategy_json
     )
     if strategy.valid?
