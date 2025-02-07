@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_02_04_203211) do
+ActiveRecord::Schema[7.2].define(version: 2025_02_07_171525) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -30,8 +30,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_04_203211) do
     t.decimal "lowest_price_since_initial_buy", precision: 30, scale: 18
     t.decimal "highest_price_since_last_trade", precision: 30, scale: 18
     t.decimal "lowest_price_since_last_trade", precision: 30, scale: 18
+    t.bigint "strategy_id"
     t.index ["chain_id"], name: "index_bots_on_chain_id"
     t.index ["last_traded_at"], name: "index_bots_on_last_traded_at"
+    t.index ["strategy_id"], name: "index_bots_on_strategy_id"
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
     t.index ["user_id"], name: "index_bots_on_user_id"
   end
@@ -44,6 +46,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_04_203211) do
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_chains_on_name", unique: true
     t.index ["native_chain_id"], name: "index_chains_on_native_chain_id", unique: true
+  end
+
+  create_table "strategies", force: :cascade do |t|
+    t.bigint "chain_id", null: false
+    t.string "contract_address", null: false
+    t.string "nft_token_id", null: false
+    t.text "strategy_json", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chain_id"], name: "index_strategies_on_chain_id"
+    t.index ["contract_address", "nft_token_id"], name: "index_strategies_on_contract_address_and_nft_token_id", unique: true
+    t.index ["strategy_json"], name: "index_strategies_on_strategy_json", unique: true
   end
 
   create_table "token_pairs", force: :cascade do |t|
@@ -114,8 +128,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_04_203211) do
   end
 
   add_foreign_key "bots", "chains"
+  add_foreign_key "bots", "strategies"
   add_foreign_key "bots", "token_pairs"
   add_foreign_key "bots", "users"
+  add_foreign_key "strategies", "chains"
   add_foreign_key "token_pairs", "chains"
   add_foreign_key "token_pairs", "tokens", column: "base_token_id"
   add_foreign_key "token_pairs", "tokens", column: "quote_token_id"

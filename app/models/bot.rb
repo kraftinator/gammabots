@@ -3,6 +3,7 @@ class Bot < ApplicationRecord
   belongs_to :chain
   belongs_to :user
   belongs_to :token_pair
+  belongs_to :strategy
   has_many :trades
 
   # Validations
