@@ -1,0 +1,11 @@
+:concurrency: 5
+:queues:
+  - default
+
+:scheduler:
+  :schedule:
+    # Run job every 2 minutes
+    bot_scheduler:
+      cron: "*/2 * * * *"
+      class: "BotSchedulerJob"
+      queue: default

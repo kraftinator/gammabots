@@ -39,6 +39,9 @@ gem "bootsnap", require: false
 #gem 'mini_racer'
 #gem 'execjs'
 
+gem 'sidekiq'
+gem 'sidekiq-scheduler'
+
 group :development, :test do
   gem 'rspec-rails', '~> 6.1.2'
 end

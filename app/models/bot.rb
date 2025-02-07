@@ -34,6 +34,7 @@ class Bot < ApplicationRecord
       process_initial_buy(trade)
     elsif trade.sell?
       process_sell(trade)
+      # TODO: Update bot to indicate that it's done.
     end
   end
 
