@@ -44,7 +44,7 @@ gem 'sidekiq'
 gem 'sidekiq-scheduler'
 
 group :development, :test do
-  gem 'rspec-rails', '~> 6.1.2'
+  gem 'rspec-rails', '~> 7.1.1'
 end
 
 group :development, :test do
