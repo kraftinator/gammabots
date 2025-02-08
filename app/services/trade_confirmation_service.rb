@@ -20,7 +20,8 @@ class TradeConfirmationService
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
     return unless valid_transaction?(transaction_receipt, amount_out)
 
-    trade_price = trade.bot.quote_token_amount / amount_out
+    #trade_price = trade.bot.quote_token_amount / amount_out
+    trade_price = amount_in / amount_out
 
     update_trade(trade, amount_in, amount_out, trade_price, transaction_receipt)
     trade.bot.process_trade(trade.reload)
@@ -35,7 +36,8 @@ class TradeConfirmationService
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
     return unless valid_transaction?(transaction_receipt, amount_out)
 
-    trade_price = amount_out / trade.bot.base_token_amount
+    #trade_price = amount_out / trade.bot.base_token_amount
+    trade_price = amount_out / amount_in
 
     update_trade(trade, amount_in, amount_out, trade_price, transaction_receipt)
     trade.bot.process_trade(trade.reload)
