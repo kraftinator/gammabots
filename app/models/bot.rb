@@ -78,7 +78,7 @@ class Bot < ApplicationRecord
   def process_initial_buy(trade)
     trade_price = trade.price
     update!(
-      initial_buy_amount: trade.total_value,
+      initial_buy_amount: trade.amount_in,
       quote_token_amount: 0,
       base_token_amount: trade.amount_out,
       initial_buy_price: trade_price,
