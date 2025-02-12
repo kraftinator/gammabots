@@ -38,12 +38,12 @@ class EthersService
     call_function('swap', private_key, amount, token_in, token_out, provider_url)
   end
 
-  def self.buy(private_key, quote_token_amount, base_token, quote_token, quote_token_decimals, provider_url)
-    call_function('buy', private_key, quote_token_amount, base_token, quote_token, quote_token_decimals, provider_url)
+  def self.buy(private_key, quote_token_amount, base_token, quote_token, quote_token_decimals, fee_tier, provider_url)
+    call_function('buy', private_key, quote_token_amount, base_token, quote_token, quote_token_decimals, fee_tier, provider_url)
   end
 
-  def self.sell(private_key, base_token_amount, base_token, quote_token, base_token_decimals, provider_url)
-    call_function('sell', private_key, base_token_amount, base_token, quote_token, base_token_decimals, provider_url)
+  def self.sell(private_key, base_token_amount, base_token, quote_token, base_token_decimals, fee_tier, provider_url)
+    call_function('sell', private_key, base_token_amount, base_token, quote_token, base_token_decimals, fee_tier, provider_url)
   end
 
   def self.get_token_price_from_pool(token_pair, provider_url)

@@ -9,6 +9,7 @@ class TradeExecutionService
       bot.token_pair.base_token.contract_address,  # Token being bought
       bot.token_pair.quote_token.contract_address, # Token used for buying
       bot.token_pair.quote_token.decimals,
+      bot.token_pair.fee_tier,
       provider_url
     )
     
@@ -36,6 +37,7 @@ class TradeExecutionService
       bot.token_pair.base_token.contract_address,  # Token being sold
       bot.token_pair.quote_token.contract_address, # Token being received
       bot.token_pair.base_token.decimals,  # Base token decimals
+      bot.token_pair.fee_tier,
       provider_url
     )
     

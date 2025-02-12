@@ -16,27 +16,13 @@ namespace :token_pairs do
     base_token_address = args[:base_token_address].downcase
 
     # Get Base Token
-    puts "FLAG A"
-    puts "chain = #{chain.name}"
-    puts "base_token_address: #{base_token_address}"
     base_token = Token.find_by(chain: chain, contract_address: base_token_address)
-    puts "base_token = #{base_token.inspect}"
-    puts "FLAG B"
     unless base_token.present?
-      puts "FLAG C"
       base_token = Token.create_from_contract_address(base_token_address, chain)
-      puts "FLAG D"
       unless base_token
-        puts "FLAG E"
         raise ArgumentError, "Token creation failed"
       end
     end
-
-    # Create base token
-    #base_token = Token.create_from_contract_address(base_token_address, chain)
-    #unless base_token
-    #  raise ArgumentError, "Token creation failed"
-    #end
 
     # Get Quote Token
     quote_token_symbol = args[:quote_token_symbol] || "WETH"
