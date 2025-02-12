@@ -32,7 +32,6 @@ class TokenPair < ApplicationRecord
   end
 
   def update_price
-    new_price = TokenPriceService.get_price(base_token, quote_token, chain)
-    update!(current_price: new_price.to_d, price_updated_at: Time.current)
+    TokenPriceService.update_price_for_pair(self)
   end
 end

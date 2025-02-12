@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_02_07_171525) do
+ActiveRecord::Schema[7.2].define(version: 2025_02_12_184053) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -68,9 +68,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_07_171525) do
     t.datetime "updated_at", null: false
     t.decimal "current_price", precision: 30, scale: 18
     t.datetime "price_updated_at"
+    t.string "pool_address"
+    t.integer "fee_tier"
+    t.datetime "pool_address_updated_at"
     t.index ["base_token_id"], name: "index_token_pairs_on_base_token_id"
     t.index ["chain_id", "base_token_id", "quote_token_id"], name: "idx_on_chain_id_base_token_id_quote_token_id_220cdf562c", unique: true
     t.index ["chain_id"], name: "index_token_pairs_on_chain_id"
+    t.index ["pool_address"], name: "index_token_pairs_on_pool_address"
     t.index ["quote_token_id"], name: "index_token_pairs_on_quote_token_id"
   end
 

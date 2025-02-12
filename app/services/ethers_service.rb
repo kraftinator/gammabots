@@ -44,9 +44,23 @@ class EthersService
 
   def self.sell(private_key, base_token_amount, base_token, quote_token, base_token_decimals, provider_url)
     call_function('sell', private_key, base_token_amount, base_token, quote_token, base_token_decimals, provider_url)
-  end  
+  end
+
+  def self.get_token_price_from_pool(token_pair, provider_url)
+    puts "Calling getPriceFromPool"
+    call_function(
+      'getPriceFromPool', 
+      token_pair.base_token.contract_address, 
+      token_pair.base_token.decimals, 
+      token_pair.quote_token.contract_address, 
+      token_pair.quote_token.decimals,
+      token_pair.pool_address,
+      provider_url
+    )
+  end
 
   def self.get_token_price(token_pair, provider_url)
+    puts "Calling getTokenPrice"
     call_function(
       'getTokenPrice', 
       token_pair.base_token.contract_address, 
@@ -58,7 +72,7 @@ class EthersService
   end
 
   def self.get_token_price_with_params(token_0, token_0_decimals, token_1, token_1_decimals, provider_url)
-    call_function('getTokenPrice', token_0, token_0_decimals, token_1, token_1_decimals, provider_url, "0xc9034c3E7F58003E6ae0C8438e7c8f4598d5ACAA")
+    call_function('getTokenPrice', token_0, token_0_decimals, token_1, token_1_decimals, provider_url)
   end
 
   def self.get_transaction_receipt(tx_hash, decimals, provider_url)
