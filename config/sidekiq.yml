@@ -4,8 +4,8 @@
 
 :scheduler:
   :schedule:
-    # Run job every 20 minutes
+    # Run job every 5 minutes
     bot_scheduler:
-      cron: "*/20 * * * *"
+      cron: "*/5 * * * *"
       class: "BotSchedulerJob"
       queue: default
