@@ -33,6 +33,23 @@ class EthersService
   def self.get_token_details(token_address, provider_url)
     call_function('getTokenDetails', token_address, provider_url) 
   end
+
+  def self.get_quote_with_params(token_in, token_out, fee_tier, amount_in, token_in_decimals, token_out_decimals, provider_url)
+    call_function('getQuote', token_in, token_out, fee_tier, amount_in, token_in_decimals, token_out_decimals, provider_url)
+  end
+
+  def self.get_sell_quote(token_pair, amount_in, provider_url)
+    call_function(
+      'getQuote',
+      token_pair.base_token.contract_address,
+      token_pair.quote_token.contract_address,
+      token_pair.fee_tier,
+      amount_in,
+      token_pair.base_token.decimals,
+      token_pair.quote_token.decimals,
+      provider_url
+    )
+  end
   
   def self.swap(private_key, amount, token_in, token_out, provider_url)
     call_function('swap', private_key, amount, token_in, token_out, provider_url)
