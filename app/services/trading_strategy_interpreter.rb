@@ -9,10 +9,8 @@ class TradingStrategyInterpreter
   def execute
     puts "***** Calling TradingStrategyInterpreter"
     @rules.each do |rule|
-      # Evaluate the rule's condition.
       if evaluate_condition(rule['c'])
-        # If the condition is met, execute all the actions in order.
-        execute_actions(rule['a'])
+        execute_actions(rule, rule['a'])
         # Stop processing further rules after the first match.
         return
       end
@@ -21,7 +19,7 @@ class TradingStrategyInterpreter
 
   private
 
-  # Evaluates a condition string (for example: "cp<=ib*0.8")
+  # Evaluates a condition string (e.g. "cp>=ib*1.05&&sc==0")
   def evaluate_condition(condition_str)
     eval(condition_str, binding_from_variables)
   rescue Exception => e
@@ -30,20 +28,23 @@ class TradingStrategyInterpreter
   end
 
   # Processes each action in the actions array.
-  # For example, an action might be "sell all" or "sell ba*0.25" or "deact"
-  def execute_actions(actions)
+  # For a sell action, it calculates the min_amount_out based on the condition.
+  def execute_actions(rule, actions)
     actions.each do |action_str|
       case action_str
       when /\Asell\s+(.*)\z/i
-        # Extract the expression after "sell"
         amount_expr = Regexp.last_match(1).strip
-        amount = parse_amount(amount_expr)
-        # Call your TradeExecutionService (assuming it exists)
-        TradeExecutionService.sell(@variables[:bot], amount, @variables[:provider_url])
-        #puts "Call TradeExecuationService"
-        #puts "********** FLAG A **********"
+        sell_amount = parse_amount(amount_expr)
+        threshold_info = extract_threshold_info(rule['c'])
+        if threshold_info
+          base_value = @variables[threshold_info[:base]]
+          target_price = base_value * threshold_info[:multiplier]
+          min_amount_out = sell_amount * target_price
+        else
+          min_amount_out = 0
+        end
+        TradeExecutionService.sell(@variables[:bot], sell_amount, min_amount_out, @variables[:provider_url])
       when /\Adeact\z/i
-        # Deactivate the bot
         @variables[:bot].update!(active: false)
       else
         Rails.logger.error "Unknown action: #{action_str}"
@@ -51,9 +52,7 @@ class TradingStrategyInterpreter
     end
   end
 
-  # Parses the amount expression used in sell actions.
-  # If the expression is "all", return the entire base token amount.
-  # Otherwise, evaluate the expression (e.g., "ba*0.25").
+  # Parses the sell amount from an expression like "bta*0.25" or "all"
   def parse_amount(expression)
     if expression == "all"
       @variables[:bot].base_token_amount
@@ -65,14 +64,23 @@ class TradingStrategyInterpreter
     0
   end
 
+  # Extracts the threshold multiplier and base key from the condition string.
+  # It first looks for an "ib*" clause and, if found, returns that multiplier using ib as base.
+  # Otherwise, it checks for a "hib*" clause.
+  def extract_threshold_info(condition_str)
+    if condition_str =~ /\bib\*(\d*\.?\d+)/
+      { multiplier: $1.to_f, base: :ib }
+    elsif condition_str =~ /\bhib\*(\d*\.?\d+)/
+      { multiplier: $1.to_f, base: :hib }
+    else
+      nil
+    end
+  end
+
   # Constructs a binding with all variables from @variables.
-  # This allows eval to resolve variable names like cp, ib, st, etc.
   def binding_from_variables
     b = binding
-    @variables.each do |key, value|
-      # Use the key as the variable name. It can be a symbol or a string.
-      b.local_variable_set(key.to_sym, value)
-    end
+    @variables.each { |key, value| b.local_variable_set(key.to_sym, value) }
     b
   end
 end

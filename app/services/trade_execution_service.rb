@@ -28,7 +28,12 @@ class TradeExecutionService
     trade
   end
 
-  def self.sell(bot, base_token_amount, provider_url)
+  def self.sell1(bot, base_token_amount, min_amount_out, provider_url)
+    puts "base_token_amount = #{base_token_amount.to_s}"
+    puts "min_amount_out = #{min_amount_out.to_s}"
+  end
+
+  def self.sell(bot, base_token_amount, min_amount_out, provider_url)
     puts "Token Amount: #{base_token_amount}"
     
     tx_hash = EthersService.sell(
