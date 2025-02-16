@@ -67,6 +67,10 @@ class EthersService
     call_function('sellWithMinAmount', private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url)
   end
 
+  def self.buy_with_min_amount(private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
+    call_function('sellWithMinAmount', private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
+  end
+
   def self.get_token_price_from_pool(token_pair, provider_url)
     puts "Calling getPriceFromPool"
     call_function(
