@@ -23,6 +23,10 @@ class TradingStrategy
   end  
 
   def perform_initial_buy
-    TradeExecutionService.buy(@bot, @provider_url)
+    TradeExecutionService.buy(
+      @bot, 
+      @bot.min_amount_out_for_initial_buy, 
+      @provider_url
+    )
   end
 end

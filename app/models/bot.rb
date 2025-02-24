@@ -73,6 +73,10 @@ class Bot < ApplicationRecord
     strategy.strategy_json
   end
 
+  def min_amount_out_for_initial_buy
+    (quote_token_amount / token_pair.current_price) * 0.95
+  end
+
   private
 
   def process_initial_buy(trade)
