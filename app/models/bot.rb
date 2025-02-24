@@ -53,17 +53,17 @@ class Bot < ApplicationRecord
 
   def strategy_variables
     {
-      cp: token_pair.latest_price,
-      ib: initial_buy_price,
-      sc: trades.where(trade_type: "sell").count,
+      cpr: token_pair.latest_price,
+      ibp: initial_buy_price,
+      scn: trades.where(trade_type: "sell").count,
       bta: base_token_amount,
-      hib: highest_price_since_initial_buy,
+      hip: highest_price_since_initial_buy,
       hlt: highest_price_since_last_trade,
-      lib: lowest_price_since_initial_buy,
+      lip: lowest_price_since_initial_buy,
       llt: lowest_price_since_last_trade,
       lta: last_traded_at,
       lsp: last_sell_price,
-      ca: created_at,
+      crt: created_at,
       bot: self,
       provider_url: provider_url
     }

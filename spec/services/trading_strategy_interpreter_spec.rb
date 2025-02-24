@@ -3,16 +3,16 @@ require 'rails_helper'
 
 RSpec.describe TradingStrategyInterpreter do
   let(:strategy_json) do
-    '[{"c":"cp<=ib*0.8","a":["sell all","deact"]},' \
-    '{"c":"cp>=ib*1.2&&sc==0","a":["sell bta*0.25"]},' \
-    '{"c":"cp>=ib*1.5&&sc==1","a":["sell bta*0.25"]},' \
-    '{"c":"cp<=hib*0.8&&sc==2","a":["sell all","deact"]}]'
+    '[{"c":"cpr<=ibp*0.8","a":["sell all","deact"]},' \
+    '{"c":"cpr>=ibp*1.2&&scn==0","a":["sell bta*0.25"]},' \
+    '{"c":"cpr>=ibp*1.5&&scn==1","a":["sell bta*0.25"]},' \
+    '{"c":"cpr<=hip*0.8&&scn==2","a":["sell all","deact"]}]'
   end
 
   let(:strategy_json2) do
-    '[{"c":"cp<=ib*0.8","a":["sell all","deact"]},' \
-    '{"c":"sc==0&&hib>=ib*2.0&&cp<=hib*0.90","a":["sell bta*0.50"]},' \
-    '{"c":"sc>0&&cp<=hlt*0.90","a":["sell bta*0.25"]}]'
+    '[{"c":"cpr<=ibp*0.8","a":["sell all","deact"]},' \
+    '{"c":"scn==0&&hip>=ibp*2.0&&cpr<=hip*0.90","a":["sell bta*0.50"]},' \
+    '{"c":"scn>0&&cpr<=hlt*0.90","a":["sell bta*0.25"]}]'
   end
 
   let(:provider_url) { "http://fakeprovider.com" }
@@ -25,39 +25,40 @@ RSpec.describe TradingStrategyInterpreter do
   end
 
   # Helper to build the variables mapping. Our abbreviations:
-  # cp: current price, ib: initial buy price, sc: sell count,
-  # bta: base token amount, hib: highest price since initial buy, hlt: highest price since last trade.
+  # cpr: current price, ibp: initial buy price, scn: sell count,
+  # bta: base token amount, hip: highest price since initial buy, hlt: highest price since last trade.
+  # Note: provider_url and bot are not exposed as strategy variables.
   def strategy_variables(overrides = {})
     {
-      cp: 100,    # current price
-      ib: 100,    # initial buy price
-      sc: 0,      # sell count
-      bta: 100,   # base token amount
-      hib: 150,   # highest price since initial buy
-      hlt: 140,   # highest price since last trade
-      bot: bot,
-      provider_url: provider_url
+      cpr: 100,    # current price
+      ibp: 100,    # initial buy price
+      scn: 0,      # sell count
+      bta: 100,    # base token amount
+      hip: 150,    # highest price since initial buy
+      hlt: 140,    # highest price since last trade
+      bot: bot,                # not exposed in binding_from_variables
+      provider_url: provider_url # not exposed in binding_from_variables
     }.merge(overrides)
   end
 
   context "with strategy 1" do
     subject { described_class.new(strategy_json, variables) }
 
-    context "when rule 1 matches (cp<=ib*0.8)" do
+    context "when rule 1 matches (cpr<=ibp*0.8)" do
       let(:variables) do
         strategy_variables(
-          cp: 80,    # satisfies cp<=100*0.8 (80<=80)
-          ib: 100,
-          sc: 0,
+          cpr: 80,    # satisfies 80<=100*0.8 (80<=80)
+          ibp: 100,
+          scn: 0,
           bta: 100,
-          hib: 150,
+          hip: 150,
           bot: bot,
           provider_url: provider_url
         )
       end
 
       it "executes sell all and deact" do
-        # For rule 1, condition: cp<=ib*0.8, multiplier = 0.8, target_price = 100*0.8 = 80,
+        # For rule 1, condition: cpr<=ibp*0.8, multiplier = 0.8, target_price = 100*0.8 = 80,
         # sell all means sell 100, so min_amount_out = 100 * 80 = 8000.
         expect(TradeExecutionService).to receive(:sell).with(bot, 100, 8000, provider_url)
         expect(bot).to receive(:update!).with(active: false)
@@ -65,14 +66,14 @@ RSpec.describe TradingStrategyInterpreter do
       end
     end
 
-    context "when rule 2 matches (cp>=ib*1.2 && sc==0)" do
+    context "when rule 2 matches (cpr>=ibp*1.2 && scn==0)" do
       let(:variables) do
         strategy_variables(
-          cp: 130,    # satisfies cp>=100*1.2 (130>=120)
-          ib: 100,
-          sc: 0,
+          cpr: 130,    # satisfies 130>=100*1.2 (130>=120)
+          ibp: 100,
+          scn: 0,
           bta: 100,
-          hib: 150,
+          hip: 150,
           bot: bot,
           provider_url: provider_url
         )
@@ -85,14 +86,14 @@ RSpec.describe TradingStrategyInterpreter do
       end
     end
 
-    context "when rule 3 matches (cp>=ib*1.5 && sc==1)" do
+    context "when rule 3 matches (cpr>=ibp*1.5 && scn==1)" do
       let(:variables) do
         strategy_variables(
-          cp: 160,    # satisfies cp>=100*1.5 (160>=150)
-          ib: 100,
-          sc: 1,
+          cpr: 160,    # satisfies 160>=100*1.5 (160>=150)
+          ibp: 100,
+          scn: 1,
           bta: 100,
-          hib: 150,
+          hip: 150,
           bot: bot,
           provider_url: provider_url
         )
@@ -105,14 +106,14 @@ RSpec.describe TradingStrategyInterpreter do
       end
     end
 
-    context "when rule 4 matches (cp<=hib*0.8 && sc==2)" do
+    context "when rule 4 matches (cpr<=hip*0.8 && scn==2)" do
       let(:variables) do
         strategy_variables(
-          cp: 110,    # satisfies cp<=150*0.8 (110<=120)
-          ib: 100,
-          sc: 2,
+          cpr: 110,    # satisfies 110<=150*0.8 (110<=120)
+          ibp: 100,
+          scn: 2,
           bta: 100,
-          hib: 150,
+          hip: 150,
           bot: bot,
           provider_url: provider_url
         )
@@ -128,11 +129,11 @@ RSpec.describe TradingStrategyInterpreter do
     context "when no rule matches" do
       let(:variables) do
         strategy_variables(
-          cp: 105,    # does not satisfy any condition
-          ib: 100,
-          sc: 3,      # no matching rule
+          cpr: 105,    # does not satisfy any condition
+          ibp: 100,
+          scn: 3,      # no matching rule
           bta: 100,
-          hib: 150,
+          hip: 150,
           bot: bot,
           provider_url: provider_url
         )
@@ -150,7 +151,7 @@ RSpec.describe TradingStrategyInterpreter do
     subject { described_class.new(strategy_json2, strategy_variables) }
 
     context "when stop-loss rule matches" do
-      let(:vars) { strategy_variables(cp: 80) } # cp<=100*0.8 holds
+      let(:vars) { strategy_variables(cpr: 80) } # satisfies cpr<=ibp*0.8 with ibp=100 (80<=80)
       subject { described_class.new(strategy_json2, vars) }
 
       it "executes sell all and deact with min_amount_out = 100 * (100*0.8) = 8000" do
@@ -161,11 +162,11 @@ RSpec.describe TradingStrategyInterpreter do
     end
 
     context "when profit capture on first sell matches" do
-      let(:vars) { strategy_variables(cp: 130, sc: 0, hib: 220) }
-      # For rule: "sc==0&&hib>=ib*2.0&&cp<=hib*0.90"
-      # From the condition, extract multiplier from "ib*2.0" => 2.0.
+      let(:vars) { strategy_variables(cpr: 130, scn: 0, hip: 220, ibp: 100) }
+      # For rule: "scn==0&&hip>=ibp*2.0&&cpr<=hip*0.90"
+      # Extract from condition: use ibp*2.0 -> multiplier = 2.0, base = ibp.
       # Sell action: "sell bta*0.50" → sell_amount = 100*0.50 = 50.
-      # target_price = ib * 2.0 = 100 * 2.0 = 200.
+      # target_price = ibp * 2.0 = 100*2.0 = 200.
       # min_amount_out = 50 * 200 = 10000.
       subject { described_class.new(strategy_json2, vars) }
 
@@ -177,10 +178,9 @@ RSpec.describe TradingStrategyInterpreter do
     end
 
     context "when trailing sell rule matches" do
-      let(:vars) { strategy_variables(cp: 120, sc: 1, hlt: 140) }
-      # For rule: "sc>0&&cp<=hlt*0.90"
-      # Since no explicit multiplier is found (because condition doesn't contain an "ib*<value>" part),
-      # our extract_threshold_multiplier returns nil, so min_amount_out = 0.
+      let(:vars) { strategy_variables(cpr: 120, scn: 1, hlt: 140) }
+      # For rule: "scn>0&&cpr<=hlt*0.90"
+      # No explicit multiplier is found, so min_amount_out = 0.
       subject { described_class.new(strategy_json2, vars) }
 
       it "executes sell bta*0.25 (i.e., 25 tokens) with min_amount_out = 0" do

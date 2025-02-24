@@ -2,7 +2,7 @@ class TradingStrategyInterpreter
   def initialize(strategy_json, variables)
     # Parse the JSON strategy into an array of rule hashes.
     @rules = JSON.parse(strategy_json)
-    # Variables is a hash mapping variable names (as symbols or strings) to their current values.
+    # @variables is a hash mapping fixed three-letter keys to their current values.
     @variables = variables
   end
 
@@ -19,7 +19,7 @@ class TradingStrategyInterpreter
 
   private
 
-  # Evaluates a condition string (e.g. "cp>=ib*1.05&&sc==0")
+  # Evaluates a condition string (e.g. "cpr>=ibp*1.05&&scn==0")
   def evaluate_condition(condition_str)
     eval(condition_str, binding_from_variables)
   rescue Exception => e
@@ -43,6 +43,7 @@ class TradingStrategyInterpreter
         else
           min_amount_out = 0
         end
+        # Note: provider_url and bot are not part of the strategy variables.
         TradeExecutionService.sell(@variables[:bot], sell_amount, min_amount_out, @variables[:provider_url])
       when /\Adeact\z/i
         @variables[:bot].update!(active: false)
@@ -65,22 +66,25 @@ class TradingStrategyInterpreter
   end
 
   # Extracts the threshold multiplier and base key from the condition string.
-  # It first looks for an "ib*" clause and, if found, returns that multiplier using ib as base.
-  # Otherwise, it checks for a "hib*" clause.
+  # It first looks for an "ibp*" clause and, if found, returns that multiplier using ibp as base.
+  # Otherwise, it checks for a "hip*" clause.
   def extract_threshold_info(condition_str)
-    if condition_str =~ /\bib\*(\d*\.?\d+)/
-      { multiplier: $1.to_f, base: :ib }
-    elsif condition_str =~ /\bhib\*(\d*\.?\d+)/
-      { multiplier: $1.to_f, base: :hib }
+    if condition_str =~ /\bibp\*(\d*\.?\d+)/
+      { multiplier: $1.to_f, base: :ibp }
+    elsif condition_str =~ /\bhip\*(\d*\.?\d+)/
+      { multiplier: $1.to_f, base: :hip }
     else
       nil
     end
   end
 
-  # Constructs a binding with all variables from @variables.
+  # Constructs a binding with only the strategy variables.
   def binding_from_variables
     b = binding
-    @variables.each { |key, value| b.local_variable_set(key.to_sym, value) }
+    allowed_keys = [:cpr, :ibp, :scn, :bta, :hip, :hlt, :lip, :llt, :lta, :lsp, :crt]
+    @variables.each do |key, value|
+      b.local_variable_set(key.to_sym, value) if allowed_keys.include?(key.to_sym)
+    end
     b
   end
 end
