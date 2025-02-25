@@ -69,6 +69,25 @@ namespace :bots do
     puts "Bot Created: #{bot.id.to_s}"
   end
 
+  desc "Create bot from service"
+  # Usage:
+  # rake bots:create_from_service["1","0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed","0.0005","4","base_mainnet"]
+  task :create_from_service, [:user_id, :token_contract_address, :initial_amount, :strategy_id, :chain_name] => :environment do |t, args|
+    if args[:user_id].nil? || args[:token_contract_address].nil? || args[:initial_amount].nil? || args[:strategy_id].nil? || args[:chain_name].nil?
+      raise ArgumentError, "Missing parameters!"
+    end
+
+    bot = CreateBotService.call(
+      user_id: args[:user_id],
+      token_contract_address: args[:token_contract_address],
+      initial_amount: args[:initial_amount],
+      strategy_id: args[:strategy_id],
+      chain_name: args[:chain_name]
+    )
+
+    puts "Bot Created: #{bot.id}"
+  end
+
   desc "Show prices"
   # Usage:
   # rake bots:show_prices["2"]
