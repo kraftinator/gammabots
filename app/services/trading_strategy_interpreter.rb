@@ -28,25 +28,38 @@ class TradingStrategyInterpreter
   end
 
   # Processes each action in the actions array.
-  # For a sell action, it calculates the min_amount_out based on the condition.
+  # For a sell action, it calculates the min_amount_out based on the condition,
+  # except when the sell action is "sell all" (liquidation) where we set it to 0.
+  # It also only deactivates the bot if a swap occurred.
   def execute_actions(rule, actions)
+    swap_executed = false
     actions.each do |action_str|
       case action_str
       when /\Asell\s+(.*)\z/i
         amount_expr = Regexp.last_match(1).strip
         sell_amount = parse_amount(amount_expr)
-        threshold_info = extract_threshold_info(rule['c'])
-        if threshold_info
-          base_value = @variables[threshold_info[:base]]
-          target_price = base_value * threshold_info[:multiplier]
-          min_amount_out = sell_amount * target_price
-        else
+        if amount_expr.downcase == "all"
+          # For liquidation events ("sell all"), we ignore slippage and set min_amount_out to 0.
           min_amount_out = 0
+        else
+          threshold_info = extract_threshold_info(rule['c'])
+          if threshold_info
+            base_value = @variables[threshold_info[:base]]
+            target_price = base_value * threshold_info[:multiplier]
+            min_amount_out = sell_amount * target_price
+          else
+            min_amount_out = 0
+          end
         end
-        # Note: provider_url and bot are not part of the strategy variables.
-        TradeExecutionService.sell(@variables[:bot], sell_amount, min_amount_out, @variables[:provider_url])
+        result = TradeExecutionService.sell(@variables[:bot], sell_amount, min_amount_out, @variables[:provider_url])
+        swap_executed = true if result.present?
       when /\Adeact\z/i
-        @variables[:bot].update!(active: false)
+        if swap_executed
+          puts "Deactivating bot"
+          @variables[:bot].update!(active: false)
+        else
+          puts "Swap did not occur; bot remains active"
+        end
       else
         Rails.logger.error "Unknown action: #{action_str}"
       end
@@ -55,7 +68,7 @@ class TradingStrategyInterpreter
 
   # Parses the sell amount from an expression like "bta*0.25" or "all"
   def parse_amount(expression)
-    if expression == "all"
+    if expression.downcase == "all"
       @variables[:bot].base_token_amount
     else
       eval(expression, binding_from_variables)

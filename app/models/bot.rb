@@ -95,12 +95,15 @@ class Bot < ApplicationRecord
   end
 
   def process_sell(trade)
-    trade_price = trade.price
+    new_base_token_amount = base_token_amount - trade.amount_in
+    # If the difference is negative but nearly zero, set it to 0
+    new_base_token_amount = 0 if new_base_token_amount < 0 && new_base_token_amount.abs < 1e-9
+    
     update!(
-      base_token_amount: base_token_amount - trade.amount_in,
+      base_token_amount: new_base_token_amount,
       quote_token_amount: quote_token_amount + trade.amount_out,
-      highest_price_since_last_trade: trade_price,
-      lowest_price_since_last_trade: trade_price,
+      highest_price_since_last_trade: trade.price,
+      lowest_price_since_last_trade: trade.price,
       last_traded_at: trade.created_at
     )
   end

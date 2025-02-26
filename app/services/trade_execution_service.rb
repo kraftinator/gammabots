@@ -27,6 +27,7 @@ class TradeExecutionService
       TradeConfirmationService.confirm_trade(trade, provider_url)
     else
       puts "No swap!"
+      puts result
     end
   end
 
@@ -57,8 +58,11 @@ class TradeExecutionService
       )
 
       TradeConfirmationService.confirm_trade(trade, provider_url)
+      trade
     else
       puts "No swap!"
+      puts result
+      nil
     end
   end
 end
