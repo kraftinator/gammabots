@@ -84,12 +84,24 @@ class TradingStrategyInterpreter
   def extract_threshold_info(condition_str)
     if condition_str =~ /\bibp\*(\d*\.?\d+)/
       { multiplier: $1.to_f, base: :ibp }
+    elsif condition_str =~ /\blsp\*(\d*\.?\d+)/
+      { multiplier: $1.to_f, base: :lsp }
     elsif condition_str =~ /\bhip\*(\d*\.?\d+)/
       { multiplier: $1.to_f, base: :hip }
     else
       nil
     end
   end
+  
+  #def extract_threshold_info(condition_str)
+  #  if condition_str =~ /\bibp\*(\d*\.?\d+)/
+  #    { multiplier: $1.to_f, base: :ibp }
+  #  elsif condition_str =~ /\bhip\*(\d*\.?\d+)/
+  #    { multiplier: $1.to_f, base: :hip }
+  #  else
+  #    nil
+  #  end
+  #end
 
   # Constructs a binding with only the strategy variables.
   def binding_from_variables
