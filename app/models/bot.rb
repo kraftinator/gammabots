@@ -38,6 +38,12 @@ class Bot < ApplicationRecord
     end
   end
 
+  def liquidate
+    trade = TradeExecutionService.sell(self, base_token_amount, 0, provider_url)
+    update!(active: false) if trade
+    trade
+  end
+
   def update_prices(current_price)
     update!(
       highest_price_since_initial_buy: [highest_price_since_initial_buy, current_price].compact.max,
