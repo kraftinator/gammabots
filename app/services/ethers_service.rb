@@ -64,6 +64,15 @@ class EthersService
   end
 
   def self.sell_with_min_amount(private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url)
+    puts "Calling sellWithMinAmount with params: " \
+                    "base_token_amount=#{base_token_amount}, " \
+                    "base_token=#{base_token}, " \
+                    "quote_token=#{quote_token}, " \
+                    "base_token_decimals=#{base_token_decimals}, " \
+                    "quote_token_decimals=#{quote_token_decimals}, " \
+                    "fee_tier=#{fee_tier}, " \
+                    "min_amount_out=#{min_amount_out}"
+
     call_function('sellWithMinAmount', private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url)
   end
 
