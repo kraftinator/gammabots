@@ -93,6 +93,31 @@ class EthersService
     )
   end
 
+  def self.get_max_amount_in(token_pair, provider_url)
+    puts "Calling getMaxAmountIn"
+    call_function(
+      'getMaxAmountIn',
+      token_pair.latest_price,
+      token_pair.pool_address,
+      token_pair.base_token.decimals,
+      token_pair.quote_token.decimals,
+      provider_url
+    )
+  end
+
+  def self.get_pool_data(token_pair, provider_url)
+    puts "Calling getPoolData"
+    call_function(
+      'getPoolData',
+      token_pair.base_token.contract_address,
+      token_pair.base_token.decimals,
+      token_pair.quote_token.contract_address,
+      token_pair.quote_token.decimals,
+      token_pair.pool_address,
+      provider_url
+    )
+  end
+
   def self.get_token_price(token_pair, provider_url)
     puts "Calling getTokenPrice"
     call_function(
