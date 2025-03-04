@@ -18,9 +18,11 @@ class TradeConfirmationService
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
-    return unless valid_transaction?(transaction_receipt, amount_out)
+    unless valid_transaction?(transaction_receipt, amount_in, amount_out)
+      update_trade(trade, amount_in, amount_out, nil, transaction_receipt, :failed)
+      return
+    end
 
-    #trade_price = trade.bot.quote_token_amount / amount_out
     trade_price = amount_in / amount_out
 
     update_trade(trade, amount_in, amount_out, trade_price, transaction_receipt)
@@ -34,25 +36,27 @@ class TradeConfirmationService
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
-    return unless valid_transaction?(transaction_receipt, amount_out)
+    unless valid_transaction?(transaction_receipt, amount_in, amount_out)
+      update_trade(trade, amount_in, amount_out, nil, transaction_receipt, :failed)
+      return
+    end
 
-    #trade_price = amount_out / trade.bot.base_token_amount
     trade_price = amount_out / amount_in
 
     update_trade(trade, amount_in, amount_out, trade_price, transaction_receipt)
     trade.bot.process_trade(trade.reload)
   end
 
-  def self.valid_transaction?(transaction_receipt, amount_out)
-    transaction_receipt["status"] == 1 && amount_out.positive?
+  def self.valid_transaction?(transaction_receipt, amount_in, amount_out)
+    transaction_receipt["status"] == 1 && amount_in.positive? && amount_out.positive?
   end
 
-  def self.update_trade(trade, amount_in, amount_out, price, transaction_receipt)
+  def self.update_trade(trade, amount_in, amount_out, price, transaction_receipt, status=:completed)
     trade.update!(
       amount_in: amount_in,
       amount_out: amount_out,
       price: price,
-      status: :completed,
+      status: status,
       block_number: transaction_receipt["blockNumber"],
       gas_used: transaction_receipt["gasUsed"],
       confirmed_at: Time.current
