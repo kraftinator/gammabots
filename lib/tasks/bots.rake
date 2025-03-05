@@ -144,6 +144,10 @@ namespace :bots do
     puts "lowest_price_since_initial_buy:  #{bot.lowest_price_since_initial_buy} #{symbol}"
     puts "highest_price_since_last_trade:  #{bot.highest_price_since_last_trade} #{symbol}"
     puts "lowest_price_since_last_trade:   #{bot.lowest_price_since_last_trade} #{symbol}"
+    puts "\nTRADES"
+    puts "---------"
+    puts "buys:  #{bot.trades.where(trade_type: "buy").count}"
+    puts "sells: #{bot.trades.where(trade_type: "sell").count}"
     puts ""
   end
 
