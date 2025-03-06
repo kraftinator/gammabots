@@ -1,3 +1,5 @@
+include ActionView::Helpers::DateHelper
+
 namespace :bots do
 
   desc "Run bot"
@@ -169,6 +171,29 @@ namespace :bots do
       puts "Liquidated!: #{trade.id}"
     else
       puts "Failed to liquidate!"
+    end
+  end
+
+  desc "List active bots"
+  # Usage:
+  # rake bots:list
+  task :list => :environment do
+    puts "\n== Active Bots (#{Bot.active.count}) =="
+    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token Pair", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
+    puts "-" * 110  # Increased width to match all columns
+    
+    Bot.active.order(created_at: :asc).each do |bot|
+      puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % [
+        bot.id,
+        bot.token_pair.try(:name).to_s[0...18],
+        bot.strategy.id,
+        bot.base_token_amount.round(6).to_s,
+        bot.quote_token_amount.round(6).to_s,
+        bot.initial_buy_amount.round(4).to_s,
+        bot.trades.where(trade_type: "sell").count,
+        #bot.created_at.strftime('%Y-%m-%d %H:%M')
+        "#{time_ago_in_words(bot.created_at) } ago"
+      ]
     end
   end
 end
