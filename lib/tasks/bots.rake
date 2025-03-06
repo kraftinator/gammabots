@@ -183,13 +183,13 @@ namespace :bots do
     puts "-" * 110  # Increased width to match all columns
     
     Bot.active.order(created_at: :asc).each do |bot|
-      puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % [
+      puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
         bot.id,
         bot.token_pair.try(:name).to_s[0...18],
         bot.strategy.id,
         bot.base_token_amount.round(6).to_s,
         bot.quote_token_amount.round(6).to_s,
-        bot.initial_buy_amount.round(4).to_s,
+        bot.initial_buy_amount,
         bot.trades.where(trade_type: "sell").count,
         #bot.created_at.strftime('%Y-%m-%d %H:%M')
         "#{time_ago_in_words(bot.created_at) } ago"
