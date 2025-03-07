@@ -24,12 +24,21 @@ class TokenPriceService
         fee_tier: result["feeTier"],
         pool_address_updated_at: Time.current
       )
+
+      pool_data = EthersService.get_pool_data(token_pair.reload, provider_url)
+      token_pair.update!(max_base_amount_in: pool_data["maxAmountIn"].to_d)
     else
       # Otherwise, use the cached pool info to get an updated price
-      new_price = EthersService.get_token_price_from_pool(token_pair, provider_url)
+      #new_price = EthersService.get_token_price_from_pool(token_pair, provider_url)
+      #token_pair.update!(
+      #  current_price: new_price.to_d,
+      #  price_updated_at: Time.current
+      #)
+      pool_data = EthersService.get_pool_data(token_pair, provider_url)
       token_pair.update!(
-        current_price: new_price.to_d,
-        price_updated_at: Time.current
+        current_price: pool_data["price"].to_d,
+        price_updated_at: Time.current,
+        max_base_amount_in: pool_data["maxAmountIn"].to_d
       )
     end
   end
