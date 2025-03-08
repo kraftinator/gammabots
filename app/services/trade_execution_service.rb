@@ -14,7 +14,7 @@ class TradeExecutionService
       provider_url
     )
     
-    if result["swapped"]
+    if result["success"]
       puts "Swapped!"
       trade = Trade.create!(
         bot: bot,
@@ -51,7 +51,7 @@ class TradeExecutionService
       provider_url
     )
 
-    if result["swapped"]
+    if result["success"]
       puts "Swapped!"
 
       trade = Trade.create!(
