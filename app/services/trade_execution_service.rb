@@ -41,7 +41,7 @@ class TradeExecutionService
     
     result = EthersService.sell_with_min_amount(
       bot.user.wallet_for_chain(bot.chain).private_key,
-      base_token_amount,  # Amount to sell
+      base_token_amount * 0.9999999999,  # Amount to sell
       bot.token_pair.base_token.contract_address,  # Token being sold
       bot.token_pair.quote_token.contract_address, # Token being received
       bot.token_pair.base_token.decimals,
