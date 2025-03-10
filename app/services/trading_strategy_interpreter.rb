@@ -28,13 +28,14 @@ class TradingStrategyInterpreter
   end
 
   # Processes each action in the actions array.
-  # For a sell action, it calculates the min_amount_out based on the condition,
-  # except when the sell action is "sell all" (liquidation) where we set it to 0.
-  # It also only deactivates the bot if a swap occurred.
   def execute_actions(rule, actions)
     swap_executed = false
     actions.each do |action_str|
       case action_str
+      when /\Abuy init\z/i
+        # For "buy init", execute initial buy
+        result = TradeExecutionService.buy(@variables[:bot], @variables[:bot].min_amount_out_for_initial_buy, @variables[:provider_url])
+        swap_executed = true if result.present?
       when /\Asell\s+(.*)\z/i
         amount_expr = Regexp.last_match(1).strip
         sell_amount = parse_amount(amount_expr)
@@ -79,8 +80,6 @@ class TradingStrategyInterpreter
   end
 
   # Extracts the threshold multiplier and base key from the condition string.
-  # It first looks for an "ibp*" clause and, if found, returns that multiplier using ibp as base.
-  # Otherwise, it checks for a "hip*" clause.
   def extract_threshold_info(condition_str)
     if condition_str =~ /\bibp\*(\d*\.?\d+)/
       { multiplier: $1.to_f, base: :ibp }
@@ -88,25 +87,17 @@ class TradingStrategyInterpreter
       { multiplier: $1.to_f, base: :lsp }
     elsif condition_str =~ /\bhip\*(\d*\.?\d+)/
       { multiplier: $1.to_f, base: :hip }
+    elsif condition_str =~ /\blps\*(\d*\.?\d+)/
+      { multiplier: $1.to_f, base: :lps }
     else
       nil
     end
   end
-  
-  #def extract_threshold_info(condition_str)
-  #  if condition_str =~ /\bibp\*(\d*\.?\d+)/
-  #    { multiplier: $1.to_f, base: :ibp }
-  #  elsif condition_str =~ /\bhip\*(\d*\.?\d+)/
-  #    { multiplier: $1.to_f, base: :hip }
-  #  else
-  #    nil
-  #  end
-  #end
 
   # Constructs a binding with only the strategy variables.
   def binding_from_variables
     b = binding
-    allowed_keys = [:cpr, :ibp, :scn, :bta, :hip, :hlt, :lip, :llt, :lta, :lsp, :crt]
+    allowed_keys = [:cpr, :ibp, :scn, :bcn, :bta, :hip, :hlt, :lip, :llt, :lta, :lsp, :lps, :crt]
     @variables.each do |key, value|
       b.local_variable_set(key.to_sym, value) if allowed_keys.include?(key.to_sym)
     end

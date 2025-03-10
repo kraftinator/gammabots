@@ -6,27 +6,34 @@ class TradingStrategy
   end
 
   def process
-    if @bot.initial_buy_made?
-      @bot.update_prices(@current_price)
-      @bot.reload
-      strategy_interpreter = TradingStrategyInterpreter.new(@bot.strategy_json, @bot.strategy_variables)
-      strategy_interpreter.execute
-    else
-      perform_initial_buy
-    end
+    @bot.update_prices(@current_price)      
+    @bot.reload
+    strategy_interpreter = TradingStrategyInterpreter.new(@bot.strategy_json, @bot.strategy_variables)
+    strategy_interpreter.execute
   end
 
-  private
+  #def process
+  #  if @bot.initial_buy_made?
+  #    @bot.update_prices(@current_price)
+  #    @bot.reload
+  #    strategy_interpreter = TradingStrategyInterpreter.new(@bot.strategy_json, @bot.strategy_variables)
+  #    strategy_interpreter.execute
+  #  else
+  #    perform_initial_buy
+  #  end
+  #end
 
-  def has_recovered_investment?
-    @bot.quote_token_amount >= @bot.initial_buy_amount
-  end  
+  #private
 
-  def perform_initial_buy
-    TradeExecutionService.buy(
-      @bot, 
-      @bot.min_amount_out_for_initial_buy, 
-      @provider_url
-    )
-  end
+  #def has_recovered_investment?
+  #  @bot.quote_token_amount >= @bot.initial_buy_amount
+  #end  
+
+  #def perform_initial_buy
+  #  TradeExecutionService.buy(
+  #    @bot, 
+  #    @bot.min_amount_out_for_initial_buy, 
+  #    @provider_url
+  #  )
+  #end
 end

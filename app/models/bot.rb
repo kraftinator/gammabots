@@ -25,7 +25,9 @@ class Bot < ApplicationRecord
   end  
 
   def initial_buy_made?
-    initial_buy_amount > 0
+    #initial_buy_amount > 0
+    #trades.where(trade_type: "buy").count > 0
+    initial_buy_amount > 0 && trades.where(trade_type: "buy").count > 0
   end
 
   def process_trade(trade)
@@ -45,12 +47,17 @@ class Bot < ApplicationRecord
   end
 
   def update_prices(current_price)
-    update!(
-      highest_price_since_initial_buy: [highest_price_since_initial_buy, current_price].compact.max,
-      lowest_price_since_initial_buy: [lowest_price_since_initial_buy, current_price].compact.min,
-      highest_price_since_last_trade: [highest_price_since_last_trade, current_price].compact.max,
-      lowest_price_since_last_trade: [lowest_price_since_last_trade, current_price].compact.min
-    )
+    if initial_buy_made?
+      update!(
+        lowest_price_since_creation: [lowest_price_since_creation, current_price].compact.min,
+        highest_price_since_initial_buy: [highest_price_since_initial_buy, current_price].compact.max,
+        lowest_price_since_initial_buy: [lowest_price_since_initial_buy, current_price].compact.min,
+        highest_price_since_last_trade: [highest_price_since_last_trade, current_price].compact.max,
+        lowest_price_since_last_trade: [lowest_price_since_last_trade, current_price].compact.min
+      )
+    else
+      update!(lowest_price_since_creation: [lowest_price_since_creation, current_price].compact.min)
+    end
   end
 
   def provider_url
@@ -61,8 +68,10 @@ class Bot < ApplicationRecord
     {
       cpr: token_pair.latest_price,
       ibp: initial_buy_price,
+      bcn: trades.where(trade_type: "buy").count,
       scn: trades.where(trade_type: "sell").count,
       bta: base_token_amount,
+      lps: lowest_price_since_creation,
       hip: highest_price_since_initial_buy,
       hlt: highest_price_since_last_trade,
       lip: lowest_price_since_initial_buy,
