@@ -146,6 +146,7 @@ namespace :bots do
     puts "lowest_price_since_initial_buy:  #{bot.lowest_price_since_initial_buy.nil? ? '---' : "#{bot.lowest_price_since_initial_buy} #{symbol}"}"
     puts "highest_price_since_last_trade:  #{bot.highest_price_since_last_trade.nil? ? '---' : "#{bot.highest_price_since_last_trade} #{symbol}"}"
     puts "lowest_price_since_last_trade:   #{bot.lowest_price_since_last_trade.nil? ? '---' : "#{bot.lowest_price_since_last_trade} #{symbol}"}"
+    puts "last_sell_price:                 #{bot.last_sell_price.nil? ? '---' : "#{bot.last_sell_price} #{symbol}"}"
     puts "lowest_price_since_creation:     #{bot.lowest_price_since_creation.nil? ? '---' : "#{bot.lowest_price_since_creation} #{symbol}"}"
     puts "\nTRADES"
     puts "---------"
