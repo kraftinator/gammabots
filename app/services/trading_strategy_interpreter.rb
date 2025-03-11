@@ -4,6 +4,20 @@ class TradingStrategyInterpreter
     @rules = JSON.parse(strategy_json)
     # @variables is a hash mapping fixed three-letter keys to their current values.
     @variables = variables
+    
+    # Ensure lta is properly converted to minutes since last trade
+    if @variables[:lta].is_a?(Time) || @variables[:lta].is_a?(ActiveSupport::TimeWithZone)
+      @variables[:lta] = ((Time.now - @variables[:lta]) / 60).to_i
+    elsif @variables[:lta].nil?
+      @variables[:lta] = Float::INFINITY
+    end
+    
+    # Also ensure crt is converted to minutes
+    if @variables[:crt].is_a?(Time) || @variables[:crt].is_a?(ActiveSupport::TimeWithZone)
+      @variables[:crt] = ((Time.now - @variables[:crt]) / 60).to_i
+    elsif @variables[:crt].nil?
+      @variables[:crt] = Float::INFINITY
+    end
   end
 
   def execute

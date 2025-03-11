@@ -5,6 +5,11 @@ RSpec.describe TradingStrategyInterpreter do
   let(:token_pair) { instance_double("TokenPair", latest_price: 1.0) }
   let(:trades) { instance_double("ActiveRecord::Relation", where: []) }
   
+  # Time references for testing
+  let(:current_time) { Time.now }
+  let(:one_hour_ago) { current_time - 1.hour }
+  let(:one_day_ago) { current_time - 1.day }
+  
   # Common variables that will be modified in each test case
   let(:base_variables) do
     {
@@ -19,9 +24,9 @@ RSpec.describe TradingStrategyInterpreter do
       lip: 1.0,                         # Lowest Price Since Initial Buy
       llt: 1.0,                         # Lowest Price Since Last Trade
       lps: 1.0,                         # Lowest Price Since Creation (New)
-      lta: Time.now,                    # Last Traded At
+      lta: current_time,                # Last Traded At (will be converted to minutes)
       lsp: 1.0,                         # Last Sell Price
-      crt: Time.now,                    # Created At
+      crt: current_time,                # Created At (will be converted to minutes)
       provider_url: "https://example.com/api"
     }
   end
@@ -31,6 +36,8 @@ RSpec.describe TradingStrategyInterpreter do
     allow(TradeExecutionService).to receive(:sell).and_return(true)
     allow(TradeExecutionService).to receive(:buy).and_return(true)
     allow(Rails.logger).to receive(:error)
+    # Freeze time for testing
+    allow(Time).to receive(:now).and_return(current_time)
   end
 
   describe 'Initial Buy Strategy' do
@@ -82,6 +89,52 @@ RSpec.describe TradingStrategyInterpreter do
         variables = base_variables.merge(bcn: 0, cpr: 1.05, lps: 1.0)
         
         expect(TradeExecutionService).not_to receive(:buy)
+        
+        interpreter = described_class.new(strategy_json, variables)
+        interpreter.execute
+      end
+    end
+  end
+
+  describe 'Time-based Strategy' do
+    let(:strategy_json) { '[{"c":"true","a":["sell bta*0.1"]}]' }
+
+    context 'when the condition is true' do
+      it 'executes a sell' do
+        variables = base_variables.merge(bcn: 1)
+        
+        # With the "sell bta*0.1" action, we expect the TradeExecutionService to receive a sell call
+        expect(TradeExecutionService).to receive(:sell).with(
+          bot, 0.1, 0, "https://example.com/api"
+        ).and_return(true)
+        
+        interpreter = described_class.new(strategy_json, variables)
+        interpreter.execute
+      end
+    end
+
+    context 'when less than 60 minutes have passed since last trade' do
+      it 'does not execute a buy' do
+        variables = base_variables.merge(bcn: 1, lta: current_time - 30.minutes)
+        
+        expect(TradeExecutionService).not_to receive(:buy)
+        
+        interpreter = described_class.new(strategy_json, variables)
+        interpreter.execute
+      end
+    end
+  end
+
+  describe 'Created-At Time-based Strategy' do
+    context 'with a buy init strategy' do
+      let(:strategy_json) { '[{"c":"bcn==0","a":["buy init"]}]' }
+      
+      it 'executes initial buy' do
+        variables = base_variables.merge(bcn: 0)
+        
+        expect(TradeExecutionService).to receive(:buy).with(
+          bot, 0.95, "https://example.com/api"
+        ).and_return(true)
         
         interpreter = described_class.new(strategy_json, variables)
         interpreter.execute
@@ -328,6 +381,65 @@ RSpec.describe TradingStrategyInterpreter do
     end
   end
 
+  describe 'Time variables conversion' do
+    let(:strategy_json) { '[]' }
+    
+    it 'converts lta to minutes since last trade' do
+      # Set last_traded_at to 65 minutes ago
+      one_hour_plus_ago = current_time - 65.minutes
+      variables = base_variables.merge(lta: one_hour_plus_ago)
+      
+      # Mock Time.now to ensure consistent results
+      allow(Time).to receive(:now).and_return(current_time)
+      
+      interpreter = described_class.new(strategy_json, variables)
+      # Access the instance variable containing the processed variables
+      processed_vars = interpreter.instance_variable_get(:@variables)
+      
+      # Calculate expected minutes - should be around 65
+      expected_minutes = ((current_time - one_hour_plus_ago) / 60).to_i
+      
+      # Check that lta is now a number of minutes (approximately 65)
+      expect(processed_vars[:lta]).to be_within(1).of(expected_minutes)
+    end
+    
+    it 'converts crt to minutes since creation' do
+      # Set created_at to 2 days ago
+      two_days_ago = current_time - 2.days
+      variables = base_variables.merge(crt: two_days_ago)
+      
+      # Mock Time.now to ensure consistent results
+      allow(Time).to receive(:now).and_return(current_time)
+      
+      interpreter = described_class.new(strategy_json, variables)
+      processed_vars = interpreter.instance_variable_get(:@variables)
+      
+      # Calculate expected minutes
+      expected_minutes = ((current_time - two_days_ago) / 60).to_i
+      
+      # Check that crt matches our calculated minutes
+      expect(processed_vars[:crt]).to be_within(1).of(expected_minutes)
+    end
+    
+    it 'sets lta to Infinity when nil' do
+      variables = base_variables.merge(lta: nil)
+      
+      interpreter = described_class.new(strategy_json, variables)
+      processed_vars = interpreter.instance_variable_get(:@variables)
+      
+      expect(processed_vars[:lta]).to eq(Float::INFINITY)
+    end
+    
+    it 'sets crt to Infinity when nil' do
+      variables = base_variables.merge(crt: nil)
+      
+      interpreter = described_class.new(strategy_json, variables)
+      processed_vars = interpreter.instance_variable_get(:@variables)
+      
+      expect(processed_vars[:crt]).to eq(Float::INFINITY)
+    end
+  end
+
   describe 'error handling' do
     let(:strategy_json) { '[{"c":"invalid_condition","a":["sell bta*0.25"]}]' }
     
@@ -430,6 +542,22 @@ RSpec.describe TradingStrategyInterpreter do
       expect {
         binding.local_variable_get(:provider_url)
       }.to raise_error(NameError)
+    end
+    
+    it 'includes time-based variables in binding' do
+      variables = base_variables.merge(
+        lta: current_time - 120.minutes,
+        crt: current_time - 24.hours
+      )
+      
+      interpreter = described_class.new(strategy_json, variables)
+      binding = interpreter.send(:binding_from_variables)
+      
+      # Check that lta is available in binding and converted to minutes
+      expect(binding.local_variable_get(:lta)).to be_within(1).of(120)
+      
+      # Check that crt is available in binding and converted to minutes
+      expect(binding.local_variable_get(:crt)).to be_within(1).of(24 * 60)
     end
   end
 end
