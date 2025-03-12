@@ -11,6 +11,13 @@ class TradingStrategyInterpreter
     elsif @variables[:lta].nil?
       @variables[:lta] = Float::INFINITY
     end
+
+    # Ensure lba is properly converted to minutes since last trade
+    if @variables[:lba].is_a?(Time) || @variables[:lba].is_a?(ActiveSupport::TimeWithZone)
+      @variables[:lba] = ((Time.now - @variables[:lba]) / 60).to_i
+    elsif @variables[:lba].nil?
+      @variables[:lba] = Float::INFINITY
+    end
     
     # Also ensure crt is converted to minutes
     if @variables[:crt].is_a?(Time) || @variables[:crt].is_a?(ActiveSupport::TimeWithZone)
@@ -111,7 +118,7 @@ class TradingStrategyInterpreter
   # Constructs a binding with only the strategy variables.
   def binding_from_variables
     b = binding
-    allowed_keys = [:cpr, :ibp, :scn, :bcn, :bta, :hip, :hlt, :lip, :llt, :lta, :lsp, :lps, :crt]
+    allowed_keys = [:cpr, :ibp, :scn, :bcn, :bta, :hip, :hlt, :lip, :llt, :lta, :lba, :lsp, :lps, :crt]
     @variables.each do |key, value|
       b.local_variable_set(key.to_sym, value) if allowed_keys.include?(key.to_sym)
     end

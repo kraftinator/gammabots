@@ -25,6 +25,7 @@ RSpec.describe TradingStrategyInterpreter do
       llt: 1.0,                         # Lowest Price Since Last Trade
       lps: 1.0,                         # Lowest Price Since Creation (New)
       lta: current_time,                # Last Traded At (will be converted to minutes)
+      lba: current_time,                # Last Buy At (will be converted to minutes)
       lsp: 1.0,                         # Last Sell Price
       crt: current_time,                # Created At (will be converted to minutes)
       provider_url: "https://example.com/api"
@@ -116,6 +117,17 @@ RSpec.describe TradingStrategyInterpreter do
     context 'when less than 60 minutes have passed since last trade' do
       it 'does not execute a buy' do
         variables = base_variables.merge(bcn: 1, lta: current_time - 30.minutes)
+        
+        expect(TradeExecutionService).not_to receive(:buy)
+        
+        interpreter = described_class.new(strategy_json, variables)
+        interpreter.execute
+      end
+    end
+
+    context 'when less than 60 minutes have passed since last buy' do
+      it 'does not execute a buy' do
+        variables = base_variables.merge(bcn: 1, lba: current_time - 30.minutes)
         
         expect(TradeExecutionService).not_to receive(:buy)
         
@@ -402,6 +414,25 @@ RSpec.describe TradingStrategyInterpreter do
       # Check that lta is now a number of minutes (approximately 65)
       expect(processed_vars[:lta]).to be_within(1).of(expected_minutes)
     end
+
+    it 'converts lba to minutes since last trade' do
+      # Set last_traded_at to 65 minutes ago
+      one_hour_plus_ago = current_time - 65.minutes
+      variables = base_variables.merge(lba: one_hour_plus_ago)
+      
+      # Mock Time.now to ensure consistent results
+      allow(Time).to receive(:now).and_return(current_time)
+      
+      interpreter = described_class.new(strategy_json, variables)
+      # Access the instance variable containing the processed variables
+      processed_vars = interpreter.instance_variable_get(:@variables)
+      
+      # Calculate expected minutes - should be around 65
+      expected_minutes = ((current_time - one_hour_plus_ago) / 60).to_i
+      
+      # Check that lba is now a number of minutes (approximately 65)
+      expect(processed_vars[:lba]).to be_within(1).of(expected_minutes)
+    end
     
     it 'converts crt to minutes since creation' do
       # Set created_at to 2 days ago
@@ -428,6 +459,15 @@ RSpec.describe TradingStrategyInterpreter do
       processed_vars = interpreter.instance_variable_get(:@variables)
       
       expect(processed_vars[:lta]).to eq(Float::INFINITY)
+    end
+
+    it 'sets lba to Infinity when nil' do
+      variables = base_variables.merge(lba: nil)
+      
+      interpreter = described_class.new(strategy_json, variables)
+      processed_vars = interpreter.instance_variable_get(:@variables)
+      
+      expect(processed_vars[:lba]).to eq(Float::INFINITY)
     end
     
     it 'sets crt to Infinity when nil' do
@@ -547,6 +587,7 @@ RSpec.describe TradingStrategyInterpreter do
     it 'includes time-based variables in binding' do
       variables = base_variables.merge(
         lta: current_time - 120.minutes,
+        lba: current_time - 120.minutes,
         crt: current_time - 24.hours
       )
       
@@ -555,7 +596,10 @@ RSpec.describe TradingStrategyInterpreter do
       
       # Check that lta is available in binding and converted to minutes
       expect(binding.local_variable_get(:lta)).to be_within(1).of(120)
-      
+
+      # Check that lba is available in binding and converted to minutes
+      expect(binding.local_variable_get(:lba)).to be_within(1).of(120)
+
       # Check that crt is available in binding and converted to minutes
       expect(binding.local_variable_get(:crt)).to be_within(1).of(24 * 60)
     end

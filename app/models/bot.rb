@@ -22,7 +22,11 @@ class Bot < ApplicationRecord
 
   def last_sell_price
     trades.where(trade_type: "sell").order(created_at: :desc).first&.price
-  end  
+  end
+
+  def last_buy_at
+    trades.where(trade_type: "buy").order(created_at: :desc).first&.created_at
+  end
 
   def initial_buy_made?
     #initial_buy_amount > 0
@@ -77,6 +81,7 @@ class Bot < ApplicationRecord
       lip: lowest_price_since_initial_buy,
       llt: lowest_price_since_last_trade,
       lta: last_traded_at,
+      lba: last_buy_at,
       lsp: last_sell_price,
       crt: created_at,
       bot: self,
