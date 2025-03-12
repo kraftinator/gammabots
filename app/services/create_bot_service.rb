@@ -53,6 +53,7 @@ class CreateBotService
       user: user,
       token_pair: token_pair,
       quote_token_amount: amount,
+      created_at_price: token_pair.latest_price,
       lowest_price_since_creation: token_pair.latest_price
     )
 
