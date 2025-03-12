@@ -176,6 +176,23 @@ namespace :bots do
     end
   end
 
+  desc "Deactivate"
+  # Usage:
+  # rake bots:deactivate["2"]
+  task :deactivate, [:bot_id] => :environment do |t, args|
+    if args[:bot_id].nil?
+      raise ArgumentError, "Missing parameters!"
+    end
+
+    bot = Bot.find(args[:bot_id])
+    unless bot
+      raise ArgumentError, "Invalid bot!"
+    end
+
+    bot.update!(active: false)
+    puts "Deactivated!"
+  end
+
   desc "List active bots"
   # Usage:
   # rake bots:list
@@ -185,6 +202,30 @@ namespace :bots do
     puts "-" * 110  # Increased width to match all columns
     
     Bot.active.order(created_at: :asc).each do |bot|
+      puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
+        bot.id,
+        bot.token_pair.try(:name).to_s[0...18],
+        bot.strategy.id,
+        bot.base_token_amount.round(6).to_s,
+        bot.quote_token_amount.round(6).to_s,
+        bot.initial_buy_amount,
+        bot.trades.where(trade_type: "sell").count,
+        #bot.created_at.strftime('%Y-%m-%d %H:%M')
+        "#{time_ago_in_words(bot.created_at) } ago"
+      ]
+    end
+  end
+
+  desc "List retired bots"
+  # Usage:
+  # rake bots:list_retired
+  task :list_retired => :environment do
+    bots = Bot.inactive.order(created_at: :asc).select { |bot| bot.trades.where(trade_type: "sell").any? }
+    puts "\n== Retired Bots (#{bots.size}) =="
+    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token Pair", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
+    puts "-" * 110  # Increased width to match all columns
+    
+    bots.each do |bot|
       puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
         bot.id,
         bot.token_pair.try(:name).to_s[0...18],
