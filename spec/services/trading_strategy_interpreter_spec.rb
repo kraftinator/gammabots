@@ -104,7 +104,8 @@ RSpec.describe TradingStrategyInterpreter do
       it 'executes a sell' do
         variables = base_variables.merge(bcn: 1)
         
-        # With the "sell bta*0.1" action, we expect the TradeExecutionService to receive a sell call
+        # Since the condition doesn't have a recognized threshold pattern,
+        # the implementation will use 0 as min_amount_out
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 0.1, 0, "https://example.com/api"
         ).and_return(true)
@@ -187,8 +188,8 @@ RSpec.describe TradingStrategyInterpreter do
       it 'sells 25% of base token amount' do
         variables = base_variables.merge(cpr: 1.21, ibp: 1.0, scn: 0, bcn: 1)
         
-        # Calculate expected min_amount_out based on the condition: cpr>=ibp*1.2
-        expected_min_amount_out = 0.25 * 1.0 * 1.2
+        # Using the new calculation method: min_amount_out = sell_amount * cpr * 0.95
+        expected_min_amount_out = 0.25 * 1.21 * 0.95
         
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 0.25, expected_min_amount_out, "https://example.com/api"
@@ -204,8 +205,8 @@ RSpec.describe TradingStrategyInterpreter do
       it 'sells 25% of base token amount' do
         variables = base_variables.merge(cpr: 1.51, ibp: 1.0, scn: 1, bcn: 1)
         
-        # Calculate expected min_amount_out based on the condition: cpr>=ibp*1.5
-        expected_min_amount_out = 0.25 * 1.0 * 1.5
+        # Using the new calculation method: min_amount_out = sell_amount * cpr * 0.95
+        expected_min_amount_out = 0.25 * 1.51 * 0.95
         
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 0.25, expected_min_amount_out, "https://example.com/api"
@@ -264,11 +265,11 @@ RSpec.describe TradingStrategyInterpreter do
       it 'sells 50% of base token amount' do
         variables = base_variables.merge(cpr: 1.8, ibp: 1.0, hip: 2.0, scn: 0, bcn: 1)
         
-        # The extract_threshold_info will pick up hip*0.90 and use hip as the base
-        # So min_amount_out = 0.5 * 2.0 * 0.9 = 0.9, but it seems the implementation
-        # is providing 0.5 * 2.0 = 1.0
+        # Using the new calculation method: min_amount_out = sell_amount * cpr * 0.95
+        expected_min_amount_out = 0.5 * 1.8 * 0.95
+        
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.5, 1.0, "https://example.com/api"
+          bot, 0.5, expected_min_amount_out, "https://example.com/api"
         )
         
         interpreter = described_class.new(strategy_json, variables)
@@ -280,8 +281,8 @@ RSpec.describe TradingStrategyInterpreter do
       it 'sells 25% of base token amount' do
         variables = base_variables.merge(cpr: 1.8, hlt: 2.0, scn: 1, bcn: 1)
         
-        # The implementation doesn't pick up hlt*0.90 in extract_threshold_info
-        # So min_amount_out is 0
+        # Since the extract_threshold_info method doesn't recognize hlt*0.90 pattern,
+        # the min_amount_out will be 0
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 0.25, 0, "https://example.com/api"
         )
@@ -325,10 +326,11 @@ RSpec.describe TradingStrategyInterpreter do
       it 'sells 50% of base token amount' do
         variables = base_variables.merge(cpr: 1.8, ibp: 1.0, hip: 2.0, scn: 0, bcn: 1)
         
-        # The extract_threshold_info will pick up hip*0.90 and use hip as the base
-        # So we expect min_amount_out = 0.5 * 2.0 = 1.0
+        # Using the new calculation method: min_amount_out = sell_amount * cpr * 0.95
+        expected_min_amount_out = 0.5 * 1.8 * 0.95
+        
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.5, 1.0, "https://example.com/api"
+          bot, 0.5, expected_min_amount_out, "https://example.com/api"
         )
         
         interpreter = described_class.new(strategy_json, variables)
@@ -340,8 +342,8 @@ RSpec.describe TradingStrategyInterpreter do
       it 'sells 25% of base token amount' do
         variables = base_variables.merge(cpr: 1.8, hlt: 2.0, scn: 1, bcn: 1)
         
-        # The implementation doesn't pick up hlt*0.90 in extract_threshold_info
-        # So min_amount_out is 0
+        # Since the extract_threshold_info method doesn't recognize hlt*0.90 pattern,
+        # the min_amount_out will be 0
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 0.25, 0, "https://example.com/api"
         )
@@ -355,10 +357,11 @@ RSpec.describe TradingStrategyInterpreter do
       it 'sells 25% of base token amount' do
         variables = base_variables.merge(cpr: 1.5, lsp: 1.0, hlt: 1.7, scn: 2, bcn: 1)
         
-        # The extract_threshold_info will pick up lsp*1.5 and use lsp as the base
-        # So min_amount_out = 0.25 * 1.0 * 1.5 = 0.375
+        # Using the new calculation method: min_amount_out = sell_amount * cpr * 0.95
+        expected_min_amount_out = 0.25 * 1.5 * 0.95
+        
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.25, 0.375, "https://example.com/api"
+          bot, 0.25, expected_min_amount_out, "https://example.com/api"
         )
         
         interpreter = described_class.new(strategy_json, variables)

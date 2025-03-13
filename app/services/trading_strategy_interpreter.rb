@@ -89,6 +89,11 @@ class TradingStrategyInterpreter
         end
         result = TradeExecutionService.sell(@variables[:bot], sell_amount, min_amount_out, @variables[:provider_url])
         swap_executed = true if result.present?
+      when /\Adeact\s+force\z/i
+        # Force deactivation regardless of swap status
+        puts "Force deactivating bot"
+        @variables[:bot].update!(active: false)
+        puts "Bot force deactivated"
       when /\Adeact\z/i
         if swap_executed
           puts "Deactivating bot"
