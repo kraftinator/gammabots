@@ -66,23 +66,23 @@ class TradingStrategyInterpreter
         else
           threshold_info = extract_threshold_info(rule['c'])
           if threshold_info
-            base_value = @variables[threshold_info[:base]]
-            target_price = base_value * threshold_info[:multiplier]
-            min_amount_out = sell_amount * target_price
+            #base_value = @variables[threshold_info[:base]]
+            #target_price = base_value * threshold_info[:multiplier]
+            #min_amount_out = sell_amount * target_price
 
             # Use current price instead of the threshold's base value
-            #base_value = @variables[:cpr]            
-            #safety_factor = 0.95
-            #min_amount_out = sell_amount * base_value * safety_factor
+            base_value = @variables[:cpr]            
+            safety_factor = 0.95
+            min_amount_out = sell_amount * base_value * safety_factor
             
             puts "***** Threshold Info *****"
             puts "action_str: #{action_str}"
-            puts "base_value: #{base_value.to_s}"
-            puts "multiplier: #{threshold_info[:multiplier].to_s}"
-            puts "sell_amount: #{sell_amount.to_s}"
-            puts "target_price: #{target_price.to_s}"
+            #puts "base_value: #{base_value.to_s}"
+            #puts "multiplier: #{threshold_info[:multiplier].to_s}"
+            #puts "sell_amount: #{sell_amount.to_s}"
+            #puts "target_price: #{target_price.to_s}"
             puts "min_amount_out: #{min_amount_out.to_s}"
-            puts "new min_amount_out: #{sell_amount * @variables[:cpr]  * 0.95}"
+            #puts "new min_amount_out: #{sell_amount * @variables[:cpr]  * 0.95}"
           else
             min_amount_out = 0
           end
