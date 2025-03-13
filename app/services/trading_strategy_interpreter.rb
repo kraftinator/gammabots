@@ -69,6 +69,13 @@ class TradingStrategyInterpreter
             base_value = @variables[threshold_info[:base]]
             target_price = base_value * threshold_info[:multiplier]
             min_amount_out = sell_amount * target_price
+            puts "***** Threshold Info *****"
+            puts "action_str: #{action_str}"
+            puts "base_value: #{base_value.to_s}"
+            puts "multiplier: #{threshold_info[:multiplier].to_s}"
+            puts "sell_amount: #{sell_amount.to_s}"
+            puts "target_price: #{target_price.to_s}"
+            puts "min_amount_out: #{min_amount_out.to_s}"
           else
             min_amount_out = 0
           end
