@@ -19,6 +19,11 @@ class TokenPriceService
       result = EthersService.get_token_price(token_pair, provider_url)
       new_price = result["price"].to_d
       previous_price = token_pair.current_price.nil? ? new_price : token_pair.current_price
+
+      puts "Updating price for #{token_pair.name} from EthersService.get_token_price"
+      puts "new_price: #{new_price.to_s}"
+      puts "previous_price: #{previous_price.to_s}"
+
       token_pair.update!(
         current_price: new_price,
         previous_price: previous_price,
@@ -34,6 +39,11 @@ class TokenPriceService
       # Otherwise, use the cached pool info to get an updated price
       new_price = EthersService.get_token_price_from_pool(token_pair, provider_url)
       previous_price = token_pair.current_price
+
+      puts "Updating price for #{token_pair.name} from EthersService.get_token_price_from_pool"
+      puts "new_price: #{new_price.to_s}"
+      puts "previous_price: #{previous_price.to_s}"
+
       token_pair.update!(
         current_price: new_price.to_d,
         previous_price: previous_price,
