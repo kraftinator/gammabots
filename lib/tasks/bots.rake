@@ -200,13 +200,14 @@ namespace :bots do
   # rake bots:list
   task :list => :environment do
     puts "\n== Active Bots (#{Bot.active.count}) =="
-    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token Pair", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
+    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
     puts "-" * 110  # Increased width to match all columns
     
     Bot.active.order(created_at: :asc).each do |bot|
       puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
         bot.id,
-        bot.token_pair.try(:name).to_s[0...18],
+        #bot.token_pair.try(:name).to_s[0...18],
+        bot.token_pair.base_token.symbol[0...18],
         bot.strategy.id,
         bot.base_token_amount.round(6).to_s,
         bot.quote_token_amount.round(6).to_s,
@@ -224,13 +225,14 @@ namespace :bots do
   task :list_retired => :environment do
     bots = Bot.inactive.order(created_at: :asc).select { |bot| bot.trades.where(trade_type: "sell").any? }
     puts "\n== Retired Bots (#{bots.size}) =="
-    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token Pair", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
+    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
     puts "-" * 110  # Increased width to match all columns
     
     bots.each do |bot|
       puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
         bot.id,
-        bot.token_pair.try(:name).to_s[0...18],
+        #bot.token_pair.try(:name).to_s[0...18],
+        bot.token_pair.base_token.symbol[0...18],
         bot.strategy.id,
         bot.base_token_amount.round(6).to_s,
         bot.quote_token_amount.round(6).to_s,
