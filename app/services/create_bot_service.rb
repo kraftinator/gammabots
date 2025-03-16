@@ -5,16 +5,16 @@ class CreateBotService
   #     user_id: 1,
   #     token_contract_address: "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed",
   #     initial_amount: "0.0005",
-  #     strategy_id: 4,
+  #     strategy_token_id: 4,
   #     chain_name: "base_mainnet"
   #   )
-  def self.call(user_id:, token_contract_address:, initial_amount:, strategy_id:, chain_name:)
+  def self.call(user_id:, token_contract_address:, initial_amount:, strategy_token_id:, chain_name:)
     # Get Chain
     chain = Chain.find_by(name: chain_name)
     raise ArgumentError, "Invalid chain" unless chain
 
     # Get Strategy
-    strategy = Strategy.find_by(id: strategy_id)
+    strategy = Strategy.find_by(nft_token_id: strategy_token_id)
     raise ArgumentError, "Invalid strategy" unless strategy
 
     # Get User

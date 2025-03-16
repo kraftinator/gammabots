@@ -74,8 +74,8 @@ namespace :bots do
   desc "Create bot from service"
   # Usage:
   # rake bots:create_from_service["1","0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed","0.0005","4","base_mainnet"]
-  task :create_from_service, [:user_id, :token_contract_address, :initial_amount, :strategy_id, :chain_name] => :environment do |t, args|
-    if args[:user_id].nil? || args[:token_contract_address].nil? || args[:initial_amount].nil? || args[:strategy_id].nil? || args[:chain_name].nil?
+  task :create_from_service, [:user_id, :token_contract_address, :initial_amount, :strategy_token_id, :chain_name] => :environment do |t, args|
+    if args[:user_id].nil? || args[:token_contract_address].nil? || args[:initial_amount].nil? || args[:strategy_token_id].nil? || args[:chain_name].nil?
       raise ArgumentError, "Missing parameters!"
     end
 
@@ -83,7 +83,7 @@ namespace :bots do
       user_id: args[:user_id],
       token_contract_address: args[:token_contract_address],
       initial_amount: args[:initial_amount],
-      strategy_id: args[:strategy_id],
+      strategy_token_id: args[:strategy_token_id],
       chain_name: args[:chain_name]
     )
 
@@ -132,7 +132,7 @@ namespace :bots do
     puts "chain:       #{bot.chain.name}"
     puts "active:      #{bot.active}"
     puts "token_pair:  #{bot.token_pair.name}"
-    puts "strategy:    #{bot.strategy.id.to_s}"
+    puts "strategy:    #{bot.strategy.nft_token_id.to_s}"
     puts "initial_buy: #{bot.initial_buy_amount} #{symbol}"
     puts "\nHOLDINGS"
     puts "---------"
@@ -208,7 +208,7 @@ namespace :bots do
         bot.id,
         #bot.token_pair.try(:name).to_s[0...18],
         bot.token_pair.base_token.symbol[0...18],
-        bot.strategy.id,
+        bot.strategy.nft_token_id,
         bot.base_token_amount.round(6).to_s,
         bot.quote_token_amount.round(6).to_s,
         bot.initial_buy_amount,
@@ -233,7 +233,7 @@ namespace :bots do
         bot.id,
         #bot.token_pair.try(:name).to_s[0...18],
         bot.token_pair.base_token.symbol[0...18],
-        bot.strategy.id,
+        bot.strategy.nft_token_id,
         bot.base_token_amount.round(6).to_s,
         bot.quote_token_amount.round(6).to_s,
         bot.initial_buy_amount,
