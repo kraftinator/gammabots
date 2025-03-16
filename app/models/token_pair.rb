@@ -3,6 +3,7 @@ class TokenPair < ApplicationRecord
   belongs_to :base_token, class_name: "Token"
   belongs_to :quote_token, class_name: "Token"
   has_many :bots, dependent: :destroy
+  has_many :token_pair_prices, dependent: :destroy
 
   validates :base_token, presence: true
   validates :quote_token, presence: true

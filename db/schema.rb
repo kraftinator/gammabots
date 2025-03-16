@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_03_12_195203) do
+ActiveRecord::Schema[7.2].define(version: 2025_03_16_181506) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -60,6 +60,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_03_12_195203) do
     t.index ["chain_id"], name: "index_strategies_on_chain_id"
     t.index ["contract_address", "nft_token_id"], name: "index_strategies_on_contract_address_and_nft_token_id", unique: true
     t.index ["strategy_json"], name: "index_strategies_on_strategy_json", unique: true
+  end
+
+  create_table "token_pair_prices", force: :cascade do |t|
+    t.bigint "token_pair_id", null: false
+    t.decimal "price", precision: 30, scale: 18, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token_pair_id", "created_at"], name: "index_token_pair_prices_on_token_pair_id_and_created_at"
+    t.index ["token_pair_id"], name: "index_token_pair_prices_on_token_pair_id"
   end
 
   create_table "token_pairs", force: :cascade do |t|
@@ -140,6 +149,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_03_12_195203) do
   add_foreign_key "bots", "token_pairs"
   add_foreign_key "bots", "users"
   add_foreign_key "strategies", "chains"
+  add_foreign_key "token_pair_prices", "token_pairs"
   add_foreign_key "token_pairs", "chains"
   add_foreign_key "token_pairs", "tokens", column: "base_token_id"
   add_foreign_key "token_pairs", "tokens", column: "quote_token_id"

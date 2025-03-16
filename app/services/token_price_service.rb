@@ -33,6 +33,9 @@ class TokenPriceService
         pool_address_updated_at: Time.current
       )
 
+      
+      token_pair.token_pair_prices.create!(price: new_price)
+
       #pool_data = EthersService.get_pool_data(token_pair.reload, provider_url)
       #token_pair.update!(max_base_amount_in: pool_data["maxAmountIn"].to_d)
     else
@@ -49,6 +52,8 @@ class TokenPriceService
         previous_price: previous_price,
         price_updated_at: Time.current
       )
+
+      token_pair.token_pair_prices.create!(price: new_price.to_d)
       #pool_data = EthersService.get_pool_data(token_pair, provider_url)
       #token_pair.update!(
       #  current_price: pool_data["price"].to_d,
