@@ -29,7 +29,8 @@ class TokenPair < ApplicationRecord
   private
 
   def price_stale?
-    price_updated_at.nil? || price_updated_at < 1.minute.ago
+    #price_updated_at.nil? || price_updated_at < 1.minute.ago
+    price_updated_at.nil? || price_updated_at < 30.seconds.ago
   end
 
   def update_price
