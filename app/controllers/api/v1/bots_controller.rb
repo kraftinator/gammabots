@@ -1,9 +1,6 @@
 module Api
   module V1
-    class BotsController < ApplicationController
-      # Skip CSRF protection for API endpoints
-      skip_before_action :verify_authenticity_token
-      
+    class BotsController < Api::BaseController      
       def index
         @bots = Bot.active.all
         #render json: @bots
