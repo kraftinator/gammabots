@@ -137,4 +137,8 @@ class EthersService
   def self.get_transaction_receipt(tx_hash, decimals, provider_url)
     call_function('getTransactionReceipt', tx_hash, decimals, provider_url)
   end
+
+  def self.get_wallet_address(private_key, provider_url)
+    call_function('getWalletAddress', private_key, provider_url)
+  end
 end
