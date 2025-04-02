@@ -141,4 +141,8 @@ class EthersService
   def self.get_wallet_address(private_key, provider_url)
     call_function('getWalletAddress', private_key, provider_url)
   end
+
+  def self.generate_wallet
+    call_function('generateWallet')
+  end
 end

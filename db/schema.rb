@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_03_16_181506) do
+ActiveRecord::Schema[7.2].define(version: 2025_04_02_153931) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -130,6 +130,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_03_16_181506) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "created_by_signature"
+    t.string "created_by_wallet"
     t.index ["farcaster_id"], name: "index_users_on_farcaster_id", unique: true
   end
 
@@ -139,6 +141,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_03_16_181506) do
     t.string "private_key", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "address"
+    t.index ["address"], name: "index_wallets_on_address", unique: true
     t.index ["chain_id"], name: "index_wallets_on_chain_id"
     t.index ["user_id", "chain_id"], name: "index_wallets_on_user_id_and_chain_id", unique: true
     t.index ["user_id"], name: "index_wallets_on_user_id"

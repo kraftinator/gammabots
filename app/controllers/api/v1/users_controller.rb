@@ -8,23 +8,28 @@ module Api
       end
 
       def create
-        #user.wallet_for_chain(bot.chain).private_key
         chain = Chain.find_by(name: "base_mainnet")
         user = User.find_or_initialize_by(farcaster_id: params[:fid])
         
         if user.new_record?
-          #user.wallet_address = params[:address]
-          #user.signature = params[:signature]
-          render json: { wallet_address: "fake_address1" }, status: :ok
-          
-          #if user.save
-          #  render json: { wallet_address: user.wallet_address }, status: :created
-          #else
-          #  render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
-          #end
+          user.created_by_signature = params[:signature]
+          user.created_by_wallet = params[:address]
+                    
+          if user.save
+            random_wallet = EthersService.generate_wallet
+
+            user.wallets.create(
+              chain: chain,
+              private_key: random_wallet["privateKey"],
+              address: random_wallet["address"]
+            )
+
+            render json: { wallet_address: user.wallet_for_chain(chain).address }, status: :created
+          else
+            render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+          end
         else
-          #render json: { wallet_address: 'user.wallet_address' }, status: :ok
-          render json: { wallet_address: user.wallet_for_chain(chain).wallet_address }, status: :ok
+          render json: { wallet_address: user.wallet_for_chain(chain).address }, status: :ok
         end
       end
 
