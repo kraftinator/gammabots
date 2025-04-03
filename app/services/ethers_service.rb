@@ -145,4 +145,12 @@ class EthersService
   def self.generate_wallet
     call_function('generateWallet')
   end
+
+  def self.convert_ETH_to_WETH(private_key, provider_url, amount, eth_reserve_percentage = 1)
+    call_function('convertETHToWETH', private_key, provider_url, amount, eth_reserve_percentage)
+  end
+
+  def self.convert_WETH_to_ETH(private_key, provider_url, amount)
+    call_function('convertWETHToETH', private_key, provider_url, amount)
+  end
 end
