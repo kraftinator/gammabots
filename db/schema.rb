@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_02_153931) do
+ActiveRecord::Schema[7.2].define(version: 2025_04_03_201636) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -33,6 +33,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_02_153931) do
     t.bigint "strategy_id"
     t.decimal "lowest_price_since_creation", precision: 30, scale: 18
     t.decimal "created_at_price", precision: 30, scale: 18
+    t.decimal "lowest_moving_avg_since_creation", precision: 30, scale: 18
+    t.decimal "highest_moving_avg_since_initial_buy", precision: 30, scale: 18
+    t.decimal "lowest_moving_avg_since_initial_buy", precision: 30, scale: 18
+    t.decimal "highest_moving_avg_since_last_trade", precision: 30, scale: 18
+    t.decimal "lowest_moving_avg_since_last_trade", precision: 30, scale: 18
     t.index ["chain_id"], name: "index_bots_on_chain_id"
     t.index ["last_traded_at"], name: "index_bots_on_last_traded_at"
     t.index ["strategy_id"], name: "index_bots_on_strategy_id"

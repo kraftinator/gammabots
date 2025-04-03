@@ -50,17 +50,26 @@ class Bot < ApplicationRecord
     trade
   end
 
-  def update_prices(current_price)
+  def update_prices(current_price, current_moving_avg)
     if initial_buy_made?
       update!(
         lowest_price_since_creation: [lowest_price_since_creation, current_price].compact.min,
         highest_price_since_initial_buy: [highest_price_since_initial_buy, current_price].compact.max,
         lowest_price_since_initial_buy: [lowest_price_since_initial_buy, current_price].compact.min,
         highest_price_since_last_trade: [highest_price_since_last_trade, current_price].compact.max,
-        lowest_price_since_last_trade: [lowest_price_since_last_trade, current_price].compact.min
+        lowest_price_since_last_trade: [lowest_price_since_last_trade, current_price].compact.min,
+      
+        lowest_moving_avg_since_creation: [lowest_moving_avg_since_creation, current_moving_avg].compact.min,
+        highest_moving_avg_since_initial_buy: [highest_moving_avg_since_initial_buy, current_moving_avg].compact.max,
+        lowest_moving_avg_since_initial_buy: [lowest_moving_avg_since_initial_buy, current_moving_avg].compact.min,
+        highest_moving_avg_since_last_trade: [highest_moving_avg_since_last_trade, current_moving_avg].compact.max,
+        lowest_moving_avg_since_last_trade: [lowest_moving_avg_since_last_trade, current_moving_avg].compact.min
       )
     else
-      update!(lowest_price_since_creation: [lowest_price_since_creation, current_price].compact.min)
+      update!(
+        lowest_price_since_creation: [lowest_price_since_creation, current_price].compact.min,
+        lowest_moving_avg_since_creation: [lowest_moving_avg_since_creation, current_moving_avg].compact.min
+      )
     end
   end
 

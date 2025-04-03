@@ -26,6 +26,21 @@ class TokenPair < ApplicationRecord
     current_price
   end
 
+  def moving_average(minutes = 5)
+    # Get prices recorded within the specified time window
+    start_time = minutes.minutes.ago
+    recent_prices = token_pair_prices.where('created_at >= ?', start_time).order(created_at: :desc)
+    
+    # Return nil if no prices are available in the time window
+    return nil if recent_prices.empty? || recent_prices.count < 2
+    
+    # Calculate the average of the available price values
+    total = recent_prices.sum(&:price)
+    average = total / recent_prices.count
+    
+    return average
+  end
+
   private
 
   def price_stale?

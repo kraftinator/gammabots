@@ -2,11 +2,12 @@ class TradingStrategy
   def initialize(bot, provider_url)
     @bot = bot
     @current_price = bot.token_pair.latest_price
+    @moving_average = bot.token_pair.moving_average
     @provider_url = provider_url
   end
 
   def process
-    @bot.update_prices(@current_price)      
+    @bot.update_prices(@current_price, @moving_average)      
     @bot.reload
     strategy_interpreter = TradingStrategyInterpreter.new(@bot.strategy_json, @bot.strategy_variables)
     strategy_interpreter.execute
