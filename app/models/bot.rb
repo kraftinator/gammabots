@@ -115,10 +115,17 @@ class Bot < ApplicationRecord
       quote_token_amount: 0,
       base_token_amount: trade.amount_out,
       initial_buy_price: trade_price,
+      # prices
       highest_price_since_initial_buy: trade_price,
       lowest_price_since_initial_buy: trade_price,
       highest_price_since_last_trade: trade_price,
       lowest_price_since_last_trade: trade_price,
+      # moving averages
+      highest_moving_avg_since_initial_buy: trade_price,
+      lowest_moving_avg_since_initial_buy: trade_price,
+      highest_moving_avg_since_last_trade: trade_price,
+      lowest_moving_avg_since_last_trade: trade_price,
+
       last_traded_at: trade.created_at
     )
   end
@@ -133,6 +140,9 @@ class Bot < ApplicationRecord
       quote_token_amount: quote_token_amount + trade.amount_out,
       highest_price_since_last_trade: trade.price,
       lowest_price_since_last_trade: trade.price,
+      highest_moving_avg_since_last_trade: trade.price,
+      lowest_moving_avg_since_last_trade: trade.price,
+
       last_traded_at: trade.created_at
     )
   end
