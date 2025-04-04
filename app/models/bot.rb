@@ -84,11 +84,20 @@ class Bot < ApplicationRecord
       bcn: trades.where(trade_type: "buy").count,
       scn: trades.where(trade_type: "sell").count,
       bta: base_token_amount,
+      # prices
       lps: lowest_price_since_creation,
       hip: highest_price_since_initial_buy,
       hlt: highest_price_since_last_trade,
       lip: lowest_price_since_initial_buy,
       llt: lowest_price_since_last_trade,
+      # moving averages
+      cma: token_pair.moving_average,
+      lmc: lowest_moving_avg_since_creation,
+      hma: highest_moving_avg_since_initial_buy,
+      lma: lowest_moving_avg_since_initial_buy,
+      hmt: highest_moving_avg_since_last_trade,
+      lmt: lowest_moving_avg_since_last_trade,
+
       lta: last_traded_at,
       lba: last_buy_at,
       lsp: last_sell_price,

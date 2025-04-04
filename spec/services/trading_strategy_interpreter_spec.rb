@@ -107,7 +107,7 @@ RSpec.describe TradingStrategyInterpreter do
         # Since the condition doesn't have a recognized threshold pattern,
         # the implementation will use 0 as min_amount_out
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.1, 0, "https://example.com/api"
+          bot, 0.1, 0.095, "https://example.com/api"
         ).and_return(true)
         
         interpreter = described_class.new(strategy_json, variables)
@@ -284,7 +284,7 @@ RSpec.describe TradingStrategyInterpreter do
         # Since the extract_threshold_info method doesn't recognize hlt*0.90 pattern,
         # the min_amount_out will be 0
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.25, 0, "https://example.com/api"
+          bot, 0.25, 0.4275, "https://example.com/api"
         )
         
         interpreter = described_class.new(strategy_json, variables)
@@ -345,7 +345,7 @@ RSpec.describe TradingStrategyInterpreter do
         # Since the extract_threshold_info method doesn't recognize hlt*0.90 pattern,
         # the min_amount_out will be 0
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.25, 0, "https://example.com/api"
+          bot, 0.25, 0.4275, "https://example.com/api"
         )
         
         interpreter = described_class.new(strategy_json, variables)

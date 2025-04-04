@@ -64,6 +64,11 @@ class TradingStrategyInterpreter
           # For liquidation events ("sell all"), we ignore slippage and set min_amount_out to 0.
           min_amount_out = 0
         else
+            base_value = @variables[:cpr]            
+            safety_factor = 0.95
+            min_amount_out = sell_amount * base_value * safety_factor
+
+=begin
           threshold_info = extract_threshold_info(rule['c'])
           if threshold_info
             #base_value = @variables[threshold_info[:base]]
@@ -86,6 +91,8 @@ class TradingStrategyInterpreter
           else
             min_amount_out = 0
           end
+=end
+
         end
         result = TradeExecutionService.sell(@variables[:bot], sell_amount, min_amount_out, @variables[:provider_url])
         swap_executed = true if result.present?
@@ -137,7 +144,7 @@ class TradingStrategyInterpreter
   # Constructs a binding with only the strategy variables.
   def binding_from_variables
     b = binding
-    allowed_keys = [:cpr, :ibp, :scn, :bcn, :bta, :hip, :hlt, :lip, :llt, :lta, :lba, :lsp, :lps, :crt]
+    allowed_keys = [:cpr, :ibp, :scn, :bcn, :bta, :hip, :hlt, :lip, :llt, :lta, :lba, :lsp, :lps, :crt, :cma, :lmc, :hma, :lma, :hmt, :lmt]
     @variables.each do |key, value|
       b.local_variable_set(key.to_sym, value) if allowed_keys.include?(key.to_sym)
     end
