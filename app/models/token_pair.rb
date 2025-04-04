@@ -32,7 +32,7 @@ class TokenPair < ApplicationRecord
     recent_prices = token_pair_prices.where('created_at >= ?', start_time).order(created_at: :desc)
     
     # Return nil if no prices are available in the time window
-    return nil if recent_prices.empty? || recent_prices.count < 2
+    return nil if recent_prices.empty? # || recent_prices.count < 2
     
     # Calculate the average of the available price values
     total = recent_prices.sum(&:price)
