@@ -8,7 +8,7 @@ class CreateBotService
   #     strategy_token_id: 4,
   #     chain_name: "base_mainnet"
   #   )
-  def self.call(user_id:, token_contract_address:, initial_amount:, strategy_token_id:, chain_name:)
+  def self.call(user_id:, token_contract_address:, initial_amount:, strategy_token_id:, moving_avg_minutes:, chain_name:)
     # Get Chain
     chain = Chain.find_by(name: chain_name)
     raise ArgumentError, "Invalid chain" unless chain
@@ -50,6 +50,7 @@ class CreateBotService
     bot = Bot.create!(
       chain: chain,
       strategy: strategy,
+      moving_avg_minutes: moving_avg_minutes,
       user: user,
       token_pair: token_pair,
       quote_token_amount: amount,
