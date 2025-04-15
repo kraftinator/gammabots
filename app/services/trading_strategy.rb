@@ -2,7 +2,7 @@ class TradingStrategy
   def initialize(bot, provider_url)
     @bot = bot
     @current_price = bot.token_pair.latest_price
-    @moving_average = bot.token_pair.moving_average(bot.moving_average_minutes)
+    @moving_average = bot.token_pair.moving_average(bot.moving_avg_minutes)
     @provider_url = provider_url
   end
 
