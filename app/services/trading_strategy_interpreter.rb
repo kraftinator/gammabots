@@ -43,7 +43,7 @@ class TradingStrategyInterpreter
   def evaluate_condition(condition_str)
     eval(condition_str, binding_from_variables)
   rescue Exception => e
-    Rails.logger.error "Error evaluating condition '#{condition_str}': #{e.message}"
+    Rails.logger.error "Bot #{@variables[:bot].id}: Error evaluating condition '#{condition_str}': #{e.message}"
     false
   end
 
