@@ -77,11 +77,19 @@ class EthersService
   end
 
   def self.buy_with_min_amount(private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
+    puts "Calling buyWithMinAmount with params: " \
+                    "quote_token_amount=#{quote_token_amount}, " \
+                    "quote_token=#{quote_token}, " \
+                    "base_token=#{base_token}, " \
+                    "quote_token_decimals=#{quote_token_decimals}, " \
+                    "base_token_decimals=#{base_token_decimals}, " \
+                    "fee_tier=#{fee_tier}, " \
+                    "min_amount_out=#{min_amount_out}"
     call_function('buyWithMinAmount', private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
   end
 
   def self.get_token_price_from_pool(token_pair, provider_url)
-    puts "Calling getPriceFromPool"
+    puts "Calling getPriceFromPool for #{token_pair.base_token.symbol}"
     call_function(
       'getPriceFromPool', 
       token_pair.base_token.contract_address, 
@@ -94,7 +102,7 @@ class EthersService
   end
 
   def self.get_max_amount_in(token_pair, provider_url)
-    puts "Calling getMaxAmountIn"
+    puts "Calling getMaxAmountIn for #{token_pair.base_token.symbol}"
     call_function(
       'getMaxAmountIn',
       token_pair.latest_price,
@@ -106,7 +114,7 @@ class EthersService
   end
 
   def self.get_pool_data(token_pair, provider_url)
-    puts "Calling getPoolData"
+    puts "Calling getPoolData for #{token_pair.base_token.symbol}"
     call_function(
       'getPoolData',
       token_pair.base_token.contract_address,
@@ -119,7 +127,7 @@ class EthersService
   end
 
   def self.get_token_price(token_pair, provider_url)
-    puts "Calling getTokenPrice"
+    puts "Calling getTokenPrice for #{token_pair.base_token.symbol}"
     call_function(
       'getTokenPrice', 
       token_pair.base_token.contract_address, 

@@ -28,7 +28,6 @@ class TradingStrategyInterpreter
   end
 
   def execute
-    puts "***** Calling TradingStrategyInterpreter"
     @rules.each do |rule|
       if evaluate_condition(rule['c'])
         execute_actions(rule, rule['a'])
@@ -98,7 +97,7 @@ class TradingStrategyInterpreter
         swap_executed = true if result.present?
       when /\Adeact\s+force\z/i
         # Force deactivation regardless of swap status
-        puts "Force deactivating bot"
+        puts "Force deactivating bot: #{@variables[:bot].id}"
         @variables[:bot].update!(active: false)
         puts "Bot force deactivated"
       when /\Adeact\z/i
