@@ -142,8 +142,20 @@ class EthersService
     call_function('getTokenPrice', token_0, token_0_decimals, token_1, token_1_decimals, provider_url)
   end
 
-  def self.get_transaction_receipt(tx_hash, decimals, provider_url)
-    call_function('getTransactionReceipt', tx_hash, decimals, provider_url)
+  #def self.get_transaction_receipt(tx_hash, decimals, provider_url)
+  #  call_function('getTransactionReceipt', tx_hash, decimals, provider_url)
+  #end
+
+  # getSwapAmounts(txHash, poolAddress, decimals0, decimals1, providerUrl)
+  def self.get_transaction_receipt(tx_hash, token_pair, provider_url)
+    call_function(
+      'getSwapAmounts', 
+      tx_hash,
+      token_pair.pool_address,
+      token_pair.base_token.decimals,
+      token_pair.quote_token.decimals,
+      provider_url
+    )
   end
 
   def self.get_wallet_address(private_key, provider_url)

@@ -12,8 +12,7 @@ class TradeConfirmationService
   private
 
   def self.confirm_buy_trade(trade, provider_url)
-    decimals = trade.bot.token_pair.base_token.decimals
-    transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, decimals, provider_url)
+    transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash,  trade.bot.token_pair, provider_url)
     return unless transaction_receipt
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
@@ -30,8 +29,7 @@ class TradeConfirmationService
   end
 
   def self.confirm_sell_trade(trade, provider_url)
-    decimals = trade.bot.token_pair.quote_token.decimals
-    transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, decimals, provider_url)
+    transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, trade.bot.token_pair, provider_url)
     return unless transaction_receipt
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
