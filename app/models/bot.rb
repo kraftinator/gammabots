@@ -91,8 +91,8 @@ class Bot < ApplicationRecord
       lip: lowest_price_since_initial_buy,
       llt: lowest_price_since_last_trade,
       # moving averages
-      cma: token_pair.moving_average(moving_avg_minutes),
-      lma: token_pair.moving_average(moving_avg_minutes*2),
+      cma: token_pair.moving_average(moving_avg_minutes) || Float::NAN,
+      lma: token_pair.moving_average(moving_avg_minutes*2) || Float::NAN,
       lmc: lowest_moving_avg_since_creation,
       hma: highest_moving_avg_since_initial_buy,
       lmi: lowest_moving_avg_since_initial_buy,

@@ -66,32 +66,6 @@ class TradingStrategyInterpreter
             base_value = @variables[:cpr]            
             safety_factor = 0.95
             min_amount_out = sell_amount * base_value * safety_factor
-
-=begin
-          threshold_info = extract_threshold_info(rule['c'])
-          if threshold_info
-            #base_value = @variables[threshold_info[:base]]
-            #target_price = base_value * threshold_info[:multiplier]
-            #min_amount_out = sell_amount * target_price
-
-            # Use current price instead of the threshold's base value
-            base_value = @variables[:cpr]            
-            safety_factor = 0.95
-            min_amount_out = sell_amount * base_value * safety_factor
-            
-            puts "***** Threshold Info *****"
-            puts "action_str: #{action_str}"
-            #puts "base_value: #{base_value.to_s}"
-            #puts "multiplier: #{threshold_info[:multiplier].to_s}"
-            #puts "sell_amount: #{sell_amount.to_s}"
-            #puts "target_price: #{target_price.to_s}"
-            puts "min_amount_out: #{min_amount_out.to_s}"
-            #puts "new min_amount_out: #{sell_amount * @variables[:cpr]  * 0.95}"
-          else
-            min_amount_out = 0
-          end
-=end
-
         end
         result = TradeExecutionService.sell(@variables[:bot], sell_amount, min_amount_out, @variables[:provider_url])
         swap_executed = true if result.present?
@@ -123,21 +97,6 @@ class TradingStrategyInterpreter
   rescue Exception => e
     Rails.logger.error "Error parsing amount expression '#{expression}': #{e.message}"
     0
-  end
-
-  # Extracts the threshold multiplier and base key from the condition string.
-  def extract_threshold_info(condition_str)
-    if condition_str =~ /\bibp\*(\d*\.?\d+)/
-      { multiplier: $1.to_f, base: :ibp }
-    elsif condition_str =~ /\blsp\*(\d*\.?\d+)/
-      { multiplier: $1.to_f, base: :lsp }
-    elsif condition_str =~ /\bhip\*(\d*\.?\d+)/
-      { multiplier: $1.to_f, base: :hip }
-    elsif condition_str =~ /\blps\*(\d*\.?\d+)/
-      { multiplier: $1.to_f, base: :lps }
-    else
-      nil
-    end
   end
 
   # Constructs a binding with only the strategy variables.

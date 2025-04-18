@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe TradingStrategyInterpreter do
-  let(:bot) { instance_double("Bot", update!: true, base_token_amount: 1.0, min_amount_out_for_initial_buy: 0.95) }
+  let(:bot) { instance_double("Bot", update!: true, id: 1, base_token_amount: 1.0, min_amount_out_for_initial_buy: 0.95) }
   let(:token_pair) { instance_double("TokenPair", latest_price: 1.0) }
   let(:trades) { instance_double("ActiveRecord::Relation", where: []) }
   
@@ -281,8 +281,6 @@ RSpec.describe TradingStrategyInterpreter do
       it 'sells 25% of base token amount' do
         variables = base_variables.merge(cpr: 1.8, hlt: 2.0, scn: 1, bcn: 1)
         
-        # Since the extract_threshold_info method doesn't recognize hlt*0.90 pattern,
-        # the min_amount_out will be 0
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 0.25, 0.4275, "https://example.com/api"
         )
@@ -342,8 +340,6 @@ RSpec.describe TradingStrategyInterpreter do
       it 'sells 25% of base token amount' do
         variables = base_variables.merge(cpr: 1.8, hlt: 2.0, scn: 1, bcn: 1)
         
-        # Since the extract_threshold_info method doesn't recognize hlt*0.90 pattern,
-        # the min_amount_out will be 0
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 0.25, 0.4275, "https://example.com/api"
         )
@@ -525,41 +521,6 @@ RSpec.describe TradingStrategyInterpreter do
         interpreter = described_class.new(strategy_json, base_variables)
         interpreter.execute
       end
-    end
-  end
-
-  describe '#extract_threshold_info' do
-    let(:strategy_json) { '[]' }
-    let(:interpreter) { described_class.new(strategy_json, base_variables) }
-    
-    it 'extracts ibp multiplier correctly' do
-      condition = "cpr<=ibp*0.75"
-      result = interpreter.send(:extract_threshold_info, condition)
-      expect(result).to eq({ multiplier: 0.75, base: :ibp })
-    end
-    
-    it 'extracts lsp multiplier correctly' do
-      condition = "cpr>=lsp*1.5"
-      result = interpreter.send(:extract_threshold_info, condition)
-      expect(result).to eq({ multiplier: 1.5, base: :lsp })
-    end
-    
-    it 'extracts hip multiplier correctly' do
-      condition = "cpr<=hip*0.9"
-      result = interpreter.send(:extract_threshold_info, condition)
-      expect(result).to eq({ multiplier: 0.9, base: :hip })
-    end
-    
-    it 'extracts lps multiplier correctly' do
-      condition = "cpr>=lps*1.10"
-      result = interpreter.send(:extract_threshold_info, condition)
-      expect(result).to eq({ multiplier: 1.10, base: :lps })
-    end
-    
-    it 'returns nil when no supported multiplier is found' do
-      condition = "cpr<=hlt*0.9"
-      result = interpreter.send(:extract_threshold_info, condition)
-      expect(result).to be_nil
     end
   end
 
