@@ -1,5 +1,6 @@
 class Trade < ApplicationRecord
   belongs_to :bot
+  after_create :schedule_confirmation
 
   validates :trade_type, presence: true, inclusion: { in: %w[buy sell] }
   validates :status, presence: true, inclusion: { in: %w[pending completed failed] }
@@ -33,5 +34,11 @@ class Trade < ApplicationRecord
 
   def total_value
     amount_out * price
+  end
+
+  private
+
+  def schedule_confirmation
+    ConfirmTradeJob.perform_later(self.id)
   end
 end

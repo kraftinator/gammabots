@@ -17,6 +17,8 @@ class TradeExecutionService
       min_amount_out,
       provider_url
     )
+
+    puts "**********RESULT HASH FOR #{bot.id}: #{result.inspect}"
     
     if result["success"]
       puts "Swap (buy) successful! Transaction Hash: #{result["txHash"]}"
@@ -29,7 +31,7 @@ class TradeExecutionService
       )
       puts "Trade created: #{trade.id}"
 
-      TradeConfirmationService.confirm_trade(trade, provider_url)
+      #TradeConfirmationService.confirm_trade(trade, provider_url)
     else
       puts "========================================================"
       puts "TradeExecutionService::buy - Swap failed"
@@ -75,7 +77,7 @@ class TradeExecutionService
       )
 
       puts "Trade created: #{trade.id}"
-      TradeConfirmationService.confirm_trade(trade, provider_url)
+      #TradeConfirmationService.confirm_trade(trade, provider_url)
       trade
     else
       puts "========================================================"
