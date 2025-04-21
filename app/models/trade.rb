@@ -1,6 +1,6 @@
 class Trade < ApplicationRecord
   belongs_to :bot
-  after_create :schedule_confirmation
+  after_commit :schedule_confirmation, on: :create
 
   validates :trade_type, presence: true, inclusion: { in: %w[buy sell] }
   validates :status, presence: true, inclusion: { in: %w[pending completed failed] }
