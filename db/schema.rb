@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_15_161907) do
+ActiveRecord::Schema[7.2].define(version: 2025_04_21_155522) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "bot_events", force: :cascade do |t|
+    t.bigint "bot_id", null: false
+    t.string "event_type", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bot_id", "event_type", "created_at"], name: "index_bot_events_on_bot_id_and_event_type_and_created_at"
+    t.index ["bot_id"], name: "index_bot_events_on_bot_id"
+    t.index ["created_at"], name: "index_bot_events_on_created_at"
+  end
 
   create_table "bots", force: :cascade do |t|
     t.bigint "chain_id", null: false
@@ -154,6 +165,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_15_161907) do
     t.index ["user_id"], name: "index_wallets_on_user_id"
   end
 
+  add_foreign_key "bot_events", "bots"
   add_foreign_key "bots", "chains"
   add_foreign_key "bots", "strategies"
   add_foreign_key "bots", "token_pairs"

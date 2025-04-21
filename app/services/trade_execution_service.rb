@@ -17,8 +17,6 @@ class TradeExecutionService
       min_amount_out,
       provider_url
     )
-
-    puts "**********RESULT HASH FOR #{bot.id}: #{result.inspect}"
     
     if result["success"]
       puts "Swap (buy) successful! Transaction Hash: #{result["txHash"]}"
@@ -33,6 +31,21 @@ class TradeExecutionService
 
       #TradeConfirmationService.confirm_trade(trade, provider_url)
     else
+      reason = result.dig("error", "reason")
+      event_type = "trade_failed"
+      BotEvent.create!(
+        bot:        bot,
+        event_type: event_type,
+        payload: {
+          class:           "TradeExecutionService",
+          method:          "buy",
+          reason:           reason,
+          attempted_amount: bot.quote_token_amount,
+          min_amount_out:   min_amount_out,
+          error:            result["error"]
+        }
+      )
+
       puts "========================================================"
       puts "TradeExecutionService::buy - Swap failed"
       puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, min_amount_out: #{min_amount_out.to_s}"
@@ -80,6 +93,21 @@ class TradeExecutionService
       #TradeConfirmationService.confirm_trade(trade, provider_url)
       trade
     else
+      reason = result.dig("error", "reason")
+      event_type = "trade_failed"
+      BotEvent.create!(
+        bot:        bot,
+        event_type: event_type,
+        payload: {
+          class:           "TradeExecutionService",
+          method:          "sell",
+          reason:           reason,
+          attempted_amount: base_token_amount,
+          min_amount_out:   min_amount_out,
+          error:            result["error"]
+        }
+      )
+
       puts "========================================================"
       puts "TradeExecutionService::sell - Swap failed"
       puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, base_token_amount: #{base_token_amount.to_s} min_amount_out: #{min_amount_out.to_s}"
