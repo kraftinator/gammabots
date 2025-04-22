@@ -82,8 +82,8 @@ class Bot < ApplicationRecord
     {
       cpr: token_pair.latest_price,
       ibp: initial_buy_price,
-      bcn: trades.where(trade_type: "buy").count,
-      scn: trades.where(trade_type: "sell").count,
+      bcn: trades.where(trade_type: "buy", status: "completed").count,
+      scn: trades.where(trade_type: "sell", status: "completed").count,
       bta: base_token_amount,
       # prices
       lps: lowest_price_since_creation,
