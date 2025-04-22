@@ -12,7 +12,25 @@ class TradeConfirmationService
   private
 
   def self.confirm_buy_trade(trade, provider_url)
-    transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash,  trade.bot.token_pair, provider_url)
+    begin
+      transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash,  trade.bot.token_pair, provider_url)
+    rescue StandardError => e
+      BotEvent.create!(
+        bot: trade.bot,
+        event_type: 'receipt_failure',
+        payload: {
+          class:       "TradeConfirmationService",
+          method:      "confirm_buy_trade",
+          trade_id:    trade.id,
+          tx_hash:     trade.tx_hash,
+          error_class: e.class.name,
+          message:     e.message
+        }
+      )
+      trade.update!(status: :failed)
+      return
+    end
+
     return unless transaction_receipt
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
@@ -29,7 +47,25 @@ class TradeConfirmationService
   end
 
   def self.confirm_sell_trade(trade, provider_url)
-    transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, trade.bot.token_pair, provider_url)
+    begin
+      transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, trade.bot.token_pair, provider_url)
+    rescue StandardError => e
+      BotEvent.create!(
+        bot: trade.bot,
+        event_type: 'receipt_failure',
+        payload: {
+          class:       "TradeConfirmationService",
+          method:      "confirm_sell_trade",
+          trade_id:    trade.id,
+          tx_hash:     trade.tx_hash,
+          error_class: e.class.name,
+          message:     e.message
+        }
+      )
+      trade.update!(status: :failed)
+      return
+    end
+
     return unless transaction_receipt
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
