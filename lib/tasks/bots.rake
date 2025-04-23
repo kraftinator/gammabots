@@ -230,10 +230,36 @@ namespace :bots do
     end
   end
 
-  desc "List retired bots"
+  desc "List recently retired bots"
   # Usage:
   # rake bots:list_retired
   task :list_retired => :environment do
+    bots = Bot.inactive.where(created_at: 1.week.ago..Time.current).order(created_at: :asc).select { |bot| bot.trades.where(trade_type: "sell").any? }
+    puts "\n== Retired Bots (#{bots.size}) =="
+    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
+    puts "-" * 110  # Increased width to match all columns
+    
+    bots.each do |bot|
+      puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
+        bot.id,
+        #bot.token_pair.try(:name).to_s[0...18],
+        bot.token_pair.base_token.symbol[0...18],
+        #bot.strategy.nft_token_id,
+        "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
+        bot.base_token_amount.round(6).to_s,
+        bot.quote_token_amount.round(6).to_s,
+        bot.initial_buy_amount,
+        bot.trades.where(trade_type: "sell").count,
+        #bot.created_at.strftime('%Y-%m-%d %H:%M')
+        "#{time_ago_in_words(bot.created_at) } ago"
+      ]
+    end
+  end
+
+  desc "List all retired bots"
+  # Usage:
+  # rake bots:list_retired_all
+  task :list_retired_all => :environment do
     bots = Bot.inactive.order(created_at: :asc).select { |bot| bot.trades.where(trade_type: "sell").any? }
     puts "\n== Retired Bots (#{bots.size}) =="
     puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
