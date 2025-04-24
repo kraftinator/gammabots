@@ -162,8 +162,8 @@ namespace :bots do
     puts "lowest_moving_avg_since_last_trade:   #{bot.lowest_moving_avg_since_last_trade.nil? ? '---' : "#{bot.lowest_moving_avg_since_last_trade} #{symbol}"}"
     puts "\nTRADES"
     puts "---------"
-    puts "buys:  #{bot.trades.where(trade_type: "buy").count}"
-    puts "sells: #{bot.trades.where(trade_type: "sell").count}"
+    puts "buys:  #{bot.trades.where(trade_type: "buy", status: "completed").count}"
+    puts "sells: #{bot.trades.where(trade_type: "sell", status: "completed").count}"
     puts ""
   end
 
@@ -223,7 +223,7 @@ namespace :bots do
         bot.base_token_amount.round(6).to_s,
         bot.quote_token_amount.round(6).to_s,
         bot.initial_buy_amount,
-        bot.trades.where(trade_type: "sell").count,
+        bot.trades.where(trade_type: "sell", status: "completed").count,
         #bot.created_at.strftime('%Y-%m-%d %H:%M')
         "#{time_ago_in_words(bot.created_at) } ago"
       ]
@@ -249,7 +249,7 @@ namespace :bots do
         bot.base_token_amount.round(6).to_s,
         bot.quote_token_amount.round(6).to_s,
         bot.initial_buy_amount,
-        bot.trades.where(trade_type: "sell").count,
+        bot.trades.where(trade_type: "sell", status: "completed").count,
         #bot.created_at.strftime('%Y-%m-%d %H:%M')
         "#{time_ago_in_words(bot.created_at) } ago"
       ]
@@ -275,7 +275,7 @@ namespace :bots do
         bot.base_token_amount.round(6).to_s,
         bot.quote_token_amount.round(6).to_s,
         bot.initial_buy_amount,
-        bot.trades.where(trade_type: "sell").count,
+        bot.trades.where(trade_type: "sell", status: "completed").count,
         #bot.created_at.strftime('%Y-%m-%d %H:%M')
         "#{time_ago_in_words(bot.created_at) } ago"
       ]
