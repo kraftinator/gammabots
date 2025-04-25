@@ -173,4 +173,22 @@ class EthersService
   def self.convert_WETH_to_ETH(private_key, provider_url, amount)
     call_function('convertWETHToETH', private_key, provider_url, amount)
   end
+
+  def self.infinite_approve(private_key, token_address, provider_url)
+    call_function(
+      'infiniteApprove',
+      private_key,
+      token_address,
+      provider_url
+    )
+  end
+
+  def self.is_infinite_approval(private_key, token_address, provider_url)
+    call_function(
+      'isInfiniteApproval',
+      private_key,
+      token_address,
+      provider_url
+    )
+  end
 end

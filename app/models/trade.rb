@@ -1,6 +1,6 @@
 class Trade < ApplicationRecord
   belongs_to :bot
-  after_commit :schedule_confirmation, on: :create
+  after_commit :schedule_confirmation, :set_infinite_approval, on: :create
 
   validates :trade_type, presence: true, inclusion: { in: %w[buy sell] }
   validates :status, presence: true, inclusion: { in: %w[pending completed failed] }
@@ -40,5 +40,10 @@ class Trade < ApplicationRecord
 
   def schedule_confirmation
     ConfirmTradeJob.perform_later(self.id)
+  end
+
+  def set_infinite_approval
+    return unless trade_type == "buy"
+    ApprovalJob.perform_later(self.id)
   end
 end
