@@ -63,7 +63,8 @@ class EthersService
     call_function('sell', private_key, base_token_amount, base_token, quote_token, base_token_decimals, fee_tier, provider_url)
   end
 
-  def self.sell_with_min_amount(private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url)
+  def self.sell_with_min_amount(wallet, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url)
+    nonce = allocate_nonce(wallet.address, provider_url)
     puts "Calling sellWithMinAmount with params: " \
                     "base_token_amount=#{base_token_amount}, " \
                     "base_token=#{base_token}, " \
@@ -71,12 +72,14 @@ class EthersService
                     "base_token_decimals=#{base_token_decimals}, " \
                     "quote_token_decimals=#{quote_token_decimals}, " \
                     "fee_tier=#{fee_tier}, " \
-                    "min_amount_out=#{min_amount_out}"
-
-    call_function('sellWithMinAmount', private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url)
+                    "min_amount_out=#{min_amount_out}, " \
+                    "nonce=#{nonce}"
+    
+    call_function('sellWithMinAmount', wallet.private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url, nonce)
   end
 
-  def self.buy_with_min_amount(private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
+  def self.buy_with_min_amount(wallet, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
+    nonce = allocate_nonce(wallet.address, provider_url)
     puts "Calling buyWithMinAmount with params: " \
                     "quote_token_amount=#{quote_token_amount}, " \
                     "quote_token=#{quote_token}, " \
@@ -84,8 +87,10 @@ class EthersService
                     "quote_token_decimals=#{quote_token_decimals}, " \
                     "base_token_decimals=#{base_token_decimals}, " \
                     "fee_tier=#{fee_tier}, " \
-                    "min_amount_out=#{min_amount_out}"
-    call_function('buyWithMinAmount', private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
+                    "min_amount_out=#{min_amount_out}, " \
+                    "nonce=#{nonce}"
+    
+    call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce)
   end
 
   def self.get_token_price_from_pool(token_pair, provider_url)
@@ -174,12 +179,14 @@ class EthersService
     call_function('convertWETHToETH', private_key, provider_url, amount)
   end
 
-  def self.infinite_approve(private_key, token_address, provider_url)
+  def self.infinite_approve(wallet, token_address, provider_url)
+    nonce = allocate_nonce(wallet.address, provider_url)
     call_function(
       'infiniteApprove',
-      private_key,
+      wallet.private_key,
       token_address,
-      provider_url
+      provider_url,
+      nonce
     )
   end
 
@@ -190,5 +197,24 @@ class EthersService
       token_address,
       provider_url
     )
+  end
+
+  def self.get_pending_nonce(address, provider_url)
+    result = call_function('getPendingNonce', address, provider_url)
+    result.to_i
+  end
+
+  def self.delete_nonce(address)
+    key = "nonce:#{address}"
+    $redis.del(key)
+  end
+
+  #private
+
+  def self.allocate_nonce(address, provider_url)
+    key = "nonce:#{address}"
+    $redis.setnx(key, get_pending_nonce(address, provider_url))
+    new_val = $redis.incr(key)
+    return new_val - 1
   end
 end

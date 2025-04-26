@@ -7,7 +7,8 @@ class TradeExecutionService
     puts "========================================================"
 
     result = EthersService.buy_with_min_amount(
-      bot.user.wallet_for_chain(bot.chain).private_key,
+      #bot.user.wallet_for_chain(bot.chain).private_key,
+      bot.user.wallet_for_chain(bot.chain),
       bot.quote_token_amount, # Amount to spend
       bot.token_pair.quote_token.contract_address, # Token used for buying
       bot.token_pair.base_token.contract_address,  # Token being bought
@@ -17,6 +18,8 @@ class TradeExecutionService
       min_amount_out,
       provider_url
     )
+
+    puts "******************** result[:nonce]: #{result["nonce"]}"
     
     if result["success"]
       puts "Swap (buy) successful! Transaction Hash: #{result["txHash"]}"
@@ -67,7 +70,8 @@ class TradeExecutionService
     #puts "Max Amount In: #{max_amount_in} #{bot.token_pair.base_token.symbol}"
     
     result = EthersService.sell_with_min_amount(
-      bot.user.wallet_for_chain(bot.chain).private_key,
+      #bot.user.wallet_for_chain(bot.chain).private_key,
+      bot.user.wallet_for_chain(bot.chain),
       base_token_amount * 0.9999999999,  # Amount to sell
       bot.token_pair.base_token.contract_address,  # Token being sold
       bot.token_pair.quote_token.contract_address, # Token being received
@@ -77,6 +81,8 @@ class TradeExecutionService
       min_amount_out,
       provider_url
     )
+
+    puts "******************** result[:nonce]: #{result["nonce"]}"
 
     if result["success"]
       puts "Swap (sell) successful! Transaction Hash: #{result["txHash"]}"

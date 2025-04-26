@@ -6,10 +6,10 @@ class ApprovalJob < ApplicationJob
     
     token_address = bot.token_pair.base_token.contract_address
     provider_url = bot.provider_url
-    private_key = bot.user.wallet_for_chain(bot.chain).private_key
+    wallet = bot.user.wallet_for_chain(bot.chain)
 
     is_infinite_approval = EthersService.is_infinite_approval(
-      private_key,
+      wallet.private_key,
       token_address,
       provider_url
     )
@@ -18,7 +18,7 @@ class ApprovalJob < ApplicationJob
     return if is_infinite_approval
 
     EthersService.infinite_approve(
-      private_key,
+      wallet,
       token_address,
       provider_url
     )
