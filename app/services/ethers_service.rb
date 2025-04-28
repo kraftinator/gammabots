@@ -34,7 +34,7 @@ class EthersService
     call_function('getTokenDetails', token_address, provider_url) 
   end
 
-  def self.get_quote_with_params(token_in, token_out, fee_tier, amount_in, token_in_decimals, token_out_decimals, provider_url)
+  def self.get_quote(token_in, token_out, fee_tier, amount_in, token_in_decimals, token_out_decimals, provider_url)
     call_function('getQuote', token_in, token_out, fee_tier, amount_in, token_in_decimals, token_out_decimals, provider_url)
   end
 
@@ -64,6 +64,31 @@ class EthersService
   end
 
   def self.sell_with_min_amount(wallet, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url)
+    sim = quote_meets_minimum(
+      base_token,
+      quote_token,
+      fee_tier,
+      base_token_amount,
+      base_token_decimals,
+      quote_token_decimals,
+      min_amount_out,
+      provider_url
+    )
+
+    # abort if JS itself errored
+    unless sim['success']
+      return { success: false, error: sim['error'] }
+    end
+
+    # abort if the quote was too low
+    unless sim['valid']
+      return {
+        success: false,
+        quote:           sim['quoteRaw'],
+        min_amount_out:  sim['minAmountOutRaw']
+      }
+    end
+
     nonce = allocate_nonce(wallet.address, provider_url)
     puts "Calling sellWithMinAmount with params: " \
                     "base_token_amount=#{base_token_amount}, " \
@@ -79,7 +104,33 @@ class EthersService
   end
 
   def self.buy_with_min_amount(wallet, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
+    sim = quote_meets_minimum(
+      quote_token,
+      base_token,
+      fee_tier,
+      quote_token_amount,
+      quote_token_decimals,
+      base_token_decimals,
+      min_amount_out,
+      provider_url
+    )
+
+    # abort if JS itself errored
+    unless sim['success']
+      return { success: false, error: sim['error'] }
+    end
+
+    # abort if the quote was too low
+    unless sim['valid']
+      return {
+        success: false,
+        quote:           sim['quoteRaw'],
+        min_amount_out:  sim['minAmountOutRaw']
+      }
+    end
+
     nonce = allocate_nonce(wallet.address, provider_url)
+
     puts "Calling buyWithMinAmount with params: " \
                     "quote_token_amount=#{quote_token_amount}, " \
                     "quote_token=#{quote_token}, " \
@@ -91,6 +142,10 @@ class EthersService
                     "nonce=#{nonce}"
     
     call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce)
+  end
+
+  def self.quote_meets_minimum(quote_token, base_token, fee_tier, quote_token_amount, quote_token_decimals, base_token_decimals, min_amount_out, provider_url)
+    call_function('quoteMeetsMinimum', quote_token, base_token, fee_tier, quote_token_amount, quote_token_decimals, base_token_decimals, min_amount_out, provider_url)
   end
 
   def self.get_token_price_from_pool(token_pair, provider_url)
