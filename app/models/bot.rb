@@ -35,6 +35,14 @@ class Bot < ApplicationRecord
     initial_buy_amount > 0 && trades.where(trade_type: "buy").count > 0
   end
 
+  def buy_count
+    trades.where(trade_type: "buy", status: "completed").count
+  end
+
+  def sell_count
+    trades.where(trade_type: "sell", status: "completed").count
+  end
+
   def process_trade(trade)
     return unless trade.completed?
     if trade.buy? && !initial_buy_made?

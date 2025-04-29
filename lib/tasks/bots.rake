@@ -221,8 +221,8 @@ namespace :bots do
         #bot.strategy.nft_token_id,
         "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
         bot.base_token_amount.round(6).to_s,
-        bot.quote_token_amount.round(6).to_s,
-        bot.initial_buy_amount,
+        bot.sell_count > 0 ? bot.quote_token_amount.round(6).to_s : 0.0,
+        bot.initial_buy_made? ? bot.initial_buy_amount : bot.quote_token_amount,
         bot.trades.where(trade_type: "sell", status: "completed").count,
         #bot.created_at.strftime('%Y-%m-%d %H:%M')
         "#{time_ago_in_words(bot.created_at) } ago"
@@ -247,8 +247,8 @@ namespace :bots do
         #bot.strategy.nft_token_id,
         "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
         bot.base_token_amount.round(6).to_s,
-        bot.quote_token_amount.round(6).to_s,
-        bot.initial_buy_amount,
+        bot.sell_count > 0 ? bot.quote_token_amount.round(6).to_s : 0.0,
+        bot.initial_buy_made? ? bot.initial_buy_amount : bot.quote_token_amount,
         bot.trades.where(trade_type: "sell", status: "completed").count,
         #bot.created_at.strftime('%Y-%m-%d %H:%M')
         "#{time_ago_in_words(bot.created_at) } ago"
@@ -273,8 +273,8 @@ namespace :bots do
         #bot.strategy.nft_token_id,
         "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
         bot.base_token_amount.round(6).to_s,
-        bot.quote_token_amount.round(6).to_s,
-        bot.initial_buy_amount,
+        bot.sell_count > 0 ? bot.quote_token_amount.round(6).to_s : 0.0,
+        bot.initial_buy_made? ? bot.initial_buy_amount : bot.quote_token_amount,
         bot.trades.where(trade_type: "sell", status: "completed").count,
         #bot.created_at.strftime('%Y-%m-%d %H:%M')
         "#{time_ago_in_words(bot.created_at) } ago"
