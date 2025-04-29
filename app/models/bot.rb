@@ -93,6 +93,7 @@ class Bot < ApplicationRecord
       bcn: trades.where(trade_type: "buy", status: "completed").count,
       scn: trades.where(trade_type: "sell", status: "completed").count,
       bta: base_token_amount,
+      mam: moving_avg_minutes,
       # prices
       lps: lowest_price_since_creation,
       hip: highest_price_since_initial_buy,
