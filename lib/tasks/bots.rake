@@ -145,6 +145,7 @@ namespace :bots do
     puts "--------"
     puts "current_price:                        #{bot.token_pair.current_price.nil? ? '---' : "#{bot.token_pair.current_price} #{symbol}"}"
     puts "current_moving_avg:                   #{bot.token_pair.moving_average(bot.moving_avg_minutes).nil? ? '---' : "#{bot.token_pair.moving_average(bot.moving_avg_minutes)} #{symbol}"}"
+    puts "longterm_moving_avg:                  #{bot.token_pair.moving_average(bot.moving_avg_minutes*2).nil? ? '---' : "#{bot.token_pair.moving_average(bot.moving_avg_minutes*2)} #{symbol}"}"
     puts ""
     puts "initial_buy_price:                    #{bot.initial_buy_price.nil? ? '---' : "#{bot.initial_buy_price} #{symbol}"}"
     puts "created_at_price:                     #{bot.created_at_price.nil? ? '---' : "#{bot.created_at_price} #{symbol}"}"
