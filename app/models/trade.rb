@@ -20,6 +20,10 @@ class Trade < ApplicationRecord
     status == "completed"
   end
 
+  def failed?
+    status == "failed"
+  end
+
   def buy?
     trade_type == "buy"
   end
