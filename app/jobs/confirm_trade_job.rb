@@ -5,10 +5,25 @@ class ConfirmTradeJob < ApplicationJob
 
     provider_url = ProviderUrlService.get_provider_url(trade.bot.chain.name)
     TradeConfirmationService.confirm_trade(trade, provider_url)
+    trade.reload
 
-    # if still pending, re‑enqueue in 30 seconds
-    if trade.reload.pending?
-      ConfirmTradeJob.set(wait: 30.seconds).perform_later(trade.id)
+    case trade.status
+    when "pending"
+      # if still pending, re‑enqueue in 30 seconds
+      self.class.set(wait: 30.seconds).perform_later(trade.id)
+    when "failed"
+      # if failed liquidation, update bot to active
+      handle_failed_sell(trade) if trade.sell?
     end
+  end
+
+  private
+
+  def handle_failed_sell(trade)
+    bot = trade.bot.reload
+    return if bot.active?
+
+    Rails.logger.info "[ConfirmTradeJob] reactivating Bot##{bot.id} after failed sell Trade##{trade.id}"
+    bot.update!(active: true)
   end
 end
