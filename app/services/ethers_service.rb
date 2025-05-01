@@ -75,34 +75,115 @@ class EthersService
       provider_url
     )
 
-    # abort if JS itself errored
-    unless sim['success']
-      return { success: false, error: sim['error'] }
-    end
+    return { success: false, error: sim['error'] } unless sim['success']
+    return { success: false, quote: sim['quoteRaw'], min_amount_out:  sim['minAmountOutRaw'] } unless sim['valid']
 
-    # abort if the quote was too low
-    unless sim['valid']
-      return {
-        success: false,
-        quote:           sim['quoteRaw'],
-        min_amount_out:  sim['minAmountOutRaw']
-      }
-    end
-
-    nonce = allocate_nonce(wallet.address, provider_url)
-    puts "Calling sellWithMinAmount with params: " \
-                    "base_token_amount=#{base_token_amount}, " \
-                    "base_token=#{base_token}, " \
-                    "quote_token=#{quote_token}, " \
-                    "base_token_decimals=#{base_token_decimals}, " \
-                    "quote_token_decimals=#{quote_token_decimals}, " \
-                    "fee_tier=#{fee_tier}, " \
-                    "min_amount_out=#{min_amount_out}, " \
-                    "nonce=#{nonce}"
-    
-    call_function('sellWithMinAmount', wallet.private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url, nonce)
+    tx_response = with_nonce_lock do
+      nonce = current_nonce(wallet.address, provider_url)
+      begin
+        result = call_function('sellWithMinAmount', wallet.private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url, nonce)
+        if result["success"] && result["txHash"].present?
+          increment_nonce(wallet.address)
+        end
+        result
+      rescue StandardError => e
+        { success: false, error: e.message }
+      end
+    end 
   end
 
+  def self.with_nonce_lock(&block)
+    REDLOCK_CLIENT.lock!(
+      "eth_nonce_lock",   # lock key
+      2_000,              # TTL in ms
+      retry_count: 10,    # try ~1s
+      retry_delay: 100    # ms between tries
+    ) { yield }
+  rescue Redlock::LockError
+    raise "Could not acquire nonce lock—please retry later"
+  end
+
+  def self.buy_with_min_amount(wallet, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
+    sim = quote_meets_minimum(
+      quote_token,
+      base_token,
+      fee_tier,
+      quote_token_amount,
+      quote_token_decimals,
+      base_token_decimals,
+      min_amount_out,
+      provider_url
+    )
+
+    return { success: false, error: sim['error'] } unless sim['success']  
+    return { success: false, quote: sim['quoteRaw'], min_amount_out:  sim['minAmountOutRaw'] } unless sim['valid']
+
+    tx_response = with_nonce_lock do
+      nonce = current_nonce(wallet.address, provider_url)
+      begin
+        result = call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce)
+        if result["success"] && result["txHash"].present?
+          increment_nonce(wallet.address)
+        end
+        result
+      rescue StandardError => e
+        { success: false, error: e.message }
+      end
+    end
+  end
+
+  def self.infinite_approve(wallet, token_address, provider_url)
+    tx_response = with_nonce_lock do
+      nonce = current_nonce(wallet.address, provider_url)
+      begin
+        result = call_function('infiniteApprove', wallet.private_key, token_address, provider_url, nonce)
+        if result["success"] && result["txHash"].present?
+          increment_nonce(wallet.address)
+        end
+        result
+      rescue StandardError => e
+        { success: false, error: e.message }
+      end
+    end
+  end
+
+  def self.current_nonce(address, provider_url)
+    key = "nonce:#{address}"
+
+    unless $redis.exists?(key)
+      pending_nonce = get_pending_nonce(address, provider_url)
+      $redis.set(key, pending_nonce)
+    end
+
+    $redis.get(key).to_i
+  end
+
+  def self.get_pending_nonce(address, provider_url)
+    result = call_function('getPendingNonce', address, provider_url)
+    result.to_i
+  end
+
+  def self.increment_nonce(address)
+    key = "nonce:#{address}"
+    $redis.incr(key)
+  end
+
+  def self.decrement_nonce(address)
+    key = "nonce:#{address}"
+    $redis.decr(key)
+  end
+
+  def self.reset_nonce(address)
+    key = "nonce:#{address}"
+    $redis.del(key)
+  end
+
+  def self.get_nonce(address)
+    key = "nonce:#{address}"
+    $redis.get(key)
+  end
+
+=begin
   def self.buy_with_min_amount(wallet, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
     sim = quote_meets_minimum(
       quote_token,
@@ -143,7 +224,7 @@ class EthersService
     
     call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce)
   end
-
+=end
   def self.quote_meets_minimum(quote_token, base_token, fee_tier, quote_token_amount, quote_token_decimals, base_token_decimals, min_amount_out, provider_url)
     call_function('quoteMeetsMinimum', quote_token, base_token, fee_tier, quote_token_amount, quote_token_decimals, base_token_decimals, min_amount_out, provider_url)
   end
@@ -234,17 +315,6 @@ class EthersService
     call_function('convertWETHToETH', private_key, provider_url, amount)
   end
 
-  def self.infinite_approve(wallet, token_address, provider_url)
-    nonce = allocate_nonce(wallet.address, provider_url)
-    call_function(
-      'infiniteApprove',
-      wallet.private_key,
-      token_address,
-      provider_url,
-      nonce
-    )
-  end
-
   def self.is_infinite_approval(private_key, token_address, provider_url)
     call_function(
       'isInfiniteApproval',
@@ -254,17 +324,10 @@ class EthersService
     )
   end
 
-  def self.get_pending_nonce(address, provider_url)
-    result = call_function('getPendingNonce', address, provider_url)
-    result.to_i
-  end
-
   def self.delete_nonce(address)
     key = "nonce:#{address}"
     $redis.del(key)
   end
-
-  #private
 
   def self.allocate_nonce(address, provider_url)
     key = "nonce:#{address}"
