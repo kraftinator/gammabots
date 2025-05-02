@@ -78,10 +78,16 @@ class EthersService
     return { success: false, error: sim['error'] } unless sim['success']
     return { success: false, quote: sim['quoteRaw'], min_amount_out:  sim['minAmountOutRaw'] } unless sim['valid']
 
+    begin
+      fees = get_gas_fees(wallet.chain_id, provider_url)
+    rescue => e
+      return { success: false, error: "gas lookup failed: #{e.message}" }
+    end
+
     tx_response = with_nonce_lock do
       nonce = current_nonce(wallet.address, provider_url)
       begin
-        result = call_function('sellWithMinAmount', wallet.private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url, nonce)
+        result = call_function('sellWithMinAmount', wallet.private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
         if result["success"] && result["txHash"].present?
           increment_nonce(wallet.address)
         end
@@ -117,11 +123,17 @@ class EthersService
 
     return { success: false, error: sim['error'] } unless sim['success']  
     return { success: false, quote: sim['quoteRaw'], min_amount_out:  sim['minAmountOutRaw'] } unless sim['valid']
-
+    
+    begin
+      fees = get_gas_fees(wallet.chain_id, provider_url)
+    rescue => e
+      return { success: false, error: "gas lookup failed: #{e.message}" }
+    end
+    
     tx_response = with_nonce_lock do
-      nonce = current_nonce(wallet.address, provider_url)
       begin
-        result = call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce)
+        nonce = current_nonce(wallet.address, provider_url)
+        result = call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
         if result["success"] && result["txHash"].present?
           increment_nonce(wallet.address)
         end
@@ -133,10 +145,16 @@ class EthersService
   end
 
   def self.infinite_approve(wallet, token_address, provider_url)
+    begin
+      fees = get_gas_fees(wallet.chain_id, provider_url)
+    rescue => e
+      return { success: false, error: "gas lookup failed: #{e.message}" }
+    end
+
     tx_response = with_nonce_lock do
       nonce = current_nonce(wallet.address, provider_url)
       begin
-        result = call_function('infiniteApprove', wallet.private_key, token_address, provider_url, nonce)
+        result = call_function('infiniteApprove', wallet.private_key, token_address, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
         if result["success"] && result["txHash"].present?
           increment_nonce(wallet.address)
         end
@@ -183,48 +201,6 @@ class EthersService
     $redis.get(key)
   end
 
-=begin
-  def self.buy_with_min_amount(wallet, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
-    sim = quote_meets_minimum(
-      quote_token,
-      base_token,
-      fee_tier,
-      quote_token_amount,
-      quote_token_decimals,
-      base_token_decimals,
-      min_amount_out,
-      provider_url
-    )
-
-    # abort if JS itself errored
-    unless sim['success']
-      return { success: false, error: sim['error'] }
-    end
-
-    # abort if the quote was too low
-    unless sim['valid']
-      return {
-        success: false,
-        quote:           sim['quoteRaw'],
-        min_amount_out:  sim['minAmountOutRaw']
-      }
-    end
-
-    nonce = allocate_nonce(wallet.address, provider_url)
-
-    puts "Calling buyWithMinAmount with params: " \
-                    "quote_token_amount=#{quote_token_amount}, " \
-                    "quote_token=#{quote_token}, " \
-                    "base_token=#{base_token}, " \
-                    "quote_token_decimals=#{quote_token_decimals}, " \
-                    "base_token_decimals=#{base_token_decimals}, " \
-                    "fee_tier=#{fee_tier}, " \
-                    "min_amount_out=#{min_amount_out}, " \
-                    "nonce=#{nonce}"
-    
-    call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce)
-  end
-=end
   def self.quote_meets_minimum(quote_token, base_token, fee_tier, quote_token_amount, quote_token_decimals, base_token_decimals, min_amount_out, provider_url)
     call_function('quoteMeetsMinimum', quote_token, base_token, fee_tier, quote_token_amount, quote_token_decimals, base_token_decimals, min_amount_out, provider_url)
   end
@@ -283,11 +259,6 @@ class EthersService
     call_function('getTokenPrice', token_0, token_0_decimals, token_1, token_1_decimals, provider_url)
   end
 
-  #def self.get_transaction_receipt(tx_hash, decimals, provider_url)
-  #  call_function('getTransactionReceipt', tx_hash, decimals, provider_url)
-  #end
-
-  # getSwapAmounts(txHash, poolAddress, decimals0, decimals1, providerUrl)
   def self.get_transaction_receipt(tx_hash, token_pair, provider_url)
     call_function(
       'getSwapAmounts', 
@@ -301,6 +272,49 @@ class EthersService
 
   def self.get_wallet_address(private_key, provider_url)
     call_function('getWalletAddress', private_key, provider_url)
+  end
+
+  def self.get_gas_price(chain_id, provider_url)
+    key = "gas_price:#{chain_id}"
+    lock_key = "#{key}:lock"
+
+    if (cached = $redis.get(key))
+      return Integer(cached).to_s
+    end
+
+    if $redis.set(lock_key, "1", nx: true, ex: 1)
+      begin
+        price = get_gas_price_from_api(provider_url)
+        $redis.set(key, price.to_s, ex: 5)   # cache for 5s
+        return price.to_s
+      ensure
+        $redis.del(lock_key)
+      end
+    else
+      # 3) Another process is fetching — wait briefly and retry
+      sleep 0.05 until (cached = $redis.get(key))
+      return Integer(cached).to_s
+    end
+  end
+
+  def self.get_gas_fees(chain_id, provider_url)
+    key = "gas_fees:#{chain_id}"
+    if (cached = $redis.get(key))
+      return JSON.parse(cached)
+    end
+  
+    raw = get_gas_fees_from_api(provider_url)
+    raw_json = raw.to_json
+    $redis.set(key, raw_json, ex: 5)  # cache for 5s
+    JSON.parse(raw_json)
+  end
+  
+  def self.get_gas_fees_from_api(provider_url)
+    call_function('getGasFees', provider_url)
+  end
+
+  def self.get_gas_price_from_api(provider_url)
+    call_function('getGasPrice', provider_url)
   end
 
   def self.generate_wallet
@@ -322,17 +336,5 @@ class EthersService
       token_address,
       provider_url
     )
-  end
-
-  def self.delete_nonce(address)
-    key = "nonce:#{address}"
-    $redis.del(key)
-  end
-
-  def self.allocate_nonce(address, provider_url)
-    key = "nonce:#{address}"
-    $redis.setnx(key, get_pending_nonce(address, provider_url))
-    new_val = $redis.incr(key)
-    return new_val - 1
   end
 end
