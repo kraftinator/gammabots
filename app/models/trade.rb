@@ -1,6 +1,8 @@
 class Trade < ApplicationRecord
+  CONFIRMATION_DELAY = 5.seconds
+
   belongs_to :bot
-  after_commit :schedule_confirmation, :set_infinite_approval, on: :create
+  after_commit :schedule_confirmation, :enqueue_infinite_approval, on: :create
 
   validates :trade_type, presence: true, inclusion: { in: %w[buy sell] }
   validates :status, presence: true, inclusion: { in: %w[pending completed failed] }
@@ -43,11 +45,16 @@ class Trade < ApplicationRecord
   private
 
   def schedule_confirmation
-    ConfirmTradeJob.perform_later(self.id)
+    #ConfirmTradeJob.perform_later(self.id)
+    ConfirmTradeJob.set(wait: CONFIRMATION_DELAY).perform_later(self.id)
   end
 
-  def set_infinite_approval
-    return unless trade_type == "buy"
-    ApprovalJob.perform_later(self.id)
+  def enqueue_infinite_approval
+    return unless buy?
+    ApprovalManager.ensure_infinite!(
+      wallet:       bot.user.wallet_for_chain(bot.chain),
+      token:        bot.token_pair.base_token,
+      provider_url: bot.provider_url
+    )
   end
 end

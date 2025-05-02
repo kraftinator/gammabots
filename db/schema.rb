@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_25_161950) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_02_190012) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -77,6 +77,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_25_161950) do
     t.index ["chain_id"], name: "index_strategies_on_chain_id"
     t.index ["contract_address", "nft_token_id"], name: "index_strategies_on_contract_address_and_nft_token_id", unique: true
     t.index ["strategy_json"], name: "index_strategies_on_strategy_json", unique: true
+  end
+
+  create_table "token_approvals", force: :cascade do |t|
+    t.bigint "wallet_id", null: false
+    t.bigint "token_id", null: false
+    t.string "status", default: "pending", null: false
+    t.string "tx_hash"
+    t.datetime "confirmed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token_id"], name: "index_token_approvals_on_token_id"
+    t.index ["wallet_id", "token_id"], name: "index_token_approvals_on_wallet_id_and_token_id", unique: true
+    t.index ["wallet_id"], name: "index_token_approvals_on_wallet_id"
   end
 
   create_table "token_pair_prices", force: :cascade do |t|
@@ -170,6 +183,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_25_161950) do
   add_foreign_key "bots", "token_pairs"
   add_foreign_key "bots", "users"
   add_foreign_key "strategies", "chains"
+  add_foreign_key "token_approvals", "tokens"
+  add_foreign_key "token_approvals", "wallets"
   add_foreign_key "token_pair_prices", "token_pairs"
   add_foreign_key "token_pairs", "chains"
   add_foreign_key "token_pairs", "tokens", column: "base_token_id"

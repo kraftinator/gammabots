@@ -1,6 +1,7 @@
 class Wallet < ApplicationRecord
   belongs_to :user
   belongs_to :chain
+  has_many :token_approvals, dependent: :destroy
 
   before_validation :normalize_address
 
