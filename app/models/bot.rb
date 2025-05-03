@@ -22,17 +22,16 @@ class Bot < ApplicationRecord
   end
 
   def last_sell_price
-    trades.where(trade_type: "sell").order(created_at: :desc).first&.price
+    trades.where(trade_type: "sell", status: "completed").order(created_at: :desc).first&.price
   end
 
   def last_buy_at
-    trades.where(trade_type: "buy").order(created_at: :desc).first&.created_at
+    trades.where(trade_type: "buy", status: "completed").order(created_at: :desc).first&.created_at
   end
 
   def initial_buy_made?
-    #initial_buy_amount > 0
     #trades.where(trade_type: "buy").count > 0
-    initial_buy_amount > 0 && trades.where(trade_type: "buy").count > 0
+    initial_buy_amount > 0 && trades.where(trade_type: "buy", status: "completed").count > 0
   end
 
   def buy_count
@@ -90,8 +89,10 @@ class Bot < ApplicationRecord
     {
       cpr: token_pair.latest_price,
       ibp: initial_buy_price,
-      bcn: trades.where(trade_type: "buy", status: "completed").count,
-      scn: trades.where(trade_type: "sell", status: "completed").count,
+      #bcn: trades.where(trade_type: "buy", status: "completed").count,
+      bcn: buy_count,
+      #scn: trades.where(trade_type: "sell", status: "completed").count,
+      scn: sell_count,
       bta: base_token_amount,
       mam: moving_avg_minutes,
       # prices
