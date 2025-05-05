@@ -17,7 +17,7 @@ class TokenPairPrice < ApplicationRecord
 
   def remove_old_prices
     # Keep only the 100 most recent records for this token_pair
-    excess_count = token_pair.token_pair_prices.count - 200
+    excess_count = token_pair.token_pair_prices.count - 720
     if excess_count > 0
       token_pair.token_pair_prices
                 .order(created_at: :asc) # Oldest first
