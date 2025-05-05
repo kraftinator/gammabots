@@ -344,8 +344,8 @@ namespace :bots do
     bot.trades.order(:id).each do |trade|
       puts "Trade ##{trade.id} (#{trade.trade_type.upcase}):"
       puts "  Price:         #{trade.price} #{symbol_quote}"
-      puts "  Amount In:     #{trade.amount_in} #{symbol_quote}"
-      puts "  Amount Out:    #{trade.amount_out} #{symbol_base}"
+      puts "  Amount In:     #{trade.amount_in} #{trade.buy? ? symbol_quote : symbol_base}"
+      puts "  Amount Out:    #{trade.amount_out} #{trade.sell? ? symbol_quote : symbol_base}"
       puts "  Executed At:   #{trade.executed_at}"
       puts "  Confirmed At:  #{trade.confirmed_at || '---'}"
       puts "  Block Number:  #{trade.block_number}"
