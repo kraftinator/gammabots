@@ -42,6 +42,11 @@ class TokenPair < ApplicationRecord
     return average
   end
 
+  def previous_price
+    ppr_record = token_pair_prices.order(created_at: :desc).offset(1).first
+    ppr_record ? ppr_record.price : nil
+  end
+
   private
 
   def price_stale?

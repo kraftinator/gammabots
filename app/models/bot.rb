@@ -88,10 +88,9 @@ class Bot < ApplicationRecord
   def strategy_variables
     {
       cpr: token_pair.latest_price,
+      ppr: token_pair.previous_price || Float::NAN,
       ibp: initial_buy_price,
-      #bcn: trades.where(trade_type: "buy", status: "completed").count,
       bcn: buy_count,
-      #scn: trades.where(trade_type: "sell", status: "completed").count,
       scn: sell_count,
       bta: base_token_amount,
       mam: moving_avg_minutes,
