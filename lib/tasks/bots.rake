@@ -282,4 +282,86 @@ namespace :bots do
       ]
     end
   end
+
+  desc "Stats"
+  # Usage:
+  # rake bots:stats["2"]
+  task :stats, [:bot_id] => :environment do |t, args|
+    if args[:bot_id].nil?
+      raise ArgumentError, "Missing parameters!"
+    end
+
+    bot = Bot.find(args[:bot_id])
+    unless bot
+      raise ArgumentError, "Invalid bot!"
+    end
+
+    #symbol = bot.token_pair.quote_token.symbol
+    symbol_base  = bot.token_pair.base_token.symbol
+    symbol_quote = bot.token_pair.quote_token.symbol
+
+    vars = bot.strategy_variables
+
+    puts "\nHOLDINGS"
+    puts "---------"
+    puts "initial_buy_amount:  #{bot.initial_buy_amount} #{symbol_quote}"
+    puts "base_token_amount:   #{bot.base_token_amount} #{symbol_base}"
+    puts "quote_token_amount:  #{bot.quote_token_amount} #{symbol_quote}"
+
+
+    puts "\nSTRATEGY VARIABLES"
+    puts "---------"
+    puts "bta (base_token_amount):                    #{vars[:bta]} #{bot.token_pair.base_token.symbol}"
+    puts "bcn (buy_count):                            #{vars[:bcn]}"
+    puts "scn (sell_count):                           #{vars[:scn]}"
+    puts "mam (moving_avg_minutes):                   #{vars[:mam]}"
+    puts ""
+    puts "cpr (current_price):                        #{vars[:cpr].nil? ? '---' : "#{vars[:cpr]} #{symbol_quote}"}"
+    puts "cma (current_moving_avg):                   #{vars[:cma].nan? ? '---' : "#{vars[:cma]} #{symbol_quote}"}" 
+    puts "lma (longterm_moving_avg):                  #{vars[:lma].nan? ? '---' : "#{vars[:lma]} #{symbol_quote}"}"
+    puts ""
+    puts "ibp (initial_buy_price):                    #{vars[:ibp].nil? ? '---' : "#{vars[:ibp]} #{symbol_quote}"}"
+    puts "lps (lowest_price_since_creation):          #{vars[:lps].nil? ? '---' : "#{vars[:lps]} #{symbol_quote}"}"
+    puts "hip (highest_price_since_initial_buy):      #{vars[:hip].nil? ? '---' : "#{vars[:hip]} #{symbol_quote}"}"
+    puts "lip (lowest_price_since_initial_buy):       #{vars[:lip].nil? ? '---' : "#{vars[:lip]} #{symbol_quote}"}"
+    puts "hlt (highest_price_since_last_trade):       #{vars[:hlt].nil? ? '---' : "#{vars[:hlt]} #{symbol_quote}"}"
+    puts "llt (lowest_price_since_last_trade):        #{vars[:llt].nil? ? '---' : "#{vars[:llt]} #{symbol_quote}"}"  
+    puts ""
+    puts "lmc (lowest_moving_avg_since_creation):     #{vars[:lmc].nan? ? '---' : "#{vars[:lmc]} #{symbol_quote}"}"  
+    puts "lmi (lowest_moving_avg_since_initial_buy):  #{vars[:lmi].nil? ? '---' : "#{vars[:lmi]} #{symbol_quote}"}"
+    puts "hma (highest_moving_avg_since_initial_buy): #{vars[:hma].nil? ? '---' : "#{vars[:hma]} #{symbol_quote}"}"
+    puts "lmt (lowest_moving_avg_since_last_trade):   #{vars[:lmt].nil? ? '---' : "#{vars[:lmt]} #{symbol_quote}"}"
+    puts "hmt (highest_moving_avg_since_last_trade):  #{vars[:hmt].nil? ? '---' : "#{vars[:hmt]} #{symbol_quote}"}"
+    puts ""
+    puts "lsp (last_sell_price):                      #{vars[:lsp].nil? ? '---' : "#{vars[:lsp]} #{symbol_quote}"}"
+    puts ""
+    puts "crt (created_at):                           #{vars[:crt]}"
+    puts "lba (last_buy_at):                          #{vars[:lba].nil? ? '---' : "#{vars[:lba]}"}"
+    puts "lta (last_trade_at):                        #{vars[:lta].nil? ? '---' : "#{vars[:lta]}"}"
+    
+    puts "\nTRADES"
+    puts "---------"
+    bot.trades.order(:id).each do |trade|
+      puts "Trade ##{trade.id} (#{trade.trade_type.upcase}):"
+      puts "  Price:         #{trade.price} #{symbol_quote}"
+      puts "  Amount In:     #{trade.amount_in} #{symbol_quote}"
+      puts "  Amount Out:    #{trade.amount_out} #{symbol_base}"
+      puts "  Executed At:   #{trade.executed_at}"
+      puts "  Confirmed At:  #{trade.confirmed_at || '---'}"
+      puts "  Block Number:  #{trade.block_number}"
+      puts "  Gas Used:      #{trade.gas_used}"
+      puts "  Status:        #{trade.status}"
+      puts ""
+    end  
+
+    strategy = JSON.parse(bot.strategy_json)
+
+    puts "\nSTRATEGY"
+    puts "--------"
+    strategy.each_with_index do |step,index|
+      puts "#{index+1}: #{step}"
+    end
+
+    puts ""
+  end
 end
