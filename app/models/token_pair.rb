@@ -42,6 +42,18 @@ class TokenPair < ApplicationRecord
     return average
   end
 
+  def volatility(minutes = 5)
+    start_time = minutes.minutes.ago
+    prices = token_pair_prices
+      .where("created_at >= ?", start_time)
+      .order(created_at: :desc)
+      .pluck(:price)
+
+    return nil if prices.empty? || prices.count < minutes
+
+    (prices.max - prices.min) / prices.min.to_f
+  end
+
   def previous_price
     ppr_record = token_pair_prices.order(created_at: :desc).offset(1).first
     ppr_record ? ppr_record.price : nil

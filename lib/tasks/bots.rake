@@ -297,18 +297,20 @@ namespace :bots do
       raise ArgumentError, "Invalid bot!"
     end
 
-    #symbol = bot.token_pair.quote_token.symbol
     symbol_base  = bot.token_pair.base_token.symbol
     symbol_quote = bot.token_pair.quote_token.symbol
 
     vars = bot.strategy_variables
+
+    puts "\n//////////////////////////////////////////"
+    puts "BOT ##{bot.id} (#{bot.token_pair.name})"
+    puts "//////////////////////////////////////////"
 
     puts "\nHOLDINGS"
     puts "---------"
     puts "initial_buy_amount:  #{bot.initial_buy_amount} #{symbol_quote}"
     puts "base_token_amount:   #{bot.base_token_amount} #{symbol_base}"
     puts "quote_token_amount:  #{bot.quote_token_amount} #{symbol_quote}"
-
 
     puts "\nSTRATEGY VARIABLES"
     puts "---------"
@@ -317,10 +319,13 @@ namespace :bots do
     puts "scn (sell_count):                           #{vars[:scn]}"
     puts "mam (moving_avg_minutes):                   #{vars[:mam]}"
     puts ""
+    puts "vst (short_term_volatility):                #{vars[:vst].nan? ? '---' : format('%.5f', vars[:vst])}"
+    puts "vlt (long_term_volatility):                 #{vars[:vlt].nan? ? '---' : format('%.5f', vars[:vlt])}"
+    puts ""
     puts "cpr (current_price):                        #{vars[:cpr].nil? ? '---' : "#{vars[:cpr]} #{symbol_quote}"}"
     puts "ppr (previous_price):                       #{vars[:ppr].nil? ? '---' : "#{vars[:ppr]} #{symbol_quote}"}"
-    puts "cma (current_moving_avg):                   #{vars[:cma].nan? ? '---' : "#{vars[:cma]} #{symbol_quote}"}" 
-    puts "lma (longterm_moving_avg):                  #{vars[:lma].nan? ? '---' : "#{vars[:lma]} #{symbol_quote}"}"
+    puts "cma (current_moving_avg):                   #{vars[:cma].nan? ? '---' : format('%.18f %s', vars[:cma], symbol_quote)}"
+    puts "lma (longterm_moving_avg):                  #{vars[:lma].nan? ? '---' : format('%.18f %s', vars[:lma], symbol_quote)}"
     puts ""
     puts "ibp (initial_buy_price):                    #{vars[:ibp].nil? ? '---' : "#{vars[:ibp]} #{symbol_quote}"}"
     puts "lps (lowest_price_since_creation):          #{vars[:lps].nil? ? '---' : "#{vars[:lps]} #{symbol_quote}"}"
