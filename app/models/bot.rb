@@ -4,6 +4,7 @@ class Bot < ApplicationRecord
   belongs_to :user
   belongs_to :token_pair
   belongs_to :strategy
+  has_many :bot_cycles
   has_many :bot_events
   has_many :trades
 
@@ -126,6 +127,10 @@ class Bot < ApplicationRecord
 
   def min_amount_out_for_initial_buy
     (quote_token_amount / token_pair.current_price) * 0.95
+  end
+
+  def current_cycle
+    bot_cycles.find_by(ended_at: nil)
   end
 
   private

@@ -10,9 +10,34 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_02_190012) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_08_202118) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "bot_cycles", force: :cascade do |t|
+    t.bigint "bot_id", null: false
+    t.decimal "initial_buy_amount", precision: 30, scale: 18, default: "0.0", null: false
+    t.decimal "base_token_amount", precision: 30, scale: 18, default: "0.0", null: false
+    t.decimal "quote_token_amount", precision: 30, scale: 18, default: "0.0", null: false
+    t.decimal "initial_buy_price", precision: 30, scale: 18
+    t.decimal "highest_price_since_initial_buy", precision: 30, scale: 18
+    t.decimal "lowest_price_since_initial_buy", precision: 30, scale: 18
+    t.decimal "highest_price_since_last_trade", precision: 30, scale: 18
+    t.decimal "lowest_price_since_last_trade", precision: 30, scale: 18
+    t.decimal "lowest_price_since_creation", precision: 30, scale: 18
+    t.decimal "created_at_price", precision: 30, scale: 18
+    t.decimal "lowest_moving_avg_since_creation", precision: 30, scale: 18
+    t.decimal "highest_moving_avg_since_initial_buy", precision: 30, scale: 18
+    t.decimal "lowest_moving_avg_since_initial_buy", precision: 30, scale: 18
+    t.decimal "highest_moving_avg_since_last_trade", precision: 30, scale: 18
+    t.decimal "lowest_moving_avg_since_last_trade", precision: 30, scale: 18
+    t.datetime "started_at", null: false
+    t.datetime "ended_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bot_id", "ended_at"], name: "index_bot_cycles_on_bot_id_and_ended_at"
+    t.index ["bot_id"], name: "index_bot_cycles_on_bot_id"
+  end
 
   create_table "bot_events", force: :cascade do |t|
     t.bigint "bot_id", null: false
@@ -147,7 +172,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_02_190012) do
     t.decimal "gas_used", precision: 30
     t.datetime "confirmed_at"
     t.decimal "amount_in", precision: 30, scale: 18
+    t.bigint "bot_cycle_id"
     t.index ["block_number"], name: "index_trades_on_block_number"
+    t.index ["bot_cycle_id"], name: "index_trades_on_bot_cycle_id"
     t.index ["bot_id"], name: "index_trades_on_bot_id"
     t.index ["executed_at"], name: "index_trades_on_executed_at"
     t.index ["trade_type"], name: "index_trades_on_trade_type"
@@ -177,6 +204,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_02_190012) do
     t.index ["user_id"], name: "index_wallets_on_user_id"
   end
 
+  add_foreign_key "bot_cycles", "bots"
   add_foreign_key "bot_events", "bots"
   add_foreign_key "bots", "chains"
   add_foreign_key "bots", "strategies"
@@ -190,6 +218,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_02_190012) do
   add_foreign_key "token_pairs", "tokens", column: "base_token_id"
   add_foreign_key "token_pairs", "tokens", column: "quote_token_id"
   add_foreign_key "tokens", "chains"
+  add_foreign_key "trades", "bot_cycles"
   add_foreign_key "trades", "bots"
   add_foreign_key "wallets", "chains"
   add_foreign_key "wallets", "users"

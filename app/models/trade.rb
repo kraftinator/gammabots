@@ -2,6 +2,7 @@ class Trade < ApplicationRecord
   CONFIRMATION_DELAY = 5.seconds
 
   belongs_to :bot
+  belongs_to :bot_cycle
   after_commit :schedule_confirmation, :enqueue_infinite_approval, on: :create
 
   validates :trade_type, presence: true, inclusion: { in: %w[buy sell] }
