@@ -300,7 +300,7 @@ namespace :bots do
     symbol_base  = bot.token_pair.base_token.symbol
     symbol_quote = bot.token_pair.quote_token.symbol
 
-    vars = bot.strategy_variables
+    vars = bot.strategy_variables(use_cached_price: true)
 
     puts "\n//////////////////////////////////////////"
     puts "BOT ##{bot.id} (#{bot.token_pair.name})"
@@ -351,8 +351,6 @@ namespace :bots do
     bot.trades.order(:id).each do |trade|
       puts "Trade ##{trade.id} (#{trade.trade_type.upcase}):"
       puts "  Price:         #{trade.price} #{symbol_quote}"
-      #puts "  Amount In:     #{trade.amount_in} #{trade.buy? ? symbol_quote : symbol_base}"
-      #puts "  Amount Out:    #{trade.amount_out} #{trade.sell? ? symbol_quote : symbol_base}"
       puts "  Amount In:     #{trade.amount_in.nil? ? '---' : "#{trade.amount_in} #{trade.buy? ? symbol_quote : symbol_base}"}"
       puts "  Amount Out:    #{trade.amount_out.nil? ? '---' : "#{trade.amount_out} #{trade.sell? ? symbol_quote : symbol_base}"}"
 
@@ -373,5 +371,24 @@ namespace :bots do
     end
 
     puts ""
+  end
+
+  # Usage:
+  # rake bots:prices["2"]
+  task :prices, [:bot_id] => :environment do |t, args|
+    if args[:bot_id].nil?
+      raise ArgumentError, "Missing parameters!"
+    end
+
+    bot = Bot.find(args[:bot_id])
+    unless bot
+      raise ArgumentError, "Invalid bot!"
+    end
+
+    prices = bot.token_pair.token_pair_prices.order(created_at: :asc)
+    puts "\nPRICES (#{bot.token_pair.name})"
+    puts "---------"
+
+    prices.each { |p| puts "#{p.created_at} - #{p.price.to_s}" }
   end
 end

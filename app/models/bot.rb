@@ -85,9 +85,9 @@ class Bot < ApplicationRecord
     ProviderUrlService.get_provider_url(chain.name)
   end
 
-  def strategy_variables
+  def strategy_variables(use_cached_price: false)
     {
-      cpr: token_pair.latest_price,
+      cpr: use_cached_price ? token_pair.current_price : token_pair.latest_price,
       ppr: token_pair.previous_price || Float::NAN,
       ibp: initial_buy_price,
       bcn: buy_count,
