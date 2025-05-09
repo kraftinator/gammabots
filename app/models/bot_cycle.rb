@@ -25,4 +25,45 @@ class BotCycle < ApplicationRecord
   def last_trade_at
     trades.where(status: "completed").order(created_at: :desc).first&.created_at
   end
+
+  def initial_buy_made?
+    initial_buy_amount > 0 && trades.where(trade_type: "buy", status: "completed").count > 0
+  end
+
+  def strategy_variables(use_cached_price: false)
+    token_pair = bot.token_pair
+    moving_avg_minutes = bot.moving_avg_minutes
+    {
+      cpr: use_cached_price ? token_pair.current_price : token_pair.latest_price,
+      ppr: token_pair.previous_price || Float::NAN,
+      ibp: initial_buy_price,
+      bcn: buy_count,
+      scn: sell_count,
+      bta: base_token_amount,
+      mam: moving_avg_minutes,
+      vst: token_pair.volatility(moving_avg_minutes) || Float::NAN,
+      vlt: token_pair.volatility(moving_avg_minutes*2) || Float::NAN,
+      # prices
+      lps: lowest_price_since_creation,
+      hip: highest_price_since_initial_buy,
+      hlt: highest_price_since_last_trade,
+      lip: lowest_price_since_initial_buy,
+      llt: lowest_price_since_last_trade,
+      # moving averages
+      cma: token_pair.moving_average(moving_avg_minutes) || Float::NAN,
+      lma: token_pair.moving_average(moving_avg_minutes*2) || Float::NAN,
+      lmc: lowest_moving_avg_since_creation || Float::NAN,
+      hma: highest_moving_avg_since_initial_buy,
+      lmi: lowest_moving_avg_since_initial_buy,
+      hmt: highest_moving_avg_since_last_trade,
+      lmt: lowest_moving_avg_since_last_trade,
+
+      lta: last_trade_at,
+      lba: last_buy_at,
+      lsp: last_sell_price,
+      crt: created_at,
+      bot: bot,
+      provider_url: bot.provider_url
+    }
+  end
 end

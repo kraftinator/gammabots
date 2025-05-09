@@ -46,7 +46,7 @@ class CreateBotService
       token_pair.latest_price
     end
 
-    # Create the Bot with the provided parameters.
+=begin
     bot = Bot.create!(
       chain: chain,
       strategy: strategy,
@@ -59,6 +59,26 @@ class CreateBotService
       #lowest_moving_avg_since_creation: token_pair.latest_price
       lowest_moving_avg_since_creation: token_pair.moving_average,
     )
+=end
+    
+    bot = Bot.create!(
+      chain: chain,
+      strategy: strategy,
+      moving_avg_minutes: moving_avg_minutes,
+      user: user,
+      token_pair: token_pair
+    )
+    if bot
+      current_price = token_pair.latest_price
+      moving_avg = token_pair.moving_average(moving_avg_minutes.to_i)
+      bot.bot_cycles.create!(
+        started_at: Time.current,
+        quote_token_amount: amount,
+        created_at_price: current_price,
+        lowest_price_since_creation: current_price,
+        lowest_moving_avg_since_creation: moving_avg
+      )
+    end
 
     bot
   end

@@ -3,6 +3,7 @@ class Trade < ApplicationRecord
 
   belongs_to :bot
   belongs_to :bot_cycle
+  before_validation :assign_bot_cycle, on: :create
   after_commit :schedule_confirmation, :enqueue_infinite_approval, on: :create
 
   validates :trade_type, presence: true, inclusion: { in: %w[buy sell] }
@@ -46,7 +47,6 @@ class Trade < ApplicationRecord
   private
 
   def schedule_confirmation
-    #ConfirmTradeJob.perform_later(self.id)
     ConfirmTradeJob.set(wait: CONFIRMATION_DELAY).perform_later(self.id)
   end
 
@@ -57,5 +57,9 @@ class Trade < ApplicationRecord
       token:        bot.token_pair.base_token,
       provider_url: bot.provider_url
     )
+  end
+
+  def assign_bot_cycle
+    self.bot_cycle = bot.current_cycle
   end
 end

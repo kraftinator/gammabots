@@ -72,12 +72,12 @@ class TradingStrategyInterpreter
       when /\Adeact\s+force\z/i
         # Force deactivation regardless of swap status
         puts "Force deactivating bot: #{@variables[:bot].id}"
-        @variables[:bot].update!(active: false)
+        @variables[:bot].deactivate
         puts "Bot force deactivated"
       when /\Adeact\z/i
         if swap_executed
           puts "Deactivating bot"
-          @variables[:bot].update!(active: false)
+          @variables[:bot].deactivate
         else
           puts "Swap did not occur; bot remains active"
         end
@@ -90,7 +90,8 @@ class TradingStrategyInterpreter
   # Parses the sell amount from an expression like "bta*0.25" or "all"
   def parse_amount(expression)
     if expression.downcase == "all"
-      @variables[:bot].base_token_amount
+      #@variables[:bot].base_token_amount
+      @variables[:bot].current_cycle.base_token_amount
     else
       eval(expression, binding_from_variables)
     end

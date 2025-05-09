@@ -1,7 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe TradingStrategyInterpreter do
-  let(:bot) { instance_double("Bot", update!: true, id: 1, base_token_amount: 1.0, min_amount_out_for_initial_buy: 0.95) }
+  let(:bot_cycle) do
+    instance_double(
+      "BotCycle",
+      base_token_amount: 1.0
+    )
+  end
+  let(:bot) { instance_double("Bot", current_cycle: bot_cycle, update!: true, deactivate: true, id: 1, base_token_amount: 1.0, min_amount_out_for_initial_buy: 0.95) }
   let(:token_pair) { instance_double("TokenPair", latest_price: 1.0) }
   let(:trades) { instance_double("ActiveRecord::Relation", where: []) }
   
@@ -165,7 +171,7 @@ RSpec.describe TradingStrategyInterpreter do
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 1.0, 0, "https://example.com/api"
         ).and_return(true)
-        expect(bot).to receive(:update!).with(active: false)
+        expect(bot).to receive(:deactivate)
         
         interpreter = described_class.new(strategy_json, variables)
         interpreter.execute
@@ -224,7 +230,7 @@ RSpec.describe TradingStrategyInterpreter do
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 1.0, 0, "https://example.com/api"
         ).and_return(true)
-        expect(bot).to receive(:update!).with(active: false)
+        expect(bot).to receive(:deactivate)
         
         interpreter = described_class.new(strategy_json, variables)
         interpreter.execute
@@ -254,7 +260,7 @@ RSpec.describe TradingStrategyInterpreter do
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 1.0, 0, "https://example.com/api"
         ).and_return(true)
-        expect(bot).to receive(:update!).with(active: false)
+        expect(bot).to receive(:deactivate)
         
         interpreter = described_class.new(strategy_json, variables)
         interpreter.execute
@@ -313,7 +319,7 @@ RSpec.describe TradingStrategyInterpreter do
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 1.0, 0, "https://example.com/api"
         ).and_return(true)
-        expect(bot).to receive(:update!).with(active: false)
+        expect(bot).to receive(:deactivate)
         
         interpreter = described_class.new(strategy_json, variables)
         interpreter.execute
@@ -372,7 +378,7 @@ RSpec.describe TradingStrategyInterpreter do
         expect(TradeExecutionService).to receive(:sell).with(
           bot, 1.0, 0, "https://example.com/api"
         ).and_return(true)
-        expect(bot).to receive(:update!).with(active: false)
+        expect(bot).to receive(:deactivate)
         
         interpreter = described_class.new(strategy_json, variables)
         interpreter.execute

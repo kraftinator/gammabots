@@ -1,6 +1,5 @@
 class TradeExecutionService
   def self.buy(bot, min_amount_out, provider_url)
-    #puts "Token Amount: #{bot.quote_token_amount}"
     puts "========================================================"
     puts "TradeExecutionService::buy"
     puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, min_amount_out: #{min_amount_out.to_s}"
@@ -9,7 +8,7 @@ class TradeExecutionService
     result = EthersService.buy_with_min_amount(
       #bot.user.wallet_for_chain(bot.chain).private_key,
       bot.user.wallet_for_chain(bot.chain),
-      bot.quote_token_amount, # Amount to spend
+      bot.current_cycle.quote_token_amount, # Amount to spend
       bot.token_pair.quote_token.contract_address, # Token used for buying
       bot.token_pair.base_token.contract_address,  # Token being bought
       bot.token_pair.quote_token.decimals,
@@ -43,7 +42,7 @@ class TradeExecutionService
           class:           "TradeExecutionService",
           method:          "buy",
           reason:           reason,
-          attempted_amount: bot.quote_token_amount,
+          attempted_amount: bot.current_cycle.quote_token_amount,
           min_amount_out:   min_amount_out,
           error:            result["error"]
         }
