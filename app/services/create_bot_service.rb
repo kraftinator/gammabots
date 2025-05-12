@@ -66,7 +66,8 @@ class CreateBotService
       strategy: strategy,
       moving_avg_minutes: moving_avg_minutes,
       user: user,
-      token_pair: token_pair
+      token_pair: token_pair,
+      initial_buy_amount: amount
     )
     if bot
       current_price = token_pair.latest_price

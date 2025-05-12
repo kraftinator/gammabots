@@ -5,10 +5,13 @@ class TradeExecutionService
     puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, min_amount_out: #{min_amount_out.to_s}"
     puts "========================================================"
 
+    quote_token_amount = bot.first_cycle? ? 
+      bot.current_cycle.quote_token_amount : bot.current_cycle.quote_token_amount * 0.9999999999
+
     result = EthersService.buy_with_min_amount(
-      #bot.user.wallet_for_chain(bot.chain).private_key,
       bot.user.wallet_for_chain(bot.chain),
-      bot.current_cycle.quote_token_amount, # Amount to spend
+      #bot.current_cycle.quote_token_amount * 0.9999999999, # Amount to spend
+      quote_token_amount, # Amount to spend
       bot.token_pair.quote_token.contract_address, # Token used for buying
       bot.token_pair.base_token.contract_address,  # Token being bought
       bot.token_pair.quote_token.decimals,
@@ -69,7 +72,6 @@ class TradeExecutionService
     #puts "Max Amount In: #{max_amount_in} #{bot.token_pair.base_token.symbol}"
     
     result = EthersService.sell_with_min_amount(
-      #bot.user.wallet_for_chain(bot.chain).private_key,
       bot.user.wallet_for_chain(bot.chain),
       base_token_amount * 0.9999999999,  # Amount to sell
       bot.token_pair.base_token.contract_address,  # Token being sold

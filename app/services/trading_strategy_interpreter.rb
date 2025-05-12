@@ -81,6 +81,13 @@ class TradingStrategyInterpreter
         else
           puts "Swap did not occur; bot remains active"
         end
+      when /\Areset\z/i
+        if swap_executed
+          puts "Resetting bot"
+          @variables[:bot].reset
+        else
+          puts "Swap did not occur; no reset"
+        end
       else
         Rails.logger.error "Unknown action: #{action_str}"
       end
