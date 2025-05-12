@@ -50,6 +50,7 @@ class Bot < ApplicationRecord
       process_initial_buy(trade)
     elsif trade.sell?
       process_sell(trade)
+      process_reset if current_cycle.reset_requested_at
       # TODO: Update bot to indicate that it's done.
     end
   end
@@ -65,54 +66,33 @@ class Bot < ApplicationRecord
     current_cycle.update!(ended_at: Time.current)
   end
 
+  def reset
+    current_cycle.update!(reset_requested_at: Time.current)
+  end
+
   def update_prices(current_price, current_moving_avg)
     bot_cycle = current_cycle
     if initial_buy_made?
       bot_cycle.update!(
-        lowest_price_since_creation: [lowest_price_since_creation, current_price].compact.min,
-        highest_price_since_initial_buy: [highest_price_since_initial_buy, current_price].compact.max,
-        lowest_price_since_initial_buy: [lowest_price_since_initial_buy, current_price].compact.min,
-        highest_price_since_last_trade: [highest_price_since_last_trade, current_price].compact.max,
-        lowest_price_since_last_trade: [lowest_price_since_last_trade, current_price].compact.min,
+        lowest_price_since_creation: [bot_cycle.lowest_price_since_creation, current_price].compact.min,
+        highest_price_since_initial_buy: [bot_cycle.highest_price_since_initial_buy, current_price].compact.max,
+        lowest_price_since_initial_buy: [bot_cycle.lowest_price_since_initial_buy, current_price].compact.min,
+        highest_price_since_last_trade: [bot_cycle.highest_price_since_last_trade, current_price].compact.max,
+        lowest_price_since_last_trade: [bot_cycle.lowest_price_since_last_trade, current_price].compact.min,
       
-        lowest_moving_avg_since_creation: [lowest_moving_avg_since_creation, current_moving_avg].compact.min,
-        highest_moving_avg_since_initial_buy: [highest_moving_avg_since_initial_buy, current_moving_avg].compact.max,
-        lowest_moving_avg_since_initial_buy: [lowest_moving_avg_since_initial_buy, current_moving_avg].compact.min,
-        highest_moving_avg_since_last_trade: [highest_moving_avg_since_last_trade, current_moving_avg].compact.max,
-        lowest_moving_avg_since_last_trade: [lowest_moving_avg_since_last_trade, current_moving_avg].compact.min
+        lowest_moving_avg_since_creation: [bot_cycle.lowest_moving_avg_since_creation, current_moving_avg].compact.min,
+        highest_moving_avg_since_initial_buy: [bot_cycle.highest_moving_avg_since_initial_buy, current_moving_avg].compact.max,
+        lowest_moving_avg_since_initial_buy: [bot_cycle.lowest_moving_avg_since_initial_buy, current_moving_avg].compact.min,
+        highest_moving_avg_since_last_trade: [bot_cycle.highest_moving_avg_since_last_trade, current_moving_avg].compact.max,
+        lowest_moving_avg_since_last_trade: [bot_cycle.lowest_moving_avg_since_last_trade, current_moving_avg].compact.min
       )
     else
       bot_cycle.update!(
-        lowest_price_since_creation: [lowest_price_since_creation, current_price].compact.min,
-        lowest_moving_avg_since_creation: [lowest_moving_avg_since_creation, current_moving_avg].compact.min
+        lowest_price_since_creation: [bot_cycle.lowest_price_since_creation, current_price].compact.min,
+        lowest_moving_avg_since_creation: [bot_cycle.lowest_moving_avg_since_creation, current_moving_avg].compact.min
       )
     end
   end
-
-=begin
-  def update_prices(current_price, current_moving_avg)
-    if initial_buy_made?
-      update!(
-        lowest_price_since_creation: [lowest_price_since_creation, current_price].compact.min,
-        highest_price_since_initial_buy: [highest_price_since_initial_buy, current_price].compact.max,
-        lowest_price_since_initial_buy: [lowest_price_since_initial_buy, current_price].compact.min,
-        highest_price_since_last_trade: [highest_price_since_last_trade, current_price].compact.max,
-        lowest_price_since_last_trade: [lowest_price_since_last_trade, current_price].compact.min,
-      
-        lowest_moving_avg_since_creation: [lowest_moving_avg_since_creation, current_moving_avg].compact.min,
-        highest_moving_avg_since_initial_buy: [highest_moving_avg_since_initial_buy, current_moving_avg].compact.max,
-        lowest_moving_avg_since_initial_buy: [lowest_moving_avg_since_initial_buy, current_moving_avg].compact.min,
-        highest_moving_avg_since_last_trade: [highest_moving_avg_since_last_trade, current_moving_avg].compact.max,
-        lowest_moving_avg_since_last_trade: [lowest_moving_avg_since_last_trade, current_moving_avg].compact.min
-      )
-    else
-      update!(
-        lowest_price_since_creation: [lowest_price_since_creation, current_price].compact.min,
-        lowest_moving_avg_since_creation: [lowest_moving_avg_since_creation, current_moving_avg].compact.min
-      )
-    end
-  end
-=end
 
   def provider_url
     ProviderUrlService.get_provider_url(chain.name)
@@ -126,48 +106,11 @@ class Bot < ApplicationRecord
     latest_cycle.strategy_variables(use_cached_price: true)
   end
 
-=begin
-  def strategy_variables(use_cached_price: false)
-    {
-      cpr: use_cached_price ? token_pair.current_price : token_pair.latest_price,
-      ppr: token_pair.previous_price || Float::NAN,
-      ibp: initial_buy_price,
-      bcn: buy_count,
-      scn: sell_count,
-      bta: base_token_amount,
-      mam: moving_avg_minutes,
-      vst: token_pair.volatility(moving_avg_minutes) || Float::NAN,
-      vlt: token_pair.volatility(moving_avg_minutes*2) || Float::NAN,
-      # prices
-      lps: lowest_price_since_creation,
-      hip: highest_price_since_initial_buy,
-      hlt: highest_price_since_last_trade,
-      lip: lowest_price_since_initial_buy,
-      llt: lowest_price_since_last_trade,
-      # moving averages
-      cma: token_pair.moving_average(moving_avg_minutes) || Float::NAN,
-      lma: token_pair.moving_average(moving_avg_minutes*2) || Float::NAN,
-      lmc: lowest_moving_avg_since_creation || Float::NAN,
-      hma: highest_moving_avg_since_initial_buy,
-      lmi: lowest_moving_avg_since_initial_buy,
-      hmt: highest_moving_avg_since_last_trade,
-      lmt: lowest_moving_avg_since_last_trade,
-
-      lta: last_traded_at,
-      lba: last_buy_at,
-      lsp: last_sell_price,
-      crt: created_at,
-      bot: self,
-      provider_url: provider_url
-    }
-  end
-=end
   def strategy_json
     strategy.strategy_json
   end
 
   def min_amount_out_for_initial_buy
-    #(quote_token_amount / token_pair.current_price) * 0.95
     (current_cycle.quote_token_amount / token_pair.current_price) * 0.95
   end
 
@@ -180,40 +123,32 @@ class Bot < ApplicationRecord
     bot_cycles.order(created_at: :desc).first
   end
 
-  private
-=begin
-  def process_initial_buy(trade)
-    trade_price = trade.price
-    update!(
-      initial_buy_amount: trade.amount_in,
-      quote_token_amount: 0,
-      base_token_amount: trade.amount_out,
-      initial_buy_price: trade_price,
-      # prices
-      highest_price_since_initial_buy: trade_price,
-      lowest_price_since_initial_buy: trade_price,
-      highest_price_since_last_trade: trade_price,
-      lowest_price_since_last_trade: trade_price,
-      # moving averages
-      highest_moving_avg_since_initial_buy: trade_price,
-      lowest_moving_avg_since_initial_buy: trade_price,
-      highest_moving_avg_since_last_trade: trade_price,
-      lowest_moving_avg_since_last_trade: trade_price,
-
-      last_traded_at: trade.created_at
-    )
+  def first_cycle?
+    bot_cycles.count == 1
   end
-=end
+
+  def initial_amount
+    bot_cycles.order(created_at: :asc).first.initial_buy_amount
+  end
+
+  private
 
   def process_initial_buy(trade)
     trade_price = trade.price
     moving_avg = token_pair.moving_average(moving_avg_minutes)
+    cycle = current_cycle
 
-    current_cycle.update!(
+    new_quote_token_amount = cycle.quote_token_amount - trade.amount_in
+    new_base_token_amount = cycle.base_token_amount + trade.amount_out
+
+    cycle.update!(
       # amounts
-      initial_buy_amount: trade.amount_in,  # ETH
-      quote_token_amount: 0,                # ETH
-      base_token_amount: trade.amount_out,  # token
+      initial_buy_amount: trade.amount_in,                 # ETH
+      quote_token_amount: [new_quote_token_amount, 0].max, # ETH
+      base_token_amount: [new_base_token_amount, 0].max,   # token
+      #quote_token_amount: 0,                # ETH
+      #base_token_amount: trade.amount_out,  # token
+
       initial_buy_price: trade_price,
       # prices
       highest_price_since_initial_buy: trade_price,
@@ -247,22 +182,19 @@ class Bot < ApplicationRecord
     )
   end
 
-=begin
-  def process_sell(trade)
-    new_base_token_amount = base_token_amount - trade.amount_in
-    # If the difference is negative but nearly zero, set it to 0
-    new_base_token_amount = 0 if new_base_token_amount < 0 && new_base_token_amount.abs < 1e-9
-    
-    update!(
-      base_token_amount: new_base_token_amount,
-      quote_token_amount: quote_token_amount + trade.amount_out,
-      highest_price_since_last_trade: trade.price,
-      lowest_price_since_last_trade: trade.price,
-      highest_moving_avg_since_last_trade: trade.price,
-      lowest_moving_avg_since_last_trade: trade.price,
+  def process_reset
+    old_cycle = current_cycle
+    old_cycle.update!(ended_at: Time.current)
 
-      last_traded_at: trade.created_at
+    current_price = token_pair.latest_price
+    moving_avg = token_pair.moving_average(moving_avg_minutes)
+    bot_cycles.create!(
+      started_at: Time.current,
+      base_token_amount: old_cycle.base_token_amount,
+      quote_token_amount: old_cycle.quote_token_amount,
+      created_at_price: current_price,
+      lowest_price_since_creation: current_price,
+      lowest_moving_avg_since_creation: moving_avg
     )
   end
-=end
 end

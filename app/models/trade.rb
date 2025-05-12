@@ -5,6 +5,7 @@ class Trade < ApplicationRecord
   belongs_to :bot_cycle
   before_validation :assign_bot_cycle, on: :create
   after_commit :schedule_confirmation, :enqueue_infinite_approval, on: :create
+  after_update :clear_reset_request_on_failed_sell, if: :saved_change_to_status?
 
   validates :trade_type, presence: true, inclusion: { in: %w[buy sell] }
   validates :status, presence: true, inclusion: { in: %w[pending completed failed] }
@@ -61,5 +62,10 @@ class Trade < ApplicationRecord
 
   def assign_bot_cycle
     self.bot_cycle = bot.current_cycle
+  end
+
+  def clear_reset_request_on_failed_sell
+    return unless sell? && failed?
+    bot_cycle.update!(reset_requested_at: nil)
   end
 end

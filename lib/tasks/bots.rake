@@ -248,8 +248,12 @@ namespace :bots do
         #bot.strategy.nft_token_id,
         "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
         bot.current_cycle.base_token_amount.round(6).to_s,
-        bot.current_cycle.sell_count > 0 ? bot.current_cycle.quote_token_amount.round(6).to_s : 0.0,
-        bot.initial_buy_made? ? bot.current_cycle.initial_buy_amount : bot.current_cycle.quote_token_amount,
+        #bot.current_cycle.sell_count > 0 ? bot.current_cycle.quote_token_amount.round(6).to_s : 0.0,
+        #!bot.first_ cycle? ? bot.current_cycle.quote_token_amount.round(6).to_s : 0.0,
+        bot.current_cycle.quote_token_amount.round(6).to_s,
+        #bot.initial_buy_made? ? bot.current_cycle.initial_buy_amount : bot.current_cycle.quote_token_amount,
+        #bot.initial_amount,
+        bot.initial_buy_amount, 
         bot.current_cycle.sell_count,
         #bot.created_at.strftime('%Y-%m-%d %H:%M')
         "#{time_ago_in_words(bot.created_at) } ago"
