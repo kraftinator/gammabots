@@ -45,17 +45,12 @@ class Bot < ApplicationRecord
   end
 
   def process_trade(trade)
-    puts "***** Calling Bot::process_trade *****"
-    puts "Trade ID: #{trade.id}"
     return unless trade.completed?
     if trade.buy? && !initial_buy_made?
       process_initial_buy(trade)
     elsif trade.sell?
-      puts "***** In trade.sell? *****"
       process_sell(trade)
-      puts "***** FLAG A *****"
       process_reset if current_cycle.reset_requested_at
-      puts "***** FLAG B *****"
       # TODO: Update bot to indicate that it's done.
     end
   end
@@ -188,13 +183,11 @@ class Bot < ApplicationRecord
   end
 
   def process_reset
-    puts "***** Calling Bot::process_reset *****"
     old_cycle = current_cycle
     old_cycle.update!(ended_at: Time.current)
 
     current_price = token_pair.latest_price
     moving_avg = token_pair.moving_average(moving_avg_minutes)
-    puts "***** Create new bot cycle *****"
     bot_cycles.create!(
       started_at: Time.current,
       base_token_amount: old_cycle.base_token_amount,

@@ -43,7 +43,9 @@ class TradeConfirmationService
     trade_price = amount_in / amount_out
 
     update_trade(trade, amount_in, amount_out, trade_price, transaction_receipt)
-    trade.bot.process_trade(trade.reload)
+    
+    trade.reload
+    trade.bot.process_trade(trade)
   end
 
   def self.confirm_sell_trade(trade, provider_url)
@@ -80,9 +82,7 @@ class TradeConfirmationService
     update_trade(trade, amount_in, amount_out, trade_price, transaction_receipt)
     
     trade.reload
-    
     trade.bot.process_trade(trade)
-    #trade.bot.process_trade(trade.reload)
   end
 
   def self.valid_transaction?(transaction_receipt, amount_in, amount_out)
