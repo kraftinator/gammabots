@@ -29,6 +29,7 @@ class TradeExecutionService
         bot: bot,
         trade_type: :buy,
         tx_hash: result["txHash"],
+        nonce: result["nonce"],
         status: :pending,
         executed_at: Time.current
       )
@@ -92,6 +93,7 @@ class TradeExecutionService
         bot: bot,
         trade_type: :sell,
         tx_hash: result["txHash"],
+        nonce: result["nonce"],
         status: :pending,
         executed_at: Time.current
       )

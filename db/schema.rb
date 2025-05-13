@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_09_204513) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_13_225742) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -175,10 +175,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_09_204513) do
     t.datetime "confirmed_at"
     t.decimal "amount_in", precision: 30, scale: 18
     t.bigint "bot_cycle_id"
+    t.bigint "nonce"
     t.index ["block_number"], name: "index_trades_on_block_number"
     t.index ["bot_cycle_id"], name: "index_trades_on_bot_cycle_id"
     t.index ["bot_id"], name: "index_trades_on_bot_id"
     t.index ["executed_at"], name: "index_trades_on_executed_at"
+    t.index ["nonce"], name: "index_trades_on_nonce"
     t.index ["trade_type"], name: "index_trades_on_trade_type"
     t.index ["tx_hash"], name: "index_trades_on_tx_hash", unique: true
   end

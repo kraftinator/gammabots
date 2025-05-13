@@ -207,10 +207,10 @@ namespace :bots do
     puts "Deactivated!"
   end
 
-  desc "List active bots"
+  desc "List active bots - OLD"
   # Usage:
-  # rake bots:list
-  task :list => :environment do
+  # rake bots:list_old
+  task :list_old => :environment do
     puts "\n== Active Bots (#{Bot.active.count}) =="
     puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
     puts "-" * 110  # Increased width to match all columns
@@ -234,8 +234,8 @@ namespace :bots do
 
   desc "List active bots"
   # Usage:
-  # rake bots:list_new
-  task :list_new => :environment do
+  # rake bots:list
+  task :list => :environment do
     puts "\n== Active Bots (#{Bot.active.count}) =="
     puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
     puts "-" * 110  # Increased width to match all columns
@@ -339,10 +339,10 @@ namespace :bots do
     end
   end
 
-  desc "Stats"
+  desc "Stats - OLD"
   # Usage:
-  # rake bots:stats["2"]
-  task :stats, [:bot_id] => :environment do |t, args|
+  # rake bots:stats_old["2"]
+  task :stats_old, [:bot_id] => :environment do |t, args|
     if args[:bot_id].nil?
       raise ArgumentError, "Missing parameters!"
     end
@@ -447,10 +447,10 @@ namespace :bots do
     prices.each { |p| puts "#{p.created_at} - #{p.price.to_s}" }
   end
 
-  desc "Stats - NEW"
+  desc "Stats"
   # Usage:
-  # rake bots:stats_new["2"]
-  task :stats_new, [:bot_id] => :environment do |t, args|
+  # rake bots:stats["2"]
+  task :stats, [:bot_id] => :environment do |t, args|
     if args[:bot_id].nil?
       raise ArgumentError, "Missing parameters!"
     end
@@ -519,6 +519,8 @@ namespace :bots do
 
       puts "  Executed At:   #{trade.executed_at}"
       puts "  Confirmed At:  #{trade.confirmed_at || '---'}"
+      puts "  Tx Hash:       #{trade.tx_hash}"
+      puts "  Nonce:         #{trade.nonce}"
       puts "  Block Number:  #{trade.block_number}"
       puts "  Gas Used:      #{trade.gas_used}"
       puts "  Status:        #{trade.status}"
