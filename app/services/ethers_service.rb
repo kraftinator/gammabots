@@ -181,6 +181,11 @@ class EthersService
     result.to_i
   end
 
+  def self.get_latest_nonce(address, provider_url)
+    result = call_function('getTransactionCount', address, provider_url)
+    result.to_i
+  end
+
   def self.increment_nonce(address)
     key = "nonce:#{address}"
     $redis.incr(key)
