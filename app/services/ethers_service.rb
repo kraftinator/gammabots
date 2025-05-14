@@ -98,6 +98,21 @@ class EthersService
     end 
   end
 
+  def self.clear_nonce(wallet, nonce_to_clear, provider_url)
+    begin
+      fees = get_gas_fees(wallet.chain_id, provider_url)
+    rescue => e
+      return { success: false, error: "gas lookup failed: #{e.message}" }
+    end
+
+    begin
+      result = call_function('clearNonce', wallet.private_key, nonce_to_clear, provider_url, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
+      result
+    rescue StandardError => e
+      { success: false, error: e.message }   
+    end
+  end
+
   def self.with_nonce_lock(&block)
     REDLOCK_CLIENT.lock!(
       "eth_nonce_lock",   # lock key
