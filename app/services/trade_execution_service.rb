@@ -43,8 +43,9 @@ class TradeExecutionService
         bot:        bot,
         event_type: event_type,
         payload: {
-          class:           "TradeExecutionService",
-          method:          "buy",
+          class:            "TradeExecutionService",
+          method:           "buy",
+          nonce:            result["nonce"],
           reason:           reason,
           attempted_amount: bot.current_cycle.quote_token_amount,
           min_amount_out:   min_amount_out,
@@ -108,8 +109,9 @@ class TradeExecutionService
         bot:        bot,
         event_type: event_type,
         payload: {
-          class:           "TradeExecutionService",
-          method:          "sell",
+          class:            "TradeExecutionService",
+          method:           "sell",
+          nonce:            result["nonce"],
           reason:           reason,
           attempted_amount: base_token_amount,
           min_amount_out:   min_amount_out,
