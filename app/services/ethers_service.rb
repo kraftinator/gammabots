@@ -88,7 +88,10 @@ class EthersService
       nonce = current_nonce(wallet.address, provider_url)
       begin
         result = call_function('sellWithMinAmount', wallet.private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
-        if result["success"] && result["txHash"].present?
+        #if result["success"] && result["txHash"].present?
+        #  increment_nonce(wallet.address)
+        #end
+        if result["bumpNonce"].to_s == "true"
           increment_nonce(wallet.address)
         end
         result
@@ -155,7 +158,10 @@ class EthersService
       begin
         nonce = current_nonce(wallet.address, provider_url)
         result = call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
-        if result["success"] && result["txHash"].present?
+        #if result["success"] && result["txHash"].present?
+        #  increment_nonce(wallet.address)
+        #end
+        if result["bumpNonce"].to_s == "true"
           increment_nonce(wallet.address)
         end
         result

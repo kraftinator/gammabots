@@ -21,22 +21,25 @@ class TradeExecutionService
       provider_url
     )
 
-    puts "******************** result[:nonce]: #{result["nonce"]}"
+    nonce   = result["nonce"]
+    tx_hash = result["txHash"]
+    success = result["success"]
     
-    if result["success"]
-      puts "Swap (buy) successful! Transaction Hash: #{result["txHash"]}"
+    trade = nil
+    if tx_hash.present?
+      puts "Swap (buy) submitted! Tx Hash: #{tx_hash}"
       trade = Trade.create!(
         bot: bot,
         trade_type: :buy,
-        tx_hash: result["txHash"],
-        nonce: result["nonce"],
+        tx_hash: tx_hash,
+        nonce: nonce,
         status: :pending,
         executed_at: Time.current
       )
-      puts "Trade created: #{trade.id}"
+      puts "Trade (buy) created: #{trade.id}"
+    end
 
-      #TradeConfirmationService.confirm_trade(trade, provider_url)
-    else
+    if !success || tx_hash.blank?
       reason = result.dig("error", "reason")
       event_type = "trade_failed"
       BotEvent.create!(
@@ -45,7 +48,8 @@ class TradeExecutionService
         payload: {
           class:            "TradeExecutionService",
           method:           "buy",
-          nonce:            result["nonce"],
+          nonce:            nonce,
+          tx_hash:          tx_hash,
           reason:           reason,
           attempted_amount: bot.current_cycle.quote_token_amount,
           min_amount_out:   min_amount_out,
@@ -59,6 +63,8 @@ class TradeExecutionService
       puts "ERROR: #{result}"
       puts "========================================================"
     end
+
+    trade
   end
 
   def self.sell(bot, base_token_amount, min_amount_out, provider_url)
@@ -66,12 +72,6 @@ class TradeExecutionService
     puts "Calling TradeExecutionService::sell"
     puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, base_token_amount: #{base_token_amount.to_s} min_amount_out: #{min_amount_out.to_s}"
     puts "========================================================"
-    #puts "Token Amount to Sell: #{base_token_amount} #{bot.token_pair.base_token.symbol}"
-
-    # Log the pool data
-    #result = EthersService.get_pool_data(bot.token_pair, provider_url)
-    #max_amount_in = EthersService.get_max_amount_in(bot.token_pair, provider_url)
-    #puts "Max Amount In: #{max_amount_in} #{bot.token_pair.base_token.symbol}"
     
     result = EthersService.sell_with_min_amount(
       bot.user.wallet_for_chain(bot.chain),
@@ -85,24 +85,27 @@ class TradeExecutionService
       provider_url
     )
 
-    puts "******************** result[:nonce]: #{result["nonce"]}"
-
-    if result["success"]
-      puts "Swap (sell) successful! Transaction Hash: #{result["txHash"]}"
+    nonce   = result["nonce"]
+    tx_hash = result["txHash"]
+    success = result["success"]
+    
+    trade = nil
+    if tx_hash.present?
+      puts "Swap (sell) submitted! Transaction Hash: #{tx_hash}"
 
       trade = Trade.create!(
         bot: bot,
         trade_type: :sell,
-        tx_hash: result["txHash"],
-        nonce: result["nonce"],
+        tx_hash: tx_hash,
+        nonce: nonce,
         status: :pending,
         executed_at: Time.current
       )
 
-      puts "Trade created: #{trade.id}"
-      #TradeConfirmationService.confirm_trade(trade, provider_url)
-      trade
-    else
+      puts "Trade (sell) created: #{trade.id}"
+    end
+
+    if !success || tx_hash.blank?
       reason = result.dig("error", "reason")
       event_type = "trade_failed"
       BotEvent.create!(
@@ -111,7 +114,8 @@ class TradeExecutionService
         payload: {
           class:            "TradeExecutionService",
           method:           "sell",
-          nonce:            result["nonce"],
+          nonce:            nonce,
+          tx_hash:          tx_hash,
           reason:           reason,
           attempted_amount: base_token_amount,
           min_amount_out:   min_amount_out,
@@ -124,7 +128,8 @@ class TradeExecutionService
       puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, base_token_amount: #{base_token_amount.to_s} min_amount_out: #{min_amount_out.to_s}"
       puts "ERROR: #{result}"
       puts "========================================================"
-      nil
     end
+
+    trade
   end
 end
