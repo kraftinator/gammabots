@@ -112,10 +112,10 @@ namespace :bots do
     puts "lowest_price_since_last_trade:   #{bot.lowest_price_since_last_trade} #{symbol}"
   end
 
-  desc "Show"
+  desc "Show - OLD2"
   # Usage:
   # rake bots:show["2"]
-  task :show, [:bot_id] => :environment do |t, args|
+  task :show_old_2, [:bot_id] => :environment do |t, args|
     if args[:bot_id].nil?
       raise ArgumentError, "Missing parameters!"
     end
@@ -447,10 +447,10 @@ namespace :bots do
     prices.each { |p| puts "#{p.created_at} - #{p.price.to_s}" }
   end
 
-  desc "Stats"
+  desc "Show"
   # Usage:
-  # rake bots:stats["2"]
-  task :stats, [:bot_id] => :environment do |t, args|
+  # rake bots:show["2"]
+  task :show, [:bot_id] => :environment do |t, args|
     if args[:bot_id].nil?
       raise ArgumentError, "Missing parameters!"
     end
@@ -464,6 +464,7 @@ namespace :bots do
     symbol_quote = bot.token_pair.quote_token.symbol
 
     vars = bot.latest_strategy_variables
+    cycle = bot.current_cycle
 
     puts "\n//////////////////////////////////////////"
     puts "BOT ##{bot.id} (#{bot.token_pair.name})"
@@ -491,6 +492,7 @@ namespace :bots do
     puts "lma (longterm_moving_avg):                  #{vars[:lma].nan? ? '---' : format('%.18f %s', vars[:lma], symbol_quote)}"
     puts ""
     puts "ibp (initial_buy_price):                    #{vars[:ibp].nil? ? '---' : "#{vars[:ibp]} #{symbol_quote}"}"
+    puts "cap (created_at_price):                     #{cycle.created_at_price.nil? ? '---' : "#{cycle.created_at_price} #{symbol_quote}"}"
     puts "lps (lowest_price_since_creation):          #{vars[:lps].nil? ? '---' : "#{vars[:lps]} #{symbol_quote}"}"
     puts "hip (highest_price_since_initial_buy):      #{vars[:hip].nil? ? '---' : "#{vars[:hip]} #{symbol_quote}"}"
     puts "lip (lowest_price_since_initial_buy):       #{vars[:lip].nil? ? '---' : "#{vars[:lip]} #{symbol_quote}"}"
@@ -524,6 +526,7 @@ namespace :bots do
       puts "  Block Number:  #{trade.block_number}"
       puts "  Gas Used:      #{trade.gas_used}"
       puts "  Status:        #{trade.status}"
+      puts "  Cycle:         #{trade.bot_cycle_id}"
       puts ""
     end  
 
