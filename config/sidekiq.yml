@@ -8,3 +8,8 @@
       cron: "*/1 * * * *"
       class: "BotSchedulerJob"
       queue: default
+
+    nonce_monitor_scheduler:
+      cron: "*/5 * * * *"
+      class: "NonceMonitorSchedulerJob"
+      queue: default

@@ -105,11 +105,17 @@ class EthersService
       return { success: false, error: "gas lookup failed: #{e.message}" }
     end
 
-    begin
-      result = call_function('clearNonce', wallet.private_key, nonce_to_clear, provider_url, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
-      result
-    rescue StandardError => e
-      { success: false, error: e.message }   
+    tx_response = with_nonce_lock do
+      begin
+        result = call_function('clearNonce', wallet.private_key, nonce_to_clear, provider_url, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
+        if result['success'] || result['txHash'].present?
+          reset_nonce(wallet.address)
+        end
+        result
+      rescue StandardError => e
+        Rails.logger.error("[EthersService.clear_nonce] failed to clear nonce #{nonce_to_clear}: #{e.message}")
+        { success: false, error: e.message }
+      end
     end
   end
 
@@ -216,9 +222,9 @@ class EthersService
     $redis.del(key)
   end
 
-  def self.get_nonce(address)
+  def self.cached_nonce(address)
     key = "nonce:#{address}"
-    $redis.get(key)
+    $redis.get(key).to_i
   end
 
   def self.quote_meets_minimum(quote_token, base_token, fee_tier, quote_token_amount, quote_token_decimals, base_token_decimals, min_amount_out, provider_url)
