@@ -12,7 +12,7 @@ class Token < ApplicationRecord
   validates :name, presence: true
   validates :contract_address, presence: true, uniqueness: { scope: :chain_id }
   validates :decimals, presence: true, numericality: { only_integer: true }
-  validates :symbol, presence: true #, uniqueness: { scope: :chain_id }
+  validates :symbol, presence: true, uniqueness: { scope: :chain_id }
 
   def self.create_from_contract_address(contract_address, chain)
     provider_url = ProviderUrlService.get_provider_url(chain.name)
