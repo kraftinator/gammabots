@@ -36,6 +36,7 @@ class BotCycle < ApplicationRecord
     {
       cpr: use_cached_price ? token_pair.current_price : token_pair.latest_price,
       ppr: token_pair.previous_price || Float::NAN,
+      rhi: token_pair.rolling_high(moving_avg_minutes) || Float::NAN,
       ibp: initial_buy_price,
       bcn: buy_count,
       scn: sell_count,

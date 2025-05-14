@@ -59,6 +59,17 @@ class TokenPair < ApplicationRecord
     ppr_record ? ppr_record.price : nil
   end
 
+  def rolling_high(minutes = 5)
+    start_time = minutes.minutes.ago
+    prices = token_pair_prices
+               .where('created_at >= ?', start_time)
+               .pluck(:price)
+
+    return nil if prices.empty? || prices.count < minutes
+
+    prices.max
+  end
+
   private
 
   def price_stale?
