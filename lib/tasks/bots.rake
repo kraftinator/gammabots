@@ -232,35 +232,6 @@ namespace :bots do
     end
   end
 
-  desc "List active bots"
-  # Usage:
-  # rake bots:list
-  task :list => :environment do
-    puts "\n== Active Bots (#{Bot.active.count}) =="
-    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
-    puts "-" * 110  # Increased width to match all columns
-    
-    Bot.active.order(created_at: :asc).each do |bot|
-      puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
-        bot.id,
-        #bot.token_pair.try(:name).to_s[0...18],
-        bot.token_pair.base_token.symbol[0...18],
-        #bot.strategy.nft_token_id,
-        "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
-        bot.current_cycle.base_token_amount.round(6).to_s,
-        #bot.current_cycle.sell_count > 0 ? bot.current_cycle.quote_token_amount.round(6).to_s : 0.0,
-        #!bot.first_ cycle? ? bot.current_cycle.quote_token_amount.round(6).to_s : 0.0,
-        bot.current_cycle.quote_token_amount.round(6).to_s,
-        #bot.initial_buy_made? ? bot.current_cycle.initial_buy_amount : bot.current_cycle.quote_token_amount,
-        #bot.initial_amount,
-        bot.initial_buy_amount, 
-        bot.current_cycle.sell_count,
-        #bot.created_at.strftime('%Y-%m-%d %H:%M')
-        "#{time_ago_in_words(bot.created_at) } ago"
-      ]
-    end
-  end
-
   desc "List recently retired bots"
   # Usage:
   # rake bots:list_retired
@@ -539,5 +510,30 @@ namespace :bots do
     end
 
     puts ""
+  end
+
+  desc "List active bots"
+  task :list => :environment do
+    puts "\n== Active Bots (#{Bot.active.count}) =="
+    # %-2s for left-justified “Cycles” and “Sells”
+    puts "%-6s %-14s %-7s %15s %10s %9s %-2s %-2s %-20s" % [
+      "ID", "Token", "Strat", "Tokens", "ETH", "Init", "Cy", "Se", "Created At"
+    ]
+    puts "-" * 105
+
+    Bot.active.order(:created_at).each do |bot|
+      puts "%-6s %-14s %-7s %15s %10s %9.4f %-2d %-2d %-20s" % [
+        bot.id,
+        bot.token_pair.base_token.symbol[0...12],
+        "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
+        bot.current_cycle.base_token_amount.round(6),
+        bot.current_cycle.quote_token_amount.round(6),
+        bot.initial_buy_amount,
+        bot.current_cycle.buy_count,
+        bot.sell_count,
+        bot.created_at.strftime('%Y-%m-%d %H:%M')
+        #"#{time_ago_in_words(bot.created_at)} ago"
+      ]
+    end
   end
 end
