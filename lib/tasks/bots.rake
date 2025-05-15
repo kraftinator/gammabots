@@ -529,7 +529,7 @@ namespace :bots do
         bot.current_cycle.base_token_amount.round(6),
         bot.current_cycle.quote_token_amount.round(6),
         bot.initial_buy_amount,
-        bot.current_cycle.buy_count,
+        bot.bot_cycles.count,
         bot.sell_count,
         bot.created_at.strftime('%Y-%m-%d %H:%M')
         #"#{time_ago_in_words(bot.created_at)} ago"
