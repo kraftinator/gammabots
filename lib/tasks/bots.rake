@@ -516,13 +516,13 @@ namespace :bots do
   task :list => :environment do
     puts "\n== Active Bots (#{Bot.active.count}) =="
     # %-2s for left-justified “Cycles” and “Sells”
-    puts "%-6s %-14s %-8s %15s %10s %9s %-2s %-2s %-20s" % [
-      "ID", "Token", "Strat", "Tokens", "ETH", "Init", "Cy", "Se", "Created At"
+    puts "%-6s %-14s %-8s %15s %10s %9s %-5s %-5s %-20s" % [
+      "ID", "Token", "Strat", "Tokens", "ETH", "Init", "Cycls", "Sells", "Created At"
     ]
     puts "-" * 105
 
     Bot.active.order(:created_at).each do |bot|
-      puts "%-6s %-14s %-8s %15s %10s %9.4f %-2d %-2d %-20s" % [
+      puts "%-6s %-14s %-8s %15s %10s %9.4f %-5d %-5d %-20s" % [
         bot.id,
         bot.token_pair.base_token.symbol[0...12],
         "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
@@ -531,8 +531,9 @@ namespace :bots do
         bot.initial_buy_amount,
         bot.bot_cycles.count,
         bot.sell_count,
-        bot.created_at.strftime('%Y-%m-%d %H:%M')
+        #bot.created_at.strftime('%Y-%m-%d %H:%M')
         #"#{time_ago_in_words(bot.created_at)} ago"
+        "#{time_ago_in_words(bot.last_action_at)} ago"
       ]
     end
   end
