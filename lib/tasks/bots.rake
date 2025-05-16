@@ -112,63 +112,6 @@ namespace :bots do
     puts "lowest_price_since_last_trade:   #{bot.lowest_price_since_last_trade} #{symbol}"
   end
 
-  desc "Show - OLD2"
-  # Usage:
-  # rake bots:show["2"]
-  task :show_old_2, [:bot_id] => :environment do |t, args|
-    if args[:bot_id].nil?
-      raise ArgumentError, "Missing parameters!"
-    end
-
-    bot = Bot.find(args[:bot_id])
-    unless bot
-      raise ArgumentError, "Invalid bot!"
-    end
-
-    symbol = bot.token_pair.quote_token.symbol
-    puts "\nBASIC"
-    puts "-----"
-    puts "id:          #{bot.id.to_s}"
-    puts "user:        #{bot.user.id.to_s}"
-    puts "chain:       #{bot.chain.name}"
-    puts "active:      #{bot.active}"
-    puts "token_pair:  #{bot.token_pair.name}"
-    puts "strategy:    #{bot.strategy.nft_token_id.to_s}"
-    puts "moving_avg:  #{bot.moving_avg_minutes.to_s} minutes"
-    puts ""
-    puts "initial_buy: #{bot.initial_buy_amount} #{symbol}"
-    puts "\nHOLDINGS"
-    puts "---------"
-    puts "base_token_amount:  #{bot.base_token_amount} #{bot.token_pair.base_token.symbol}"
-    puts "quote_token_amount: #{bot.quote_token_amount} #{symbol}"
-    puts "\nSTRATEGY"
-    puts "--------"
-    puts "current_price:                        #{bot.token_pair.current_price.nil? ? '---' : "#{bot.token_pair.current_price} #{symbol}"}"
-    puts "previous_price:                       #{bot.token_pair.previous_price.nil? ? '---' : "#{bot.token_pair.previous_price} #{symbol}"}"
-    puts "current_moving_avg:                   #{bot.token_pair.moving_average(bot.moving_avg_minutes).nil? ? '---' : "#{bot.token_pair.moving_average(bot.moving_avg_minutes)} #{symbol}"}"
-    puts "longterm_moving_avg:                  #{bot.token_pair.moving_average(bot.moving_avg_minutes*2).nil? ? '---' : "#{bot.token_pair.moving_average(bot.moving_avg_minutes*2)} #{symbol}"}"
-    puts ""
-    puts "initial_buy_price:                    #{bot.initial_buy_price.nil? ? '---' : "#{bot.initial_buy_price} #{symbol}"}"
-    puts "created_at_price:                     #{bot.created_at_price.nil? ? '---' : "#{bot.created_at_price} #{symbol}"}"
-    puts "lowest_price_since_creation:          #{bot.lowest_price_since_creation.nil? ? '---' : "#{bot.lowest_price_since_creation} #{symbol}"}"
-    puts "highest_price_since_initial_buy:      #{bot.highest_price_since_initial_buy.nil? ? '---' : "#{bot.highest_price_since_initial_buy} #{symbol}"}"
-    puts "lowest_price_since_initial_buy:       #{bot.lowest_price_since_initial_buy.nil? ? '---' : "#{bot.lowest_price_since_initial_buy} #{symbol}"}"
-    puts "highest_price_since_last_trade:       #{bot.highest_price_since_last_trade.nil? ? '---' : "#{bot.highest_price_since_last_trade} #{symbol}"}"
-    puts "lowest_price_since_last_trade:        #{bot.lowest_price_since_last_trade.nil? ? '---' : "#{bot.lowest_price_since_last_trade} #{symbol}"}"
-    puts "last_sell_price:                      #{bot.last_sell_price.nil? ? '---' : "#{bot.last_sell_price} #{symbol}"}" 
-    puts ""
-    puts "lowest_moving_avg_since_creation:     #{bot.lowest_moving_avg_since_creation.nil? ? '---' : "#{bot.lowest_moving_avg_since_creation} #{symbol}"}"
-    puts "highest_moving_avg_since_initial_buy: #{bot.highest_moving_avg_since_initial_buy.nil? ? '---' : "#{bot.highest_moving_avg_since_initial_buy} #{symbol}"}"
-    puts "lowest_moving_avg_since_initial_buy:  #{bot.lowest_moving_avg_since_initial_buy.nil? ? '---' : "#{bot.lowest_moving_avg_since_initial_buy} #{symbol}"}"
-    puts "highest_moving_avg_since_last_trade:  #{bot.highest_moving_avg_since_last_trade.nil? ? '---' : "#{bot.highest_moving_avg_since_last_trade} #{symbol}"}"
-    puts "lowest_moving_avg_since_last_trade:   #{bot.lowest_moving_avg_since_last_trade.nil? ? '---' : "#{bot.lowest_moving_avg_since_last_trade} #{symbol}"}"
-    puts "\nTRADES"
-    puts "---------"
-    puts "buys:  #{bot.trades.where(trade_type: "buy", status: "completed").count}"
-    puts "sells: #{bot.trades.where(trade_type: "sell", status: "completed").count}"
-    puts ""
-  end
-
   desc "Liquidate"
   # Usage:
   # rake bots:liquidate["2"]
@@ -207,196 +150,32 @@ namespace :bots do
     puts "Deactivated!"
   end
 
-  desc "List active bots - OLD"
-  # Usage:
-  # rake bots:list_old
-  task :list_old => :environment do
-    puts "\n== Active Bots (#{Bot.active.count}) =="
-    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
-    puts "-" * 110  # Increased width to match all columns
-    
-    Bot.active.order(created_at: :asc).each do |bot|
-      puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
-        bot.id,
-        #bot.token_pair.try(:name).to_s[0...18],
-        bot.token_pair.base_token.symbol[0...18],
-        #bot.strategy.nft_token_id,
-        "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
-        bot.base_token_amount.round(6).to_s,
-        bot.sell_count > 0 ? bot.quote_token_amount.round(6).to_s : 0.0,
-        bot.initial_buy_made? ? bot.initial_buy_amount : bot.quote_token_amount,
-        bot.trades.where(trade_type: "sell", status: "completed").count,
-        #bot.created_at.strftime('%Y-%m-%d %H:%M')
-        "#{time_ago_in_words(bot.created_at) } ago"
-      ]
-    end
-  end
-
   desc "List recently retired bots"
-  # Usage:
-  # rake bots:list_retired_old
-  task :list_retired_old => :environment do
-    bots = Bot.inactive.where(created_at: 1.week.ago..Time.current).order(created_at: :asc).select { |bot| bot.trades.where(trade_type: "sell").any? }
-    puts "\n== Retired Bots (#{bots.size}) =="
-    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
-    puts "-" * 110  # Increased width to match all columns
-    
-    bots.each do |bot|
-      puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
-        bot.id,
-        #bot.token_pair.try(:name).to_s[0...18],
-        bot.token_pair.base_token.symbol[0...18],
-        #bot.strategy.nft_token_id,
-        "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
-        bot.base_token_amount.round(6).to_s,
-        bot.sell_count > 0 ? bot.quote_token_amount.round(6).to_s : 0.0,
-        bot.initial_buy_made? ? bot.initial_buy_amount : bot.quote_token_amount,
-        bot.trades.where(trade_type: "sell", status: "completed").count,
-        #bot.created_at.strftime('%Y-%m-%d %H:%M')
-        "#{time_ago_in_words(bot.created_at) } ago"
-      ]
-    end
-  end
-
-    desc "List recently retired bots"
-  # Usage:
-  # rake bots:list_retired
   task :list_retired => :environment do
-    bots = Bot.inactive.where(created_at: 1.week.ago..Time.current).order(created_at: :asc).select { |bot| bot.trades.where(trade_type: "sell").any? }
-    puts "\n== Retired Bots (#{bots.size}) =="
-    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
-    puts "-" * 110  # Increased width to match all columns
-    
-    bots.each do |bot|
-      puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
-        bot.id,
-        #bot.token_pair.try(:name).to_s[0...18],
-        bot.token_pair.base_token.symbol[0...18],
-        #bot.strategy.nft_token_id,
-        "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
-        bot.current_cycle.base_token_amount.round(6).to_s,
-        bot.sell_count > 0 ? bot.current_cycle.quote_token_amount.round(6).to_s : 0.0,
-        bot.initial_buy_made? ? bot.current_cycle.initial_buy_amount : bot.current_cycle.quote_token_amount,
-        bot.current_cycle.sell_count,
-        #bot.created_at.strftime('%Y-%m-%d %H:%M')
-        "#{time_ago_in_words(bot.created_at) } ago"
-      ]
-    end
+        bots = Bot.inactive
+              .joins(:trades)
+              .where(created_at: 1.week.ago..Time.current, trades: { status: "completed" })
+              .distinct
+              .to_a
+              .sort_by(&:last_action_at)
+              .reverse
+        
+        puts "\n== Recently Retired Bots (#{bots.count}) =="
+        list_bots(bots)
   end
 
   desc "List all retired bots"
-  # Usage:
-  # rake bots:list_retired_all
   task :list_retired_all => :environment do
-    bots = Bot.inactive.order(created_at: :asc).select { |bot| bot.trades.where(trade_type: "sell").any? }
-    puts "\n== Retired Bots (#{bots.size}) =="
-    puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
-    puts "-" * 110  # Increased width to match all columns
-    
-    bots.each do |bot|
-      puts "%-6s %-20s %-10s %15s %15s %9.4f %-6s %-20s" % [
-        bot.id,
-        #bot.token_pair.try(:name).to_s[0...18],
-        bot.token_pair.base_token.symbol[0...18],
-        #bot.strategy.nft_token_id,
-        "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
-        bot.base_token_amount.round(6).to_s,
-        bot.sell_count > 0 ? bot.quote_token_amount.round(6).to_s : 0.0,
-        bot.initial_buy_made? ? bot.initial_buy_amount : bot.quote_token_amount,
-        bot.trades.where(trade_type: "sell", status: "completed").count,
-        #bot.created_at.strftime('%Y-%m-%d %H:%M')
-        "#{time_ago_in_words(bot.created_at) } ago"
-      ]
-    end
-  end
+        bots = Bot.inactive
+              .joins(:trades)
+              .where(trades: { status: "completed" })
+              .distinct
+              .to_a
+              .sort_by(&:last_action_at)
+              .reverse
 
-  desc "Stats - OLD"
-  # Usage:
-  # rake bots:stats_old["2"]
-  task :stats_old, [:bot_id] => :environment do |t, args|
-    if args[:bot_id].nil?
-      raise ArgumentError, "Missing parameters!"
-    end
-
-    bot = Bot.find(args[:bot_id])
-    unless bot
-      raise ArgumentError, "Invalid bot!"
-    end
-
-    symbol_base  = bot.token_pair.base_token.symbol
-    symbol_quote = bot.token_pair.quote_token.symbol
-
-    vars = bot.strategy_variables(use_cached_price: true)
-
-    puts "\n//////////////////////////////////////////"
-    puts "BOT ##{bot.id} (#{bot.token_pair.name})"
-    puts "//////////////////////////////////////////"
-
-    puts "\nHOLDINGS"
-    puts "---------"
-    puts "initial_buy_amount:  #{bot.initial_buy_amount} #{symbol_quote}"
-    puts "base_token_amount:   #{bot.base_token_amount} #{symbol_base}"
-    puts "quote_token_amount:  #{bot.quote_token_amount} #{symbol_quote}"
-
-    puts "\nSTRATEGY VARIABLES"
-    puts "---------"
-    puts "bta (base_token_amount):                    #{vars[:bta]} #{bot.token_pair.base_token.symbol}"
-    puts "bcn (buy_count):                            #{vars[:bcn]}"
-    puts "scn (sell_count):                           #{vars[:scn]}"
-    puts "mam (moving_avg_minutes):                   #{vars[:mam]}"
-    puts ""
-    puts "vst (short_term_volatility):                #{vars[:vst].nan? ? '---' : format('%.5f', vars[:vst])}"
-    puts "vlt (long_term_volatility):                 #{vars[:vlt].nan? ? '---' : format('%.5f', vars[:vlt])}"
-    puts ""
-    puts "cpr (current_price):                        #{vars[:cpr].nil? ? '---' : "#{vars[:cpr]} #{symbol_quote}"}"
-    puts "ppr (previous_price):                       #{vars[:ppr].nil? ? '---' : "#{vars[:ppr]} #{symbol_quote}"}"
-    puts "cma (current_moving_avg):                   #{vars[:cma].nan? ? '---' : format('%.18f %s', vars[:cma], symbol_quote)}"
-    puts "lma (longterm_moving_avg):                  #{vars[:lma].nan? ? '---' : format('%.18f %s', vars[:lma], symbol_quote)}"
-    puts ""
-    puts "ibp (initial_buy_price):                    #{vars[:ibp].nil? ? '---' : "#{vars[:ibp]} #{symbol_quote}"}"
-    puts "lps (lowest_price_since_creation):          #{vars[:lps].nil? ? '---' : "#{vars[:lps]} #{symbol_quote}"}"
-    puts "hip (highest_price_since_initial_buy):      #{vars[:hip].nil? ? '---' : "#{vars[:hip]} #{symbol_quote}"}"
-    puts "lip (lowest_price_since_initial_buy):       #{vars[:lip].nil? ? '---' : "#{vars[:lip]} #{symbol_quote}"}"
-    puts "hlt (highest_price_since_last_trade):       #{vars[:hlt].nil? ? '---' : "#{vars[:hlt]} #{symbol_quote}"}"
-    puts "llt (lowest_price_since_last_trade):        #{vars[:llt].nil? ? '---' : "#{vars[:llt]} #{symbol_quote}"}"  
-    puts ""
-    puts "lmc (lowest_moving_avg_since_creation):     #{vars[:lmc].nan? ? '---' : "#{vars[:lmc]} #{symbol_quote}"}"  
-    puts "lmi (lowest_moving_avg_since_initial_buy):  #{vars[:lmi].nil? ? '---' : "#{vars[:lmi]} #{symbol_quote}"}"
-    puts "hma (highest_moving_avg_since_initial_buy): #{vars[:hma].nil? ? '---' : "#{vars[:hma]} #{symbol_quote}"}"
-    puts "lmt (lowest_moving_avg_since_last_trade):   #{vars[:lmt].nil? ? '---' : "#{vars[:lmt]} #{symbol_quote}"}"
-    puts "hmt (highest_moving_avg_since_last_trade):  #{vars[:hmt].nil? ? '---' : "#{vars[:hmt]} #{symbol_quote}"}"
-    puts ""
-    puts "lsp (last_sell_price):                      #{vars[:lsp].nil? ? '---' : "#{vars[:lsp]} #{symbol_quote}"}"
-    puts ""
-    puts "crt (created_at):                           #{vars[:crt]}"
-    puts "lba (last_buy_at):                          #{vars[:lba].nil? ? '---' : "#{vars[:lba]}"}"
-    puts "lta (last_trade_at):                        #{vars[:lta].nil? ? '---' : "#{vars[:lta]}"}"
-    
-    puts "\nTRADES"
-    puts "---------"
-    bot.trades.order(:id).each do |trade|
-      puts "Trade ##{trade.id} (#{trade.trade_type.upcase}):"
-      puts "  Price:         #{trade.price} #{symbol_quote}"
-      puts "  Amount In:     #{trade.amount_in.nil? ? '---' : "#{trade.amount_in} #{trade.buy? ? symbol_quote : symbol_base}"}"
-      puts "  Amount Out:    #{trade.amount_out.nil? ? '---' : "#{trade.amount_out} #{trade.sell? ? symbol_quote : symbol_base}"}"
-
-      puts "  Executed At:   #{trade.executed_at}"
-      puts "  Confirmed At:  #{trade.confirmed_at || '---'}"
-      puts "  Block Number:  #{trade.block_number}"
-      puts "  Gas Used:      #{trade.gas_used}"
-      puts "  Status:        #{trade.status}"
-      puts ""
-    end  
-
-    strategy = JSON.parse(bot.strategy_json)
-
-    puts "\nSTRATEGY"
-    puts "--------"
-    strategy.each_with_index do |step,index|
-      puts "#{index+1}: #{step}"
-    end
-
-    puts ""
+        puts "\n== All Retired Bots (#{bots.count}) =="
+        list_bots(bots)
   end
 
   # Usage:
@@ -523,27 +302,27 @@ namespace :bots do
               .sort_by(&:last_action_at)
               .reverse
 
+    puts "\n== Active Bots (#{bots.count}) =="
     list_bots(bots)
   end
 
   desc "List all bots"
   task :list_all => :environment do
     bots = Bot.active.to_a.sort_by(&:last_action_at).reverse
+    puts "\n== All Active Bots (#{bots.count}) =="
     list_bots(bots)
   end
 
   private
 
   def list_bots(bots)
-        puts "\n== Active Bots (#{Bot.active.count}) =="
-    # %-2s for left-justified “Cycles” and “Sells”
-    puts "%-6s %-14s %-8s %15s %10s %9s %-5s %-5s %-20s" % [
-      "ID", "Token", "Strat", "Tokens", "ETH", "Init", "Cycls", "Sells", "Last Action At"
+    puts "%-6s %-14s %-8s %15s %10s %9s %7s %6s  %-20s" % [
+      "ID", "Token", "Strat", "Tokens", "ETH", "Init", "Cycles", "Sells", "Last Action At"
     ]
-    puts "-" * 105    
+    puts "-" * 98
 
     bots.each do |bot|
-      puts "%-6s %-14s %-8s %15s %10s %9.4f %-5d %-5d %-20s" % [
+      puts "%-6s %-14s %-8s %15.6f %10.6f %9.4f %7d %6d  %-20s" % [
         bot.id,
         bot.token_pair.base_token.symbol[0...12],
         "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
@@ -551,7 +330,7 @@ namespace :bots do
         bot.current_cycle.quote_token_amount.round(6),
         bot.initial_buy_amount,
         bot.bot_cycles.count,
-        bot.sell_count,      
+        bot.sell_count,
         "#{time_ago_in_words(bot.last_action_at)} ago"
       ]
     end
