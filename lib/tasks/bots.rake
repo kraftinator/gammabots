@@ -461,6 +461,7 @@ namespace :bots do
     puts "ppr (previous_price):                       #{vars[:ppr].nil? ? '---' : "#{vars[:ppr]} #{symbol_quote}"}"
     puts "cma (current_moving_avg):                   #{vars[:cma].nan? ? '---' : format('%.18f %s', vars[:cma], symbol_quote)}"
     puts "lma (longterm_moving_avg):                  #{vars[:lma].nan? ? '---' : format('%.18f %s', vars[:lma], symbol_quote)}"
+    puts "rhi (rolling_high):                         #{vars[:rhi].nan? ? '---' : format('%.18f %s', vars[:rhi], symbol_quote)}"
     puts ""
     puts "ibp (initial_buy_price):                    #{vars[:ibp].nil? ? '---' : "#{vars[:ibp]} #{symbol_quote}"}"
     puts "cap (created_at_price):                     #{cycle.created_at_price.nil? ? '---' : "#{cycle.created_at_price} #{symbol_quote}"}"
