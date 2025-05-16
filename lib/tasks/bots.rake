@@ -515,14 +515,34 @@ namespace :bots do
 
   desc "List active bots"
   task :list => :environment do
-    puts "\n== Active Bots (#{Bot.active.count}) =="
+    bots = Bot.active
+              .joins(:trades)
+              .where(trades: { status: "completed" })
+              .distinct
+              .to_a
+              .sort_by(&:last_action_at)
+              .reverse
+
+    list_bots(bots)
+  end
+
+  desc "List all bots"
+  task :list_all => :environment do
+    bots = Bot.active.to_a.sort_by(&:last_action_at).reverse
+    list_bots(bots)
+  end
+
+  private
+
+  def list_bots(bots)
+        puts "\n== Active Bots (#{Bot.active.count}) =="
     # %-2s for left-justified “Cycles” and “Sells”
     puts "%-6s %-14s %-8s %15s %10s %9s %-5s %-5s %-20s" % [
-      "ID", "Token", "Strat", "Tokens", "ETH", "Init", "Cycls", "Sells", "Created At"
+      "ID", "Token", "Strat", "Tokens", "ETH", "Init", "Cycls", "Sells", "Last Action At"
     ]
-    puts "-" * 105
+    puts "-" * 105    
 
-    Bot.active.order(:created_at).each do |bot|
+    bots.each do |bot|
       puts "%-6s %-14s %-8s %15s %10s %9.4f %-5d %-5d %-20s" % [
         bot.id,
         bot.token_pair.base_token.symbol[0...12],
@@ -531,9 +551,7 @@ namespace :bots do
         bot.current_cycle.quote_token_amount.round(6),
         bot.initial_buy_amount,
         bot.bot_cycles.count,
-        bot.sell_count,
-        #bot.created_at.strftime('%Y-%m-%d %H:%M')
-        #"#{time_ago_in_words(bot.created_at)} ago"
+        bot.sell_count,      
         "#{time_ago_in_words(bot.last_action_at)} ago"
       ]
     end
