@@ -234,8 +234,8 @@ namespace :bots do
 
   desc "List recently retired bots"
   # Usage:
-  # rake bots:list_retired
-  task :list_retired => :environment do
+  # rake bots:list_retired_old
+  task :list_retired_old => :environment do
     bots = Bot.inactive.where(created_at: 1.week.ago..Time.current).order(created_at: :asc).select { |bot| bot.trades.where(trade_type: "sell").any? }
     puts "\n== Retired Bots (#{bots.size}) =="
     puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
@@ -260,8 +260,8 @@ namespace :bots do
 
     desc "List recently retired bots"
   # Usage:
-  # rake bots:list_retired_new
-  task :list_retired_new => :environment do
+  # rake bots:list_retired
+  task :list_retired => :environment do
     bots = Bot.inactive.where(created_at: 1.week.ago..Time.current).order(created_at: :asc).select { |bot| bot.trades.where(trade_type: "sell").any? }
     puts "\n== Retired Bots (#{bots.size}) =="
     puts "%-6s %-20s %-10s %15s %15s %9s %-6s %-20s" % ["ID", "Token", "Strategy", "Tokens", "Sold", "Initial", "Sells", "Created At"]
