@@ -27,7 +27,7 @@ class TradeConfirmationService
           message:     e.message
         }
       )
-      trade.update!(status: :failed)
+      trade.update!(status: :failed, price: trade.token_pair.current_price)
       return
     end
 
@@ -36,7 +36,7 @@ class TradeConfirmationService
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
     unless valid_transaction?(transaction_receipt, amount_in, amount_out)
-      update_trade(trade, amount_in, amount_out, nil, transaction_receipt, :failed)
+      update_trade(trade, amount_in, amount_out, trade.token_pair.current_price, transaction_receipt, :failed)
       return
     end
 
@@ -64,7 +64,7 @@ class TradeConfirmationService
           message:     e.message
         }
       )
-      trade.update!(status: :failed)
+      trade.update!(status: :failed, price: trade.token_pair.current_price)
       return
     end
 
@@ -73,7 +73,7 @@ class TradeConfirmationService
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
     unless valid_transaction?(transaction_receipt, amount_in, amount_out)
-      update_trade(trade, amount_in, amount_out, nil, transaction_receipt, :failed)
+      update_trade(trade, amount_in, amount_out, trade.token_pair.current_price, transaction_receipt, :failed)
       return
     end
 
