@@ -26,6 +26,7 @@ class TokenPair < ApplicationRecord
     current_price
   end
 
+=begin
   def moving_average(minutes = 5)
     # Get prices recorded within the specified time window
     start_time = minutes.minutes.ago
@@ -40,6 +41,28 @@ class TokenPair < ApplicationRecord
     average = total / recent_prices.count
     
     return average
+  end
+=end
+
+  # Simple Moving Average over the past `minutes` minutes,
+  # aggregating multiple ticks per minute via averaging
+  def moving_average(minutes = 5)
+    # Define window to include the current minute and the previous minutes
+    start_time = minutes.minutes.ago
+
+    # Bucket ticks by minute and compute average price per bucket
+    avg_prices = token_pair_prices
+      .where('created_at >= ? AND created_at <= ?', start_time, Time.current)
+      .group(Arel.sql("date_trunc('minute', created_at)"))
+      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
+      .limit(minutes)             # take the latest `minutes` buckets
+      .pluck(Arel.sql("AVG(price)"))
+
+    # Ensure we have a full set of minutes
+    return nil if avg_prices.size < minutes
+
+    # Calculate the average of the minute-averages
+    avg_prices.sum(0.0) / avg_prices.size
   end
 
   def volatility(minutes = 5)
@@ -69,7 +92,7 @@ class TokenPair < ApplicationRecord
 
    # prices.max
   #end
-
+=begin
   # Highest price over the past `minutes` minutes (rolling high), excluding the latest price
   def rolling_high(minutes = 5)
     start_time = minutes.minutes.ago
@@ -83,6 +106,28 @@ class TokenPair < ApplicationRecord
     return nil if recent.empty? || recent.count < minutes
 
     recent.max
+  end
+=end
+
+  # Highest average price over the past `minutes` minutes (rolling high)
+  # aggregates multiple ticks per minute into one bar via averaging
+  def rolling_high(minutes = 5)
+    # Expand window by 1 to include the current minute bucket before dropping it
+    start_time = (minutes + 1).minutes.ago
+
+    # Bucket ticks by minute and compute average price per bucket
+    avg_prices = token_pair_prices
+      .where('created_at >= ? AND created_at < ?', start_time, Time.current)
+      .group(Arel.sql("date_trunc('minute', created_at)"))
+      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
+      .offset(1)                  # skip the current minute bucket
+      .limit(minutes)             # take the previous `minutes` buckets
+      .pluck(Arel.sql("AVG(price)"))
+
+    # Ensure we have a full set of minutes before calculating
+    return nil if avg_prices.size < minutes
+
+    avg_prices.max
   end
 
   private
