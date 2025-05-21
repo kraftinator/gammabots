@@ -141,6 +141,22 @@ class Bot < ApplicationRecord
     trade ? trade.executed_at : created_at
   end
 
+  def current_value
+    total_value = current_cycle.base_token_amount * token_pair.current_price
+    total_value += current_cycle.quote_token_amount
+    total_value
+  end
+
+  def profit_percentage
+    # guard against divide-by-zero
+    return 0.0 if initial_buy_amount.to_f.zero?
+
+    # ((current – initial) / initial) × 100, rounded to 2 decimal places
+    change    = current_value - initial_buy_amount.to_f
+    percent   = change / initial_buy_amount.to_f * 100
+    percent.round(2)
+  end
+
   private
 
   def process_initial_buy(trade)

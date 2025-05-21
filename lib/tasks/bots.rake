@@ -150,7 +150,7 @@ namespace :bots do
     puts "Deactivated!"
   end
 
-    desc "Activate"
+  desc "Activate"
   # Usage:
   # rake bots:Activate["2"]
   task :activate, [:bot_id] => :environment do |t, args|
@@ -168,31 +168,54 @@ namespace :bots do
   end
 
   desc "List recently retired bots"
-  task :list_retired => :environment do
-        bots = Bot.inactive
+  task :list_retired, [:sort_by] => :environment do |t, args|
+    # default to sorting by last action
+    args.with_defaults(sort_by: 'last_action')
+    sort_key = args[:sort_by]
+
+    bots = Bot.inactive
               .joins(:trades)
-              .where(created_at: 1.week.ago..Time.current, trades: { status: "completed" })
+              .where(
+                created_at: 1.week.ago..Time.current,
+                trades:      { status: 'completed' }
+              )
               .distinct
               .to_a
-              .sort_by(&:last_action_at)
-              .reverse
-        
-        puts "\n== Recently Retired Bots (#{bots.count}) =="
-        list_bots(bots)
+
+    bots = case sort_key
+           when 'profit'
+             bots.sort_by(&:profit_percentage).reverse
+           else
+             bots.sort_by(&:last_action_at).reverse
+           end
+
+    label = sort_key == 'profit' ? 'profit %' : 'last action'
+    puts "\n== Recently Retired Bots (#{bots.count}) — sorted by #{label} =="
+    list_bots(bots)
   end
 
   desc "List all retired bots"
-  task :list_retired_all => :environment do
-        bots = Bot.inactive
+  task :list_retired_all, [:sort_by] => :environment do |t, args|
+    # default to sorting by last action
+    args.with_defaults(sort_by: 'last_action')
+    sort_key = args[:sort_by]
+
+    bots = Bot.inactive
               .joins(:trades)
-              .where(trades: { status: "completed" })
+              .where(trades: { status: 'completed' })
               .distinct
               .to_a
-              .sort_by(&:last_action_at)
-              .reverse
 
-        puts "\n== All Retired Bots (#{bots.count}) =="
-        list_bots(bots)
+    bots = case sort_key
+           when 'profit'
+             bots.sort_by(&:profit_percentage).reverse
+           else
+             bots.sort_by(&:last_action_at).reverse
+           end
+
+    label = sort_key == 'profit' ? 'profit %' : 'last action'
+    puts "\n== All Retired Bots (#{bots.count}) — sorted by #{label} =="
+    list_bots(bots)
   end
 
   # Usage:
@@ -239,7 +262,7 @@ namespace :bots do
 
     puts "\nHOLDINGS"
     puts "---------"
-    puts "initial_buy_amount:  #{bot.latest_cycle.initial_buy_amount} #{symbol_quote}"
+    puts "initial_buy_amount:  #{bot.initial_buy_amount} #{symbol_quote}"
     puts "base_token_amount:   #{bot.latest_cycle.base_token_amount} #{symbol_base}"
     puts "quote_token_amount:  #{bot.latest_cycle.quote_token_amount} #{symbol_quote}"
 
@@ -310,7 +333,7 @@ namespace :bots do
   end
 
   desc "List active bots"
-  task :list => :environment do
+  task :list2 => :environment do
     bots = Bot.active
               .joins(:trades)
               .where(trades: { status: "completed" })
@@ -320,6 +343,30 @@ namespace :bots do
               .reverse
 
     puts "\n== Active Bots (#{bots.count}) =="
+    list_bots(bots)
+  end
+
+  desc "List active bots; pass 'profit' to sort by profit percentage"
+  task :list, [:sort_by] => :environment do |t, args|
+    # default to last_action if no arg given
+    args.with_defaults(sort_by: 'last_action')
+    sort_key = args[:sort_by]
+
+    bots = Bot.active
+              .joins(:trades)
+              .where(trades: { status: 'completed' })
+              .distinct
+              .to_a
+
+    bots = case sort_key
+           when 'profit'
+             bots.sort_by(&:profit_percentage).reverse
+           else
+             bots.sort_by(&:last_action_at).reverse
+           end
+
+    header_label = sort_key == 'profit' ? 'profit %' : 'last action'
+    puts "\n== Active Bots (#{bots.count}) — sorted by #{header_label} =="
     list_bots(bots)
   end
 
@@ -333,19 +380,35 @@ namespace :bots do
   private
 
   def list_bots(bots)
-    puts "%-6s %-14s %-8s %15s %10s %9s %7s %6s  %-20s" % [
-      "ID", "Token", "Strat", "Tokens", "ETH", "Init", "Cycles", "Sells", "Last Action At"
+    #    ID     Token           Strat          Tokens            ETH       Init      Value   Profit%  Cycles Sells  Last Action At
+    header_fmt = "%-6s %-14s %-8s %15s %10s %9s %10s %9s %7s %6s  %-20s"
+    row_fmt    = "%-6s %-14s %-8s %15.6f %10.6f %9.4f %10.6f %+9.2f %7d %6d  %-20s"
+
+    puts header_fmt % [
+      "ID",
+      "Token",
+      "Strat",
+      "Tokens",
+      "ETH",
+      "Init",
+      "Value",
+      "Profit%",
+      "Cycles",
+      "Sells",
+      "Last Action At"
     ]
-    puts "-" * 98
+    puts "-" * 114
 
     bots.each do |bot|
-      puts "%-6s %-14s %-8s %15.6f %10.6f %9.4f %7d %6d  %-20s" % [
+      puts row_fmt % [
         bot.id,
         bot.token_pair.base_token.symbol[0...12],
         "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
         bot.current_cycle.base_token_amount.round(6),
         bot.current_cycle.quote_token_amount.round(6),
         bot.initial_buy_amount,
+        bot.current_value,
+        bot.profit_percentage,
         bot.bot_cycles.count,
         bot.sell_count,
         "#{time_ago_in_words(bot.last_action_at)} ago"
