@@ -56,7 +56,7 @@ class Bot < ApplicationRecord
   end
 
   def liquidate
-    trade = TradeExecutionService.sell(self, current_cycle.base_token_amount, 0, provider_url)
+    trade = TradeExecutionService.sell(current_cycle.strategy_variables.merge({ step: 0 }), current_cycle.base_token_amount, 0)
     deactivate if trade
     trade
   end
