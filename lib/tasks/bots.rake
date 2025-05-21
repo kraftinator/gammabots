@@ -382,7 +382,7 @@ namespace :bots do
   def list_bots(bots)
     #    ID     Token           Strat          Tokens            ETH       Init      Value   Profit%  Cycles Sells  Last Action At
     header_fmt = "%-6s %-14s %-8s %15s %10s %9s %10s %9s %7s %6s  %-20s"
-    row_fmt    = "%-6s %-14s %-8s %15.6f %10.6f %9.4f %10.6f %+9.2f %7d %6d  %-20s"
+    row_fmt    = "%-6s %-14s %-8s %15.5f %10.6f %9.4f %10.6f %+9.2f %7d %6d  %-20s"
 
     puts header_fmt % [
       "ID",
