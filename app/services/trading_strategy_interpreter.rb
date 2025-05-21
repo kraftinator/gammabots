@@ -28,10 +28,9 @@ class TradingStrategyInterpreter
   end
 
   def execute
-    @rules.each do |rule|
+    @rules.each_with_index do |rule, idx|
       if evaluate_condition(rule['c'])
-        execute_actions(rule, rule['a'])
-        # Stop processing further rules after the first match.
+        execute_actions(rule, rule['a'], idx + 1)
         return
       end
     end
@@ -48,13 +47,13 @@ class TradingStrategyInterpreter
   end
 
   # Processes each action in the actions array.
-  def execute_actions(rule, actions)
+  def execute_actions(rule, actions, step)
     swap_executed = false
     actions.each do |action_str|
       case action_str
       when /\Abuy init\z/i
         # For "buy init", execute initial buy
-        result = TradeExecutionService.buy(@variables[:bot], @variables[:bot].min_amount_out_for_initial_buy, @variables[:provider_url])
+        result = TradeExecutionService.buy(@variables.merge({ step: step }))
         swap_executed = true if result.present?
       when /\Asell\s+(.*)\z/i
         amount_expr = Regexp.last_match(1).strip
@@ -67,7 +66,7 @@ class TradingStrategyInterpreter
             safety_factor = 0.95
             min_amount_out = sell_amount * base_value * safety_factor
         end
-        result = TradeExecutionService.sell(@variables[:bot], sell_amount, min_amount_out, @variables[:provider_url])
+        result = TradeExecutionService.sell(@variables.merge({ step: step }), sell_amount, min_amount_out)
         swap_executed = true if result.present?
       when /\Adeact\s+force\z/i
         # Force deactivation regardless of swap status

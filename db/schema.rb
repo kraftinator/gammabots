@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_13_225742) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_21_153538) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -176,6 +176,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_13_225742) do
     t.decimal "amount_in", precision: 30, scale: 18
     t.bigint "bot_cycle_id"
     t.bigint "nonce"
+    t.jsonb "metrics", default: {}
     t.index ["block_number"], name: "index_trades_on_block_number"
     t.index ["bot_cycle_id"], name: "index_trades_on_bot_cycle_id"
     t.index ["bot_id"], name: "index_trades_on_bot_id"

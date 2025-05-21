@@ -1,16 +1,19 @@
 class TradeExecutionService
-  def self.buy(bot, min_amount_out, provider_url)
+  def self.buy(vars)
+    bot = vars[:bot]
+    provider_url = bot.provider_url
+    min_amount_out = bot.min_amount_out_for_initial_buy
+
     puts "========================================================"
     puts "TradeExecutionService::buy"
     puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, min_amount_out: #{min_amount_out.to_s}"
     puts "========================================================"
-
+    
     quote_token_amount = bot.first_cycle? ? 
       bot.current_cycle.quote_token_amount : bot.current_cycle.quote_token_amount * 0.9999999999
 
     result = EthersService.buy_with_min_amount(
       bot.user.wallet_for_chain(bot.chain),
-      #bot.current_cycle.quote_token_amount * 0.9999999999, # Amount to spend
       quote_token_amount, # Amount to spend
       bot.token_pair.quote_token.contract_address, # Token used for buying
       bot.token_pair.base_token.contract_address,  # Token being bought
@@ -34,7 +37,8 @@ class TradeExecutionService
         tx_hash: tx_hash,
         nonce: nonce,
         status: :pending,
-        executed_at: Time.current
+        executed_at: Time.current,
+        metrics: build_metrics(vars)
       )
       puts "Trade (buy) created: #{trade.id}"
     end
@@ -67,7 +71,10 @@ class TradeExecutionService
     trade
   end
 
-  def self.sell(bot, base_token_amount, min_amount_out, provider_url)
+  def self.sell(vars, base_token_amount, min_amount_out)
+    bot = vars[:bot]
+    provider_url = bot.provider_url
+
     puts "========================================================"
     puts "Calling TradeExecutionService::sell"
     puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, base_token_amount: #{base_token_amount.to_s} min_amount_out: #{min_amount_out.to_s}"
@@ -99,7 +106,8 @@ class TradeExecutionService
         tx_hash: tx_hash,
         nonce: nonce,
         status: :pending,
-        executed_at: Time.current
+        executed_at: Time.current,
+        metrics: build_metrics(vars)
       )
 
       puts "Trade (sell) created: #{trade.id}"
@@ -131,5 +139,37 @@ class TradeExecutionService
     end
 
     trade
+  end
+
+  private
+
+  def self.build_metrics(vars)
+    {
+      strategy: vars[:bot].strategy.nft_token_id,
+      step: vars[:step],
+      cpr: vars[:cpr],
+      ppr: vars[:ppr],
+      rhi: vars[:rhi],
+      ibp: vars[:ibp],
+      bcn: vars[:bcn],    
+      scn: vars[:scn],
+      bta: vars[:bta],
+      mam: vars[:mam],
+      vst: vars[:vst],
+      vlt: vars[:vlt],
+      lps: vars[:lps],
+      hip: vars[:hip],
+      hlt: vars[:hlt],
+      lip: vars[:lip],
+      llt: vars[:llt],
+      cma: vars[:cma],
+      lma: vars[:lma],
+      lmc: vars[:lmc],
+      hma: vars[:hma],
+      lmi: vars[:lmi],
+      hmt: vars[:hmt],
+      lmt: vars[:lmt],
+      lsp: vars[:lsp],
+    }
   end
 end

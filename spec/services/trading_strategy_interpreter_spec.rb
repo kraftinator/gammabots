@@ -52,10 +52,10 @@ RSpec.describe TradingStrategyInterpreter do
 
     context 'when no buys have been made yet' do
       it 'executes initial buy' do
-        variables = base_variables.merge(bcn: 0)
+        variables = base_variables.merge(bcn: 0, step: 1)
         
         expect(TradeExecutionService).to receive(:buy).with(
-          bot, 0.95, "https://example.com/api"
+          variables
         ).and_return(true)
         
         interpreter = described_class.new(strategy_json, variables)
@@ -80,10 +80,10 @@ RSpec.describe TradingStrategyInterpreter do
 
     context 'when price has increased at least 10% from lowest' do
       it 'executes initial buy' do
-        variables = base_variables.merge(bcn: 0, cpr: 1.1, lps: 1.0)
+        variables = base_variables.merge(bcn: 0, cpr: 1.1, lps: 1.0, step: 1)
         
         expect(TradeExecutionService).to receive(:buy).with(
-          bot, 0.95, "https://example.com/api"
+          variables
         ).and_return(true)
         
         interpreter = described_class.new(strategy_json, variables)
@@ -108,12 +108,12 @@ RSpec.describe TradingStrategyInterpreter do
 
     context 'when the condition is true' do
       it 'executes a sell' do
-        variables = base_variables.merge(bcn: 1)
+        variables = base_variables.merge(bcn: 1, step: 1)
         
         # Since the condition doesn't have a recognized threshold pattern,
         # the implementation will use 0 as min_amount_out
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.1, 0.095, "https://example.com/api"
+          variables, 0.1, 0.095
         ).and_return(true)
         
         interpreter = described_class.new(strategy_json, variables)
@@ -149,10 +149,10 @@ RSpec.describe TradingStrategyInterpreter do
       let(:strategy_json) { '[{"c":"bcn==0","a":["buy init"]}]' }
       
       it 'executes initial buy' do
-        variables = base_variables.merge(bcn: 0)
+        variables = base_variables.merge(bcn: 0, step: 1)
         
         expect(TradeExecutionService).to receive(:buy).with(
-          bot, 0.95, "https://example.com/api"
+          variables
         ).and_return(true)
         
         interpreter = described_class.new(strategy_json, variables)
@@ -166,10 +166,10 @@ RSpec.describe TradingStrategyInterpreter do
 
     context 'when price drops to 80% of initial buy price' do
       it 'sells all and deactivates the bot' do
-        variables = base_variables.merge(cpr: 0.79, ibp: 1.0, bcn: 1)
+        variables = base_variables.merge(cpr: 0.79, ibp: 1.0, bcn: 1, step: 1)
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 1.0, 0, "https://example.com/api"
+          variables, 1.0, 0
         ).and_return(true)
         expect(bot).to receive(:deactivate)
         
@@ -192,13 +192,13 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when price rises to 120% of initial buy price with no previous sells' do
       it 'sells 25% of base token amount' do
-        variables = base_variables.merge(cpr: 1.21, ibp: 1.0, scn: 0, bcn: 1)
+        variables = base_variables.merge(cpr: 1.21, ibp: 1.0, scn: 0, bcn: 1, step: 2)
         
         # Using the new calculation method: min_amount_out = sell_amount * cpr * 0.95
         expected_min_amount_out = 0.25 * 1.21 * 0.95
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.25, expected_min_amount_out, "https://example.com/api"
+          variables, 0.25, expected_min_amount_out
         )
         expect(bot).not_to receive(:update!)
         
@@ -209,13 +209,13 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when price rises to 150% of initial buy price with one previous sell' do
       it 'sells 25% of base token amount' do
-        variables = base_variables.merge(cpr: 1.51, ibp: 1.0, scn: 1, bcn: 1)
+        variables = base_variables.merge(cpr: 1.51, ibp: 1.0, scn: 1, bcn: 1, step: 3)
         
         # Using the new calculation method: min_amount_out = sell_amount * cpr * 0.95
         expected_min_amount_out = 0.25 * 1.51 * 0.95
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.25, expected_min_amount_out, "https://example.com/api"
+          variables, 0.25, expected_min_amount_out
         )
         
         interpreter = described_class.new(strategy_json, variables)
@@ -225,10 +225,10 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when price drops to 80% of highest price with two previous sells' do
       it 'sells all and deactivates the bot' do
-        variables = base_variables.merge(cpr: 1.6, hip: 2.0, scn: 2, bcn: 1)
+        variables = base_variables.merge(cpr: 1.6, hip: 2.0, scn: 2, bcn: 1, step: 4)
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 1.0, 0, "https://example.com/api"
+          variables, 1.0, 0
         ).and_return(true)
         expect(bot).to receive(:deactivate)
         
@@ -255,10 +255,10 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when price drops to 80% of initial buy price' do
       it 'sells all and deactivates the bot' do
-        variables = base_variables.merge(cpr: 0.79, ibp: 1.0, bcn: 1)
+        variables = base_variables.merge(cpr: 0.79, ibp: 1.0, bcn: 1, step: 1)
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 1.0, 0, "https://example.com/api"
+          variables, 1.0, 0
         ).and_return(true)
         expect(bot).to receive(:deactivate)
         
@@ -269,13 +269,13 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when highest price is 2x initial price and current price drops to 90% of highest with no previous sells' do
       it 'sells 50% of base token amount' do
-        variables = base_variables.merge(cpr: 1.8, ibp: 1.0, hip: 2.0, scn: 0, bcn: 1)
+        variables = base_variables.merge(cpr: 1.8, ibp: 1.0, hip: 2.0, scn: 0, bcn: 1, step: 2)
         
         # Using the new calculation method: min_amount_out = sell_amount * cpr * 0.95
         expected_min_amount_out = 0.5 * 1.8 * 0.95
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.5, expected_min_amount_out, "https://example.com/api"
+          variables, 0.5, expected_min_amount_out
         )
         
         interpreter = described_class.new(strategy_json, variables)
@@ -285,10 +285,10 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when current price drops to 90% of highest price since last trade with previous sells' do
       it 'sells 25% of base token amount' do
-        variables = base_variables.merge(cpr: 1.8, hlt: 2.0, scn: 1, bcn: 1)
+        variables = base_variables.merge(cpr: 1.8, hlt: 2.0, scn: 1, bcn: 1, step: 3)
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.25, 0.4275, "https://example.com/api"
+          variables, 0.25, 0.4275
         )
         
         interpreter = described_class.new(strategy_json, variables)
@@ -314,10 +314,10 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when price drops to 75% of initial buy price' do
       it 'sells all and deactivates the bot' do
-        variables = base_variables.merge(cpr: 0.74, ibp: 1.0, bcn: 1)
+        variables = base_variables.merge(cpr: 0.74, ibp: 1.0, bcn: 1, step: 1)
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 1.0, 0, "https://example.com/api"
+          variables, 1.0, 0
         ).and_return(true)
         expect(bot).to receive(:deactivate)
         
@@ -328,13 +328,13 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when highest price is 2x initial price and current price drops to 90% of highest with no previous sells' do
       it 'sells 50% of base token amount' do
-        variables = base_variables.merge(cpr: 1.8, ibp: 1.0, hip: 2.0, scn: 0, bcn: 1)
+        variables = base_variables.merge(cpr: 1.8, ibp: 1.0, hip: 2.0, scn: 0, bcn: 1, step: 2) 
         
         # Using the new calculation method: min_amount_out = sell_amount * cpr * 0.95
         expected_min_amount_out = 0.5 * 1.8 * 0.95
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.5, expected_min_amount_out, "https://example.com/api"
+          variables, 0.5, expected_min_amount_out
         )
         
         interpreter = described_class.new(strategy_json, variables)
@@ -344,10 +344,10 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when current price drops to 90% of highest price since last trade with one previous sell' do
       it 'sells 25% of base token amount' do
-        variables = base_variables.merge(cpr: 1.8, hlt: 2.0, scn: 1, bcn: 1)
+        variables = base_variables.merge(cpr: 1.8, hlt: 2.0, scn: 1, bcn: 1, step: 3)
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.25, 0.4275, "https://example.com/api"
+          variables, 0.25, 0.4275
         )
         
         interpreter = described_class.new(strategy_json, variables)
@@ -357,13 +357,13 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when price is 1.5x last sell price and 90% of highest since last trade with multiple previous sells' do
       it 'sells 25% of base token amount' do
-        variables = base_variables.merge(cpr: 1.5, lsp: 1.0, hlt: 1.7, scn: 2, bcn: 1)
+        variables = base_variables.merge(cpr: 1.5, lsp: 1.0, hlt: 1.7, scn: 2, bcn: 1, step: 4)
         
         # Using the new calculation method: min_amount_out = sell_amount * cpr * 0.95
         expected_min_amount_out = 0.25 * 1.5 * 0.95
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 0.25, expected_min_amount_out, "https://example.com/api"
+          variables, 0.25, expected_min_amount_out
         )
         
         interpreter = described_class.new(strategy_json, variables)
@@ -373,10 +373,10 @@ RSpec.describe TradingStrategyInterpreter do
     
     context 'when price drops below initial buy price with multiple previous sells' do
       it 'sells all and deactivates the bot' do
-        variables = base_variables.merge(cpr: 0.95, ibp: 1.0, scn: 2, bcn: 1)
+        variables = base_variables.merge(cpr: 0.95, ibp: 1.0, scn: 2, bcn: 1, step: 5)
         
         expect(TradeExecutionService).to receive(:sell).with(
-          bot, 1.0, 0, "https://example.com/api"
+          variables, 1.0, 0
         ).and_return(true)
         expect(bot).to receive(:deactivate)
         
