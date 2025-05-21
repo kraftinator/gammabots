@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_21_153538) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_21_183150) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -57,28 +57,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_21_153538) do
     t.bigint "user_id", null: false
     t.bigint "token_pair_id", null: false
     t.decimal "initial_buy_amount", precision: 30, scale: 18, default: "0.0", null: false
-    t.decimal "base_token_amount", precision: 30, scale: 18, default: "0.0", null: false
-    t.decimal "quote_token_amount", precision: 30, scale: 18, default: "0.0", null: false
     t.boolean "active", default: true, null: false
-    t.datetime "last_traded_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.decimal "initial_buy_price", precision: 30, scale: 18
-    t.decimal "highest_price_since_initial_buy", precision: 30, scale: 18
-    t.decimal "lowest_price_since_initial_buy", precision: 30, scale: 18
-    t.decimal "highest_price_since_last_trade", precision: 30, scale: 18
-    t.decimal "lowest_price_since_last_trade", precision: 30, scale: 18
     t.bigint "strategy_id"
-    t.decimal "lowest_price_since_creation", precision: 30, scale: 18
-    t.decimal "created_at_price", precision: 30, scale: 18
-    t.decimal "lowest_moving_avg_since_creation", precision: 30, scale: 18
-    t.decimal "highest_moving_avg_since_initial_buy", precision: 30, scale: 18
-    t.decimal "lowest_moving_avg_since_initial_buy", precision: 30, scale: 18
-    t.decimal "highest_moving_avg_since_last_trade", precision: 30, scale: 18
-    t.decimal "lowest_moving_avg_since_last_trade", precision: 30, scale: 18
     t.integer "moving_avg_minutes", default: 5, null: false
     t.index ["chain_id"], name: "index_bots_on_chain_id"
-    t.index ["last_traded_at"], name: "index_bots_on_last_traded_at"
     t.index ["strategy_id"], name: "index_bots_on_strategy_id"
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
     t.index ["user_id"], name: "index_bots_on_user_id"

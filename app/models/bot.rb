@@ -10,9 +10,9 @@ class Bot < ApplicationRecord
 
   # Validations
   validates :initial_buy_amount, numericality: { greater_than_or_equal_to: 0 }
-  validates :base_token_amount, numericality: { greater_than_or_equal_to: 0 }
-  validates :quote_token_amount, numericality: { greater_than_or_equal_to: 0 }
-  validates :last_traded_at, presence: true, allow_nil: true
+  #validates :base_token_amount, numericality: { greater_than_or_equal_to: 0 }
+  #validates :quote_token_amount, numericality: { greater_than_or_equal_to: 0 }
+  #validates :last_traded_at, presence: true, allow_nil: true
 
   # Scopes
   scope :active, -> { where(active: true) }
@@ -31,8 +31,6 @@ class Bot < ApplicationRecord
   end
 
   def initial_buy_made?
-    #trades.where(trade_type: "buy").count > 0
-    #initial_buy_amount > 0 && trades.where(trade_type: "buy", status: "completed").count > 0
     current_cycle.initial_buy_made?
   end
 
