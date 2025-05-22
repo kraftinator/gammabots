@@ -30,6 +30,26 @@ class BotCycle < ApplicationRecord
     initial_buy_amount > 0 && trades.where(trade_type: "buy", status: "completed").count > 0
   end
 
+  def open?
+    ended_at.nil?
+  end
+
+  def current_value
+    total_value = base_token_amount * bot.token_pair.current_price
+    total_value += quote_token_amount
+    total_value
+  end
+
+  def profit_percentage
+    # guard against divide-by-zero
+    return 0.0 if initial_buy_amount.to_f.zero?
+
+    # ((current – initial) / initial) × 100, rounded to 2 decimal places
+    change    = current_value - initial_buy_amount.to_f
+    percent   = change / initial_buy_amount.to_f * 100
+    percent.round(2)
+  end
+
   def strategy_variables(use_cached_price: false)
     token_pair = bot.token_pair
     moving_avg_minutes = bot.moving_avg_minutes

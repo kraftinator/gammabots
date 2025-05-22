@@ -332,18 +332,46 @@ namespace :bots do
     puts ""
   end
 
-  desc "List active bots"
-  task :list2 => :environment do
-    bots = Bot.active
-              .joins(:trades)
-              .where(trades: { status: "completed" })
-              .distinct
-              .to_a
-              .sort_by(&:last_action_at)
-              .reverse
+  desc "Cycles"
+  # Usage:
+  #   rake bots:cycles[2]
+  task :cycles, [:bot_id] => :environment do |_t, args|
+    bot_id = args[:bot_id]
+    raise ArgumentError, "Missing bot_id" unless bot_id
 
-    puts "\n== Active Bots (#{bots.count}) =="
-    list_bots(bots)
+    bot = Bot.find_by(id: bot_id)
+    raise ArgumentError, "Invalid bot_id: #{bot_id}" unless bot
+
+    puts "\n== Bot ##{bot.id} - Strategy: #{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes}) =="
+
+    header = "%-6s %-20s %-20s %8s %12s %12s %10s" % [
+      "#", "Started At", "Ended At", "Duration", "ETH In", "ETH Out", "Profit %"
+    ]
+    puts header
+    puts "-" * header.length
+
+    bot.bot_cycles.order(:started_at).each_with_index do |cycle, idx|
+      cycle_num  = idx + 1
+      started_at = cycle.started_at.strftime("%Y-%m-%d %H:%M:%S")
+      ended_at   = cycle.ended_at ? cycle.ended_at.strftime("%Y-%m-%d %H:%M:%S") : "open"
+
+      # duration: ended_at minus started_at, or now minus started_at if still open
+      duration_minutes = (( (cycle.ended_at || Time.current) - cycle.started_at ) / 60).to_i
+
+      eth_in   = cycle.initial_buy_amount.to_f
+      eth_out  = (!cycle.open? && cycle.initial_buy_made?) ? cycle.quote_token_amount.to_f : 0.0
+      profit   = cycle.profit_percentage.to_f
+
+      puts "%-6d %-20s %-20s %8d %12.6f %12.6f %9.2f%%" % [
+        cycle_num,
+        started_at,
+        ended_at,
+        duration_minutes,
+        eth_in,
+        eth_out,
+        profit
+      ]
+    end
   end
 
   desc "List active bots; pass 'profit' to sort by profit percentage"
