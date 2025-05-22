@@ -342,7 +342,7 @@ namespace :bots do
     bot = Bot.find_by(id: bot_id)
     raise ArgumentError, "Invalid bot_id: #{bot_id}" unless bot
 
-    puts "\n== Bot ##{bot.id} - Strategy: #{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes}) =="
+    puts "\n== Cycles for Bot ##{bot.id} - Strategy: #{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes}) =="
 
     header = "%-6s %-20s %-20s %8s %12s %12s %10s" % [
       "#", "Started At", "Ended At", "Duration", "ETH In", "ETH Out", "Profit %"
@@ -403,6 +403,55 @@ namespace :bots do
     bots = Bot.active.to_a.sort_by(&:last_action_at).reverse
     puts "\n== All Active Bots (#{bots.count}) =="
     list_bots(bots)
+  end
+
+  desc "List trades for a bot"
+  # Usage:
+  #   rake bots:trades[<bot_id>]
+  task :trades, [:bot_id] => :environment do |_t, args|
+    bot_id = args[:bot_id]
+    raise ArgumentError, "Missing bot_id" unless bot_id
+
+    bot = Bot.find_by(id: bot_id)
+    raise ArgumentError, "Invalid bot_id: #{bot_id}" unless bot
+
+    trades = bot.trades
+                .where(status: "completed")
+                .order(:executed_at)
+
+    puts "\n== #{trades.count} Trades for Bot ##{bot.id} =="
+
+    header = "%-6s %-6s %-10s %-6s %-20s %18s %18s %18s" % [
+      "#", "Type", "Strategy", "Step", "Executed At",
+      "Price", "Token In", "Token Out"
+    ]
+    puts header
+    puts "-" * header.length
+
+    trades.each_with_index do |trade, idx|
+      metrics = trade.metrics || {}
+      strategy = metrics["strategy"].to_s
+      mam      = metrics["mam"].to_i
+      step     = metrics["step"].to_i
+
+      strategy_str = "#{strategy} (#{mam})"
+      executed_at  = trade.executed_at.strftime("%Y-%m-%d %H:%M:%S")
+      price        = trade.price.to_f
+      in_amt       = trade.amount_in.to_f
+      out_amt      = trade.amount_out.to_f
+
+      puts "%-6d %-6s %-10s %-6d %-20s %18.10f %18.6f %18.6f" % [
+        #idx + 1,
+        trade.id.to_s,
+        trade.trade_type.upcase,
+        strategy_str,
+        step,
+        executed_at,
+        price,
+        in_amt,
+        out_amt
+      ]
+    end
   end
 
   private
