@@ -92,8 +92,8 @@ class BotCycle < ApplicationRecord
       hmt: highest_moving_avg_since_last_trade,
       lmt: lowest_moving_avg_since_last_trade,
       # profitability
-      lcp: previous_cycle&.profit_fraction.to_f || Float::NAN,
-      bpp: bot.profit_fraction.to_f || Float::NAN,
+      lcp: previous_cycle&.profit_fraction.to_f || 0.0,
+      bpp: bot.profit_fraction.to_f || 0.0,
 
       lta: last_trade_at,
       lba: last_buy_at,
