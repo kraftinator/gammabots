@@ -7,7 +7,7 @@ RSpec.describe TradingStrategyInterpreter do
       base_token_amount: 1.0
     )
   end
-  let(:bot) { instance_double("Bot", current_cycle: bot_cycle, update!: true, deactivate: true, id: 1, base_token_amount: 1.0, min_amount_out_for_initial_buy: 0.95) }
+  let(:bot) { instance_double("Bot", current_cycle: bot_cycle, update!: true, deactivate: true, id: 1, min_amount_out_for_initial_buy: 0.95) }
   let(:token_pair) { instance_double("TokenPair", latest_price: 1.0) }
   let(:trades) { instance_double("ActiveRecord::Relation", where: []) }
   

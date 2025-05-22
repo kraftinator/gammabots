@@ -155,6 +155,11 @@ class Bot < ApplicationRecord
     percent.round(2)
   end
 
+  def profit_fraction
+    return 0.0 if initial_buy_amount.to_f.zero?
+    (current_value - initial_buy_amount.to_f) / initial_buy_amount.to_f
+  end
+
   private
 
   def process_initial_buy(trade)

@@ -50,6 +50,18 @@ class BotCycle < ApplicationRecord
     percent.round(2)
   end
 
+  def profit_fraction
+    return 0.0 if initial_buy_amount.to_f.zero?
+    (current_value - initial_buy_amount.to_f) / initial_buy_amount.to_f
+  end
+
+  def previous_cycle
+    bot.bot_cycles
+       .where("created_at < ?", created_at)
+       .order(created_at: :desc)
+       .first
+  end
+
   def strategy_variables(use_cached_price: false)
     token_pair = bot.token_pair
     moving_avg_minutes = bot.moving_avg_minutes
@@ -73,11 +85,15 @@ class BotCycle < ApplicationRecord
       # moving averages
       cma: token_pair.moving_average(moving_avg_minutes) || Float::NAN,
       lma: token_pair.moving_average(moving_avg_minutes*2) || Float::NAN,
+      tma: token_pair.moving_average(moving_avg_minutes*3) || Float::NAN,
       lmc: lowest_moving_avg_since_creation || Float::NAN,
       hma: highest_moving_avg_since_initial_buy,
       lmi: lowest_moving_avg_since_initial_buy,
       hmt: highest_moving_avg_since_last_trade,
       lmt: lowest_moving_avg_since_last_trade,
+      # profitability
+      lcp: previous_cycle&.profit_fraction.to_f || Float::NAN,
+      bpp: bot.profit_fraction.to_f || Float::NAN,
 
       lta: last_trade_at,
       lba: last_buy_at,
