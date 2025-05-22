@@ -51,6 +51,10 @@ class TradingStrategyInterpreter
     swap_executed = false
     actions.each do |action_str|
       case action_str
+      when /\Askip\z/i
+        # intentional no-op: skip this cycle
+        Rails.logger.info "Bot #{@variables[:bot].id}: skipping trades for this cycle"
+        return
       when /\Abuy init\z/i
         # For "buy init", execute initial buy
         result = TradeExecutionService.buy(@variables.merge({ step: step }))
