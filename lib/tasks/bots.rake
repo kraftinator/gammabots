@@ -176,7 +176,8 @@ namespace :bots do
     bots = Bot.inactive
               .joins(:trades)
               .where(
-                created_at: 1.week.ago..Time.current,
+                #created_at: 1.week.ago..Time.current,
+                created_at: 2.days.ago..Time.current,
                 trades:      { status: 'completed' }
               )
               .distinct
@@ -372,6 +373,8 @@ namespace :bots do
         profit
       ]
     end
+
+    list_strategy(bot)
   end
 
   desc "List active bots; pass 'profit' to sort by profit percentage"
@@ -452,6 +455,21 @@ namespace :bots do
         out_amt
       ]
     end
+
+    list_strategy(bot)
+  end
+
+  desc "Show strategy"
+  # Usage:
+  #   rake bots:trades[<bot_id>]
+  task :strategy, [:bot_id] => :environment do |_t, args|
+    bot_id = args[:bot_id]
+    raise ArgumentError, "Missing bot_id" unless bot_id
+
+    bot = Bot.find_by(id: bot_id)
+    raise ArgumentError, "Invalid bot_id: #{bot_id}" unless bot
+
+    list_strategy(bot)
   end
 
   private
@@ -492,4 +510,14 @@ namespace :bots do
       ]
     end
   end
+
+  def list_strategy(bot)
+    strategy = JSON.parse(bot.strategy_json)
+
+    puts "\n== Strategy #{bot.strategy.id.to_s} (#{bot.moving_avg_minutes}) for Bot ##{bot.id} =="
+    puts "-" * 40
+    strategy.each_with_index do |step,index|
+      puts "#{index+1}: #{step}"
+    end
+  end 
 end
