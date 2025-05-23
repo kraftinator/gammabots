@@ -514,7 +514,7 @@ namespace :bots do
   def list_strategy(bot)
     strategy = JSON.parse(bot.strategy_json)
 
-    puts "\n== Strategy #{bot.strategy.id.to_s} (#{bot.moving_avg_minutes}) for Bot ##{bot.id} =="
+    puts "\n== Strategy #{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes}) for Bot ##{bot.id} =="
     puts "-" * 40
     strategy.each_with_index do |step,index|
       puts "#{index+1}: #{step}"
