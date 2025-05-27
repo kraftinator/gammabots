@@ -62,6 +62,14 @@ class BotCycle < ApplicationRecord
        .first
   end
 
+  def second_previous_cycle
+    bot.bot_cycles
+      .where("created_at < ?", created_at)
+      .order(created_at: :desc)
+      .offset(1)
+      .first
+  end
+
   def strategy_variables(use_cached_price: false)
     token_pair = bot.token_pair
     moving_avg_minutes = bot.moving_avg_minutes
@@ -93,6 +101,7 @@ class BotCycle < ApplicationRecord
       lmt: lowest_moving_avg_since_last_trade,
       # profitability
       lcp: previous_cycle&.profit_fraction.to_f || 0.0,
+      scp: second_previous_cycle&.profit_fraction.to_f || 0.0,
       bpp: bot.profit_fraction.to_f || 0.0,
 
       lta: last_trade_at,
