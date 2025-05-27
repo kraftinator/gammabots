@@ -176,8 +176,8 @@ namespace :bots do
     bots = Bot.inactive
               .joins(:trades)
               .where(
-                #created_at: 1.week.ago..Time.current,
-                created_at: 2.days.ago..Time.current,
+                created_at: 1.week.ago..Time.current,
+                #created_at: 2.days.ago..Time.current,
                 trades:      { status: 'completed' }
               )
               .distinct
