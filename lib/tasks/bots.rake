@@ -333,6 +333,69 @@ namespace :bots do
     puts ""
   end
 
+  desc "Current Cycle"
+  # Usage:
+  # rake bots:current_cycle[2]
+  task :current_cycle, [:bot_id] => :environment do |_t, args|
+    bot_id = args[:bot_id]
+    raise ArgumentError, "Missing bot_id" unless bot_id
+
+    bot = Bot.find_by(id: bot_id)
+    raise ArgumentError, "Invalid bot_id: #{bot_id}" unless bot
+
+    symbol_base  = bot.token_pair.base_token.symbol
+    #symbol_quote = bot.token_pair.quote_token.symbol
+    symbol_quote = 'ETH'
+
+    vars = bot.latest_strategy_variables
+    cycle = bot.current_cycle
+
+    puts "\n== Current Cycle for Bot ##{bot.id} - Strategy: #{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes}) =="
+    puts "-" * 75
+
+    puts "bta (base_token_amount):                    #{vars[:bta]} #{bot.token_pair.base_token.symbol}"
+    puts "bcn (buy_count):                            #{vars[:bcn]}"
+    puts "scn (sell_count):                           #{vars[:scn]}"
+    puts "mam (moving_avg_minutes):                   #{vars[:mam]}"
+    puts ""
+    
+    puts "lcp (previous_cycle_profit):                #{vars[:lcp].nil? ? '---' : format('%.5f', vars[:lcp])}"
+    puts "scp (second_previous_cycle_profit):         #{vars[:scp].nil? ? '---' : format('%.5f', vars[:scp])}"
+    puts "bpp (bot_profit):                           #{vars[:bpp].nil? ? '---' : format('%.5f', vars[:bpp])}"
+    puts ""
+    puts "vst (short_term_volatility):                #{vars[:vst].nan? ? '---' : format('%.5f', vars[:vst])}"
+    puts "vlt (long_term_volatility):                 #{vars[:vlt].nan? ? '---' : format('%.5f', vars[:vlt])}"
+    puts ""
+    puts "cpr (current_price):                        #{vars[:cpr].nil? ? '---' : "#{vars[:cpr]} #{symbol_quote}"}"
+    puts "ppr (previous_price):                       #{vars[:ppr].nil? ? '---' : "#{vars[:ppr]} #{symbol_quote}"}"
+    puts "cma (current_moving_avg):                   #{vars[:cma].nan? ? '---' : format('%.18f %s', vars[:cma], symbol_quote)}"
+    puts "lma (longterm_moving_avg):                  #{vars[:lma].nan? ? '---' : format('%.18f %s', vars[:lma], symbol_quote)}"
+    puts "tma (triterm_moving_avg):                   #{vars[:tma].nan? ? '---' : format('%.18f %s', vars[:tma], symbol_quote)}"
+    puts "rhi (rolling_high):                         #{vars[:rhi].nan? ? '---' : format('%.18f %s', vars[:rhi], symbol_quote)}"
+    puts ""
+    puts "ibp (initial_buy_price):                    #{vars[:ibp].nil? ? '---' : "#{vars[:ibp]} #{symbol_quote}"}"
+    puts "cap (created_at_price):                     #{cycle.created_at_price.nil? ? '---' : "#{cycle.created_at_price} #{symbol_quote}"}"
+    puts "lps (lowest_price_since_creation):          #{vars[:lps].nil? ? '---' : "#{vars[:lps]} #{symbol_quote}"}"
+    puts "hip (highest_price_since_initial_buy):      #{vars[:hip].nil? ? '---' : "#{vars[:hip]} #{symbol_quote}"}"
+    puts "lip (lowest_price_since_initial_buy):       #{vars[:lip].nil? ? '---' : "#{vars[:lip]} #{symbol_quote}"}"
+    puts "hlt (highest_price_since_last_trade):       #{vars[:hlt].nil? ? '---' : "#{vars[:hlt]} #{symbol_quote}"}"
+    puts "llt (lowest_price_since_last_trade):        #{vars[:llt].nil? ? '---' : "#{vars[:llt]} #{symbol_quote}"}"  
+    puts ""
+    puts "lmc (lowest_moving_avg_since_creation):     #{vars[:lmc].nan? ? '---' : "#{vars[:lmc]} #{symbol_quote}"}"  
+    puts "lmi (lowest_moving_avg_since_initial_buy):  #{vars[:lmi].nil? ? '---' : "#{vars[:lmi]} #{symbol_quote}"}"
+    puts "hma (highest_moving_avg_since_initial_buy): #{vars[:hma].nil? ? '---' : "#{vars[:hma]} #{symbol_quote}"}"
+    puts "lmt (lowest_moving_avg_since_last_trade):   #{vars[:lmt].nil? ? '---' : "#{vars[:lmt]} #{symbol_quote}"}"
+    puts "hmt (highest_moving_avg_since_last_trade):  #{vars[:hmt].nil? ? '---' : "#{vars[:hmt]} #{symbol_quote}"}"
+    puts ""
+    puts "lsp (last_sell_price):                      #{vars[:lsp].nil? ? '---' : "#{vars[:lsp]} #{symbol_quote}"}"
+    puts ""
+    puts "crt (created_at):                           #{time_ago_in_words(vars[:crt])} ago"
+    puts "lba (last_buy_at):                          #{vars[:lba].nil? ? '---' : "#{time_ago_in_words(vars[:lba])} ago"}"
+    puts "lta (last_trade_at):                        #{vars[:lta].nil? ? '---' : "#{time_ago_in_words(vars[:lta])} ago"}"
+
+    list_strategy(bot)
+  end
+
   desc "Cycles"
   # Usage:
   #   rake bots:cycles[2]
