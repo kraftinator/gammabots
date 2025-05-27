@@ -369,4 +369,38 @@ class EthersService
       provider_url
     )
   end
+
+  def self.send_erc20(wallet, token_address, to_address, amount, decimals, provider_url)
+    begin
+      fees = get_gas_fees(wallet.chain_id, provider_url)
+    rescue => e
+      return { "success" => false, "error" => "gas lookup failed: #{e.message}" }
+    end
+
+    with_nonce_lock do
+      nonce = current_nonce(wallet.address, provider_url)
+      begin
+        result = call_function(
+          'sendErc20',
+          wallet.private_key,
+          token_address,
+          to_address,
+          amount,
+          decimals,
+          provider_url,
+          nonce,
+          fees['maxFeePerGas'],
+          fees['maxPriorityFeePerGas']
+        )
+
+        if result['success'] && result['txHash'].present?
+          increment_nonce(wallet.address)
+        end
+
+        result
+      rescue StandardError => e
+        { "success" => false, "error" => e.message, "nonce" => nonce }
+      end
+    end
+  end
 end

@@ -60,6 +60,7 @@ class Bot < ApplicationRecord
   end
 
   def deactivate
+    take_profit(split: false)
     update!(active: false)
     current_cycle.update!(ended_at: Time.current)
   end
@@ -118,7 +119,6 @@ class Bot < ApplicationRecord
   end
 
   def current_cycle
-    #bot_cycles.find_by(ended_at: nil)
     bot_cycles.order(created_at: :desc).first
   end
 
@@ -212,6 +212,8 @@ class Bot < ApplicationRecord
   end
 
   def process_reset
+    take_profit(split: true)
+
     old_cycle = current_cycle
     old_cycle.update!(ended_at: Time.current)
 
@@ -224,6 +226,44 @@ class Bot < ApplicationRecord
       created_at_price: current_price,
       lowest_price_since_creation: current_price,
       lowest_moving_avg_since_creation: moving_avg
+    )
+  end
+
+  def take_profit(split:)
+    cycle = current_cycle
+    return unless cycle && profit_fraction > 0.10
+
+    # compute raw profit
+    profit = cycle.quote_token_amount - initial_buy_amount
+    amount_to_send = split ? (profit / 2.0) : profit
+
+    puts "amount_to_send: #{amount_to_send.to_s}"
+
+    # perform the on-chain transfer
+    tx = EthersService.send_erc20(
+      user.wallet_for_chain(chain),
+      token_pair.quote_token.contract_address,
+      user.created_by_wallet,
+      amount_to_send,
+      token_pair.quote_token.decimals,
+      provider_url
+    )
+
+    puts "tx: #{tx.inspect}"
+
+    # log the event
+    bot_events.create!(
+      event_type: 'profit_sent',
+      payload: {
+        split: split,
+        sent_amount: amount_to_send,
+        tx_hash: tx['txHash']
+      }
+    )
+
+    # subtract the sent ETH so it's not reinvested
+    cycle.update!(
+      quote_token_amount: cycle.quote_token_amount - amount_to_send
     )
   end
 end
