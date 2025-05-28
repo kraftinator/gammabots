@@ -60,7 +60,7 @@ class Bot < ApplicationRecord
   end
 
   def deactivate
-    take_profit(split: false)
+    take_profit(split: true)
     update!(active: false)
     current_cycle.update!(ended_at: Time.current)
   end
