@@ -59,10 +59,15 @@ class Bot < ApplicationRecord
     trade
   end
 
+  #def deactivate
+  #  take_profit(split: true)
+  #  update!(active: false)
+  #  current_cycle.update!(ended_at: Time.current)
+  #end
+
   def deactivate
-    take_profit(split: true)
     update!(active: false)
-    current_cycle.update!(ended_at: Time.current)
+    reset
   end
 
   def activate
@@ -216,6 +221,8 @@ class Bot < ApplicationRecord
 
     old_cycle = current_cycle
     old_cycle.update!(ended_at: Time.current)
+
+    return unless active
 
     current_price = token_pair.latest_price
     moving_avg = token_pair.moving_average(moving_avg_minutes)
