@@ -157,6 +157,8 @@ class TradeExecutionService
       mam: vars[:mam],
       vst: vars[:vst],
       vlt: vars[:vlt],
+      ssd: vars[:ssd],
+      lsd: vars[:lsd],
       lps: vars[:lps],
       hip: vars[:hip],
       hlt: vars[:hlt],
