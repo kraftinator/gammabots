@@ -482,7 +482,7 @@ namespace :bots do
     raise ArgumentError, "Invalid bot_id: #{bot_id}" unless bot
 
     trades = bot.trades
-                .where(status: "completed")
+                .where(status: %w[completed failed])
                 .order(:executed_at)
 
     puts "\n== #{trades.count} Trades for Bot ##{bot.id} =="
@@ -494,28 +494,29 @@ namespace :bots do
     puts header
     puts "-" * header.length
 
-    trades.each_with_index do |trade, idx|
-      metrics = trade.metrics || {}
-      strategy = metrics["strategy"].to_s
-      mam      = metrics["mam"].to_i
-      step     = metrics["step"].to_i
-
+    trades.each do |trade|
+      metrics      = trade.metrics || {}
+      strategy     = metrics["strategy"].to_s
+      mam          = metrics["mam"].to_i
       strategy_str = "#{strategy} (#{mam})"
-      executed_at  = trade.executed_at.strftime("%Y-%m-%d %H:%M:%S")
-      price        = trade.price.to_f
-      in_amt       = trade.amount_in.to_f
-      out_amt      = trade.amount_out.to_f
 
-      puts "%-6d %-6s %-10s %-6d %-20s %18.10f %18.6f %18.6f" % [
-        #idx + 1,
-        trade.id.to_s,
+      # only show step/in/out for completed trades
+      step_str = trade.status == "completed" ? metrics["step"].to_s : ""
+      in_str   = trade.status == "completed" ? sprintf("%0.6f", trade.amount_in.to_f)  : ""
+      out_str  = trade.status == "completed" ? sprintf("%0.6f", trade.amount_out.to_f) : ""
+
+      executed_at = trade.executed_at.strftime("%Y-%m-%d %H:%M:%S")
+      price       = trade.price.to_f
+
+      puts "%-6d %-6s %-10s %-6s %-20s %18.12f %18s %18s" % [
+        trade.id,
         trade.trade_type.upcase,
         strategy_str,
-        step,
+        step_str,
         executed_at,
         price,
-        in_amt,
-        out_amt
+        in_str,
+        out_str
       ]
     end
 
