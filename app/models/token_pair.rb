@@ -65,7 +65,7 @@ class TokenPair < ApplicationRecord
     avg_prices.sum(0.0) / avg_prices.size
   end
 
-  def volatility(minutes = 5)
+  def volatility_by_range(minutes = 5)
     start_time = minutes.minutes.ago
     prices = token_pair_prices
       .where("created_at >= ?", start_time)
@@ -75,6 +75,31 @@ class TokenPair < ApplicationRecord
     return nil if prices.empty? || prices.count < minutes
 
     (prices.max - prices.min) / prices.min.to_f
+  end
+
+  def volatility_by_std_dev(minutes = 5)
+    start_time = minutes.minutes.ago
+    prices = token_pair_prices
+      .where("created_at >= ?", start_time)
+      .order(created_at: :desc)
+      .pluck(:price)
+
+    # Need at least two prices to compute returns
+    return nil if prices.size < 2
+
+    # 1) compute simple returns between consecutive prices
+    returns = prices.each_cons(2).map do |prev_price, cur_price|
+      (cur_price - prev_price) / prev_price.to_f
+    end
+
+    # 2) mean of returns
+    mean = returns.sum / returns.size.to_f
+
+    # 3) variance (population)
+    variance = returns.reduce(0.0) { |acc, r| acc + (r - mean)**2 } / returns.size.to_f
+
+    # 4) std-dev
+    Math.sqrt(variance)
   end
 
   def previous_price

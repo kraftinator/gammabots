@@ -82,8 +82,8 @@ class BotCycle < ApplicationRecord
       scn: sell_count,
       bta: base_token_amount,
       mam: moving_avg_minutes,
-      vst: token_pair.volatility(moving_avg_minutes) || Float::NAN,
-      vlt: token_pair.volatility(moving_avg_minutes*2) || Float::NAN,
+      vst: token_pair.volatility_by_std_dev(moving_avg_minutes) || Float::NAN,
+      vlt: token_pair.volatility_by_std_dev(moving_avg_minutes*2) || Float::NAN,
       # prices
       lps: lowest_price_since_creation,
       hip: highest_price_since_initial_buy,
