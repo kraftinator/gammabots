@@ -274,6 +274,8 @@ namespace :bots do
     puts "scn (sell_count):                           #{vars[:scn]}"
     puts "mam (moving_avg_minutes):                   #{vars[:mam]}"
     puts ""
+    puts "ssd (short_standard_dev_volatility):        #{vars[:ssd].nan? ? '---' : format('%.5f', vars[:ssd])}"
+    puts "lsd (long_standard_dev_volatility):         #{vars[:lsd].nan? ? '---' : format('%.5f', vars[:lsd])}"
     puts "vst (short_term_volatility):                #{vars[:vst].nan? ? '---' : format('%.5f', vars[:vst])}"
     puts "vlt (long_term_volatility):                 #{vars[:vlt].nan? ? '---' : format('%.5f', vars[:vlt])}"
     puts ""
