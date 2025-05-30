@@ -547,7 +547,7 @@ namespace :bots do
     puts header_fmt % [
       "ID",
       "Token",
-      "Strat",
+      "Strategy",
       "Tokens",
       "ETH",
       "Init",
@@ -560,9 +560,11 @@ namespace :bots do
     puts "-" * 114
 
     bots.each do |bot|
+      token_symbol = bot.token_pair.base_token.symbol.delete("\r\n").strip  
       puts row_fmt % [
         bot.id,
-        bot.token_pair.base_token.symbol[0...12],
+        #bot.token_pair.base_token.symbol[0...12],
+        token_symbol[0...12],
         "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
         bot.current_cycle.base_token_amount.round(6),
         bot.current_cycle.quote_token_amount.round(6),
