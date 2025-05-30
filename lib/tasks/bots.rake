@@ -501,7 +501,8 @@ namespace :bots do
       strategy_str = "#{strategy} (#{mam})"
 
       # only show step/in/out for completed trades
-      step_str = trade.status == "completed" ? metrics["step"].to_s : ""
+      #step_str = trade.status == "completed" ? metrics["step"].to_s : ""
+      step_str = metrics["step"].to_s
       in_str   = trade.status == "completed" ? sprintf("%0.6f", trade.amount_in.to_f)  : ""
       out_str  = trade.status == "completed" ? sprintf("%0.6f", trade.amount_out.to_f) : ""
 
