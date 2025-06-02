@@ -2,6 +2,12 @@ class BotCycle < ApplicationRecord
   belongs_to :bot
   has_many :trades
 
+  def ordinal
+    # Order this bot’s cycles by creation time, pluck their IDs, and find this cycle’s index
+    ids = bot.bot_cycles.order(:created_at).pluck(:id)
+    ids.index(id) + 1
+  end
+
   def buy_count
     trades.where(trade_type: "buy", status: "completed").count
   end

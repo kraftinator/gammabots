@@ -489,8 +489,8 @@ namespace :bots do
 
     puts "\n== #{trades.count} Trades for Bot ##{bot.id} =="
 
-    header = "%-6s %-6s %-10s %-6s %-20s %18s %18s %18s" % [
-      "#", "Type", "Strategy", "Step", "Executed At",
+    header = "%-6s %-6s %-6s %-10s %-6s %-20s %18s %18s %18s" % [
+      "#", "Cycle", "Type", "Strategy", "Step", "Executed At",
       "Price", "Token In", "Token Out"
     ]
     puts header
@@ -502,8 +502,6 @@ namespace :bots do
       mam          = metrics["mam"].to_i
       strategy_str = "#{strategy} (#{mam})"
 
-      # only show step/in/out for completed trades
-      #step_str = trade.status == "completed" ? metrics["step"].to_s : ""
       step_str = metrics["step"].to_s
       in_str   = trade.status == "completed" ? sprintf("%0.6f", trade.amount_in.to_f)  : ""
       out_str  = trade.status == "completed" ? sprintf("%0.6f", trade.amount_out.to_f) : ""
@@ -511,8 +509,9 @@ namespace :bots do
       executed_at = trade.executed_at.strftime("%Y-%m-%d %H:%M:%S")
       price       = trade.price.to_f
 
-      puts "%-6d %-6s %-10s %-6s %-20s %18.12f %18s %18s" % [
+      puts "%-6d %-6d %-6s %-10s %-6s %-20s %18.12f %18s %18s" % [
         trade.id,
+        trade.bot_cycle.ordinal,
         trade.trade_type.upcase,
         strategy_str,
         step_str,
