@@ -129,13 +129,13 @@ class Trade < ApplicationRecord
       lsd = BigDecimal(lsd_str.to_s)
 
       # absolute difference
-      diff = lsd - ssd
-      puts "lsd - ssd: #{diff.to_f.round(6)}"
+      diff = ssd - lsd
+      puts "ssd - lsd: #{diff.to_f.round(6)}"
 
       # percentage difference (relative to lsd), guard against zero
       unless lsd.zero?
         diff_pct = diff / lsd * 100
-        puts "lsd > ssd: #{diff_pct.to_f.round(6)}%"
+        puts "ssd > lsd: #{diff_pct.to_f.round(6)}%"
       end
     end
   end
