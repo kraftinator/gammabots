@@ -107,33 +107,6 @@ class TokenPair < ApplicationRecord
     ppr_record ? ppr_record.price : nil
   end
 
-  #def rolling_high(minutes = 5)
-  #  start_time = minutes.minutes.ago
-  #  prices = token_pair_prices
-  #             .where('created_at >= ?', start_time)
-  #             .pluck(:price)
-
-  #  return nil if prices.empty? || prices.count < minutes
-
-   # prices.max
-  #end
-=begin
-  # Highest price over the past `minutes` minutes (rolling high), excluding the latest price
-  def rolling_high(minutes = 5)
-    start_time = minutes.minutes.ago
-    recent = token_pair_prices
-               .where('created_at >= ?', start_time)
-               .order(created_at: :desc)
-               .offset(1)        # skip the most recent price
-               .limit(minutes)   # take the next `minutes` prices
-               .pluck(:price)
-
-    return nil if recent.empty? || recent.count < minutes
-
-    recent.max
-  end
-=end
-
   # Highest average price over the past `minutes` minutes (rolling high)
   # aggregates multiple ticks per minute into one bar via averaging
   def rolling_high(minutes = 5)
@@ -158,9 +131,16 @@ class TokenPair < ApplicationRecord
   private
 
   def price_stale?
-    #price_updated_at.nil? || price_updated_at < 1.minute.ago
-    price_updated_at.nil? || price_updated_at < 30.seconds.ago
+    return true if price_updated_at.nil?
+    return true if price_updated_at < 30.seconds.ago
+    return true if price_updated_at.beginning_of_minute < Time.current.beginning_of_minute
+
+    false
   end
+
+  #def price_stale?
+  #  price_updated_at.nil? || price_updated_at < 30.seconds.ago
+  #end
 
   def update_price
     TokenPriceService.update_price_for_pair(self)
