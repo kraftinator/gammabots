@@ -45,6 +45,101 @@ class Trade < ApplicationRecord
     amount_out * price
   end
 
+  def analyze_metrics
+    # Extract string values (or nil)
+    cma_str = metrics["cma"]
+    lma_str = metrics["lma"]
+    tma_str = metrics["tma"]
+    cpr_str = metrics["cpr"]
+    ppr_str = metrics["ppr"]
+
+    # cma > lma
+    if cma_str && lma_str
+      cma = BigDecimal(cma_str)
+      lma = BigDecimal(lma_str)
+      unless lma.zero?
+        cma_lma_pct = (cma - lma) / lma * 100
+        puts "cma > lma: #{cma_lma_pct.to_f.round(6)}%"
+      end
+    end
+
+    # lma > tma
+    if lma_str && tma_str
+      lma = BigDecimal(lma_str)
+      tma = BigDecimal(tma_str)
+      unless tma.zero?
+        lma_tma_pct = (lma - tma) / tma * 100
+        puts "lma > tma: #{lma_tma_pct.to_f.round(6)}%"
+      end
+    end
+
+    # cma > tma
+    if cma_str && tma_str
+      cma = BigDecimal(cma_str)
+      tma = BigDecimal(tma_str)
+      unless tma.zero?
+        cma_tma_pct = (cma - tma) / tma * 100
+        puts "cma > tma: #{cma_tma_pct.to_f.round(6)}%"
+      end
+    end
+
+    # cpr > cma
+    if cpr_str && cma_str
+      cpr = BigDecimal(cpr_str)
+      cma = BigDecimal(cma_str)
+      unless cma.zero?
+        cpr_cma_pct = (cpr - cma) / cma * 100
+        puts "cpr > cma: #{cpr_cma_pct.to_f.round(6)}%"
+      end
+    end
+
+    # cpr > ppr
+    if cpr_str && ppr_str
+      cpr = BigDecimal(cpr_str)
+      ppr = BigDecimal(ppr_str)
+      unless ppr.zero?
+        cpr_ppr_pct = (cpr - ppr) / ppr * 100
+        puts "cpr > ppr: #{cpr_ppr_pct.to_f.round(6)}%"
+      end
+    end
+
+    vst_str = metrics["vst"]
+    vlt_str = metrics["vlt"]
+
+    if vst_str && vlt_str
+      vst = BigDecimal(vst_str.to_s)
+      vlt = BigDecimal(vlt_str.to_s)
+
+      # absolute difference
+      diff = vst - vlt
+      puts "vst - vlt: #{diff.to_f.round(6)}"
+
+      # percentage difference (relative to vlt), guard against zero
+      unless vlt.zero?
+        diff_pct = diff / vlt * 100
+        puts "vst > vlt: #{diff_pct.to_f.round(6)}%"
+      end
+    end
+
+    ssd_str = metrics["ssd"]
+    lsd_str = metrics["lsd"]
+
+    if ssd_str && lsd_str
+      ssd = BigDecimal(ssd_str.to_s)
+      lsd = BigDecimal(lsd_str.to_s)
+
+      # absolute difference
+      diff = lsd - ssd
+      puts "lsd - ssd: #{diff.to_f.round(6)}"
+
+      # percentage difference (relative to lsd), guard against zero
+      unless lsd.zero?
+        diff_pct = diff / lsd * 100
+        puts "lsd > ssd: #{diff_pct.to_f.round(6)}%"
+      end
+    end
+  end
+
   private
 
   def schedule_confirmation
