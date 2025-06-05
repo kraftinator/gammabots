@@ -52,6 +52,8 @@ class Trade < ApplicationRecord
     tma_str = metrics["tma"]
     cpr_str = metrics["cpr"]
     ppr_str = metrics["ppr"]
+    lps_str = metrics["lps"]
+    lmc_str = metrics["lmc"]
 
     # cma > lma
     if cma_str && lma_str
@@ -100,6 +102,26 @@ class Trade < ApplicationRecord
       unless ppr.zero?
         cpr_ppr_pct = (cpr - ppr) / ppr * 100
         puts "cpr > ppr: #{cpr_ppr_pct.to_f.round(6)}%"
+      end
+    end
+
+    # cpr > lps
+    if cpr_str && lps_str
+      cpr = BigDecimal(cpr_str)
+      lps = BigDecimal(lps_str)
+      unless lps.zero?
+        cpr_lps_pct = (cpr - lps) / lps * 100
+        puts "cpr > lps: #{cpr_lps_pct.to_f.round(6)}%"
+      end
+    end
+
+    # cma > lmc
+    if cma_str && lmc_str
+      cma = BigDecimal(cma_str)
+      lmc = BigDecimal(lmc_str)
+      unless lmc.zero?
+        cma_lmc_pct = (cma - lmc) / lmc * 100
+        puts "cma > lmc: #{cma_lmc_pct.to_f.round(6)}%"
       end
     end
 
