@@ -70,6 +70,11 @@ class Bot < ApplicationRecord
     reset
   end
 
+  def forced_deactivate
+    update!(active: false)
+    current_cycle.update!(ended_at: Time.current)
+  end
+
   def activate
     update!(active: true)
     current_cycle.update!(ended_at: nil)

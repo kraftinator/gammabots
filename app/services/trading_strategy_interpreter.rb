@@ -75,7 +75,8 @@ class TradingStrategyInterpreter
       when /\Adeact\s+force\z/i
         # Force deactivation regardless of swap status
         puts "Force deactivating bot: #{@variables[:bot].id}"
-        @variables[:bot].deactivate
+        #@variables[:bot].deactivate
+        @variables[:bot].forced_deactivate
         puts "Bot force deactivated"
       when /\Adeact\z/i
         if swap_executed
