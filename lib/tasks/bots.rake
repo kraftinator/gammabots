@@ -273,6 +273,7 @@ namespace :bots do
     puts "bcn (buy_count):                            #{vars[:bcn]}"
     puts "scn (sell_count):                           #{vars[:scn]}"
     puts "mam (moving_avg_minutes):                   #{vars[:mam]}"
+    puts "ndp (price_non_decreasing):                 #{vars[:ndp]}"
     puts ""
     puts "ssd (short_standard_dev_volatility):        #{vars[:ssd].nan? ? '---' : format('%.5f', vars[:ssd])}"
     puts "lsd (long_standard_dev_volatility):         #{vars[:lsd].nan? ? '---' : format('%.5f', vars[:lsd])}"
@@ -360,6 +361,7 @@ namespace :bots do
     puts "bcn (buy_count):                            #{vars[:bcn]}"
     puts "scn (sell_count):                           #{vars[:scn]}"
     puts "mam (moving_avg_minutes):                   #{vars[:mam]}"
+    puts "ndp (price_non_decreasing):                 #{vars[:ndp]}"
     puts ""
     
     puts "lcp (previous_cycle_profit):                #{vars[:lcp].nil? ? '---' : format('%.5f', vars[:lcp])}"

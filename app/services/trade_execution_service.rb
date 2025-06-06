@@ -155,6 +155,7 @@ class TradeExecutionService
       scn: vars[:scn],
       bta: vars[:bta],
       mam: vars[:mam],
+      ndp: vars[:ndp],
       vst: vars[:vst],
       vlt: vars[:vlt],
       ssd: vars[:ssd],
