@@ -128,7 +128,7 @@ class TokenPair < ApplicationRecord
     avg_prices.max
   end
 
-  def price_non_decreasing?(minutes = 5)
+  def price_non_decreasing?(minutes = 5, min_unique_points = 1)
     cutoff = minutes.minutes.ago
     prices = token_pair_prices
               .where("created_at >= ?", cutoff)
@@ -136,7 +136,7 @@ class TokenPair < ApplicationRecord
               .pluck(:price)
     return false if prices.size < minutes
 
-    prices.each_cons(2).all? { |prev, curr| curr >= prev } && prices.uniq.size > 1
+    prices.each_cons(2).all? { |prev, curr| curr >= prev } && prices.uniq.size > min_unique_points
   end
 
   private
