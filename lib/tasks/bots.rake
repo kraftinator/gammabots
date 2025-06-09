@@ -401,15 +401,18 @@ namespace :bots do
     list_strategy(bot)
   end
 
+  # AAK
   desc "Cycles"
   # Usage:
   #   rake bots:cycles[2]
-  task :cycles, [:bot_id] => :environment do |_t, args|
+  task :cycles, [:bot_id, :analyze] => :environment do |_t, args|
     bot_id = args[:bot_id]
     raise ArgumentError, "Missing bot_id" unless bot_id
 
     bot = Bot.find_by(id: bot_id)
     raise ArgumentError, "Invalid bot_id: #{bot_id}" unless bot
+
+    show_analysis = args[:analyze] == 'true' || args[:analyze] == '1'
 
     puts "\n== Cycles for Bot ##{bot.id} - Strategy: #{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes}) =="
 
@@ -440,6 +443,14 @@ namespace :bots do
         eth_out,
         profit
       ]
+
+      if show_analysis
+        trade = cycle.initial_buy_trade
+        if trade
+          puts ""
+          puts "#{trade.analyze_metrics}"
+        end
+      end
     end
 
     list_strategy(bot)

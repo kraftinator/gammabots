@@ -76,6 +76,10 @@ class BotCycle < ApplicationRecord
       .first
   end
 
+  def initial_buy_trade
+    trades.where(trade_type: "buy", status: "completed").order(created_at: :asc).first
+  end
+
   def strategy_variables(use_cached_price: false)
     token_pair = bot.token_pair
     moving_avg_minutes = bot.moving_avg_minutes

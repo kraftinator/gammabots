@@ -130,14 +130,14 @@ class Trade < ApplicationRecord
       ppr = BigDecimal(ppr_str)
       lps = BigDecimal(lps_str)
       if ppr == lps
-        puts "ppr == lps: true"
+        puts "ppr = lps: true"
       else
-        puts "ppr == lps: false"
+        puts "ppr = lps: false"
       end
     end
 
-    vst_str = metrics["vst"]
-    vlt_str = metrics["vlt"]
+    vst_str = metrics["vst"].to_s
+    vlt_str = metrics["vlt"].to_s
 
     if vst_str && vlt_str
       vst = BigDecimal(vst_str.to_s)
@@ -171,7 +171,7 @@ class Trade < ApplicationRecord
         puts "ssd > lsd: #{diff_pct.to_f.round(6)}%"
       end
     end
-
+    
     puts "ssd: #{ssd_str[0..6]}, lsd: #{lsd_str[0..6]}" if ssd_str && lsd_str
     puts "vst: #{vst_str[0..6]}, vlt: #{vlt_str[0..6]}" if vst_str && vlt_str
   end
