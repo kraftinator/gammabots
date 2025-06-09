@@ -172,7 +172,7 @@ class Trade < ApplicationRecord
       end
     end
     
-    puts "ssd: #{ssd_str[0..6]}, lsd: #{lsd_str[0..6]}" if ssd_str && lsd_str
+    puts "ssd: #{ssd_str.to_s[0..6]}, lsd: #{lsd_str.to_s[0..6]}" if ssd_str && lsd_str
     puts "vst: #{vst_str[0..6]}, vlt: #{vlt_str[0..6]}" if vst_str && vlt_str
   end
 
