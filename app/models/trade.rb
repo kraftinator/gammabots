@@ -139,7 +139,7 @@ class Trade < ApplicationRecord
     vst_str = metrics["vst"].to_s
     vlt_str = metrics["vlt"].to_s
 
-    if vst_str && vlt_str
+    if vst_str.present? && vlt_str.present?
       vst = BigDecimal(vst_str.to_s)
       vlt = BigDecimal(vlt_str.to_s)
 
