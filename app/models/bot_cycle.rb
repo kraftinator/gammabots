@@ -1,5 +1,6 @@
 class BotCycle < ApplicationRecord
   belongs_to :bot
+  has_many :profit_withdrawals
   has_many :trades
 
   def ordinal

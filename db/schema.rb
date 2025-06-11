@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_21_183150) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_11_185257) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -62,6 +62,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_21_183150) do
     t.datetime "updated_at", null: false
     t.bigint "strategy_id"
     t.integer "moving_avg_minutes", default: 5, null: false
+    t.decimal "profit_share", precision: 5, scale: 4, default: "0.5", null: false
+    t.decimal "profit_threshold", precision: 5, scale: 4, default: "0.1", null: false
     t.index ["chain_id"], name: "index_bots_on_chain_id"
     t.index ["strategy_id"], name: "index_bots_on_strategy_id"
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
@@ -76,6 +78,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_21_183150) do
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_chains_on_name", unique: true
     t.index ["native_chain_id"], name: "index_chains_on_native_chain_id", unique: true
+  end
+
+  create_table "profit_withdrawals", force: :cascade do |t|
+    t.bigint "bot_id", null: false
+    t.bigint "bot_cycle_id", null: false
+    t.decimal "raw_profit", precision: 30, scale: 18, null: false
+    t.decimal "profit_share", precision: 5, scale: 4, null: false
+    t.decimal "amount_withdrawn", precision: 30, scale: 18, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bot_cycle_id"], name: "index_profit_withdrawals_on_bot_cycle_id"
+    t.index ["bot_id"], name: "index_profit_withdrawals_on_bot_id"
   end
 
   create_table "strategies", force: :cascade do |t|
@@ -199,6 +213,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_21_183150) do
   add_foreign_key "bots", "strategies"
   add_foreign_key "bots", "token_pairs"
   add_foreign_key "bots", "users"
+  add_foreign_key "profit_withdrawals", "bot_cycles"
+  add_foreign_key "profit_withdrawals", "bots"
   add_foreign_key "strategies", "chains"
   add_foreign_key "token_approvals", "tokens"
   add_foreign_key "token_approvals", "wallets"

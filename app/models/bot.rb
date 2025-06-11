@@ -6,13 +6,11 @@ class Bot < ApplicationRecord
   belongs_to :strategy
   has_many :bot_cycles
   has_many :bot_events
+  has_many :profit_withdrawals
   has_many :trades
 
   # Validations
   validates :initial_buy_amount, numericality: { greater_than_or_equal_to: 0 }
-  #validates :base_token_amount, numericality: { greater_than_or_equal_to: 0 }
-  #validates :quote_token_amount, numericality: { greater_than_or_equal_to: 0 }
-  #validates :last_traded_at, presence: true, allow_nil: true
 
   # Scopes
   scope :active, -> { where(active: true) }
@@ -58,12 +56,6 @@ class Bot < ApplicationRecord
     deactivate if trade
     trade
   end
-
-  #def deactivate
-  #  take_profit(split: true)
-  #  update!(active: false)
-  #  current_cycle.update!(ended_at: Time.current)
-  #end
 
   def deactivate
     update!(active: false)
@@ -222,7 +214,7 @@ class Bot < ApplicationRecord
   end
 
   def process_reset
-    take_profit(split: true)
+    take_profit
 
     old_cycle = current_cycle
     old_cycle.update!(ended_at: Time.current)
@@ -241,41 +233,35 @@ class Bot < ApplicationRecord
     )
   end
 
-  def take_profit(split:)
+  def take_profit(full_share: false)
     cycle = current_cycle
-    return unless cycle && profit_fraction > 0.10
+    return unless cycle && profit_fraction > profit_threshold
 
-    # compute raw profit
+    # compute raw profit and share
     profit = cycle.quote_token_amount - initial_buy_amount
-    amount_to_send = split ? (profit / 2.0) : profit
-
-    puts "amount_to_send: #{amount_to_send.to_s}"
+    share = full_share ? BigDecimal("1.0") : BigDecimal(profit_share.to_s)
+    amount = profit * share
 
     # perform the on-chain transfer
     tx = EthersService.send_erc20(
       user.wallet_for_chain(chain),
       token_pair.quote_token.contract_address,
       user.created_by_wallet,
-      amount_to_send,
+      amount,
       token_pair.quote_token.decimals,
       provider_url
     )
 
-    puts "tx: #{tx.inspect}"
-
-    # log the event
-    bot_events.create!(
-      event_type: 'profit_sent',
-      payload: {
-        split: split,
-        sent_amount: amount_to_send,
-        tx_hash: tx['txHash']
-      }
+    # record the withdrawal
+    ProfitWithdrawal.create!(
+      bot:              self,
+      bot_cycle:        cycle,
+      raw_profit:       profit,
+      profit_share:     share,
+      amount_withdrawn: amount
     )
 
-    # subtract the sent ETH so it's not reinvested
-    cycle.update!(
-      quote_token_amount: cycle.quote_token_amount - amount_to_send
-    )
+    # subtract the sent amount so it's not reinvested
+    cycle.update!(quote_token_amount: cycle.quote_token_amount - amount)
   end
 end
