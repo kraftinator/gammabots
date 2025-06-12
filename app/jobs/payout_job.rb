@@ -33,7 +33,7 @@ class PayoutJob < ApplicationJob
     transfer_result = EthersService.send_erc20(
       bot.user.wallet_for_chain(bot.chain),
       token_pair.base_token.contract_address,
-      bot.user.created_by_wallet,
+      bot.user.profit_withdrawal_address,
       amount_out * 0.9999999999,
       token_pair.base_token.decimals,
       provider_url

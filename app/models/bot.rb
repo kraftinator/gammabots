@@ -242,16 +242,6 @@ class Bot < ApplicationRecord
     share = full_share ? BigDecimal("1.0") : BigDecimal(profit_share.to_s)
     amount = profit * share
 
-    # perform the on-chain transfer
-    #tx = EthersService.send_erc20(
-    #  user.wallet_for_chain(chain),
-    #  token_pair.quote_token.contract_address,
-    #  user.created_by_wallet,
-    #  amount,
-    #  token_pair.quote_token.decimals,
-    #  provider_url
-    #)
-
     # record the withdrawal
     withdrawal = ProfitWithdrawal.create!(
       bot:              self,
