@@ -262,7 +262,7 @@ class Bot < ApplicationRecord
 
   def enqueue_infinite_approval
     ApprovalManager.ensure_infinite!(
-      wallet:       user.wallet_for_chain(bot.chain),
+      wallet:       user.wallet_for_chain(chain),
       token:        token_pair.quote_token,
       provider_url: provider_url
     )
