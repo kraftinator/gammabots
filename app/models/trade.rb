@@ -204,12 +204,15 @@ class Trade < ApplicationRecord
   end
 
   def enqueue_infinite_approval
-    return unless buy?
     ApprovalManager.ensure_infinite!(
       wallet:       bot.user.wallet_for_chain(bot.chain),
-      token:        bot.token_pair.base_token,
+      token:        token_to_approve,
       provider_url: bot.provider_url
     )
+  end
+
+  def token_to_approve
+    buy? ? bot.token_pair.quote_token : bot.token_pair.base_token
   end
 
   def assign_bot_cycle
