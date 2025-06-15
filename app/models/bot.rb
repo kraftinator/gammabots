@@ -216,7 +216,7 @@ class Bot < ApplicationRecord
   end
 
   def process_reset
-    take_profit
+    active? ? take_profit : take_profit(full_share: true)
 
     old_cycle = current_cycle
     old_cycle.update!(ended_at: Time.current)
