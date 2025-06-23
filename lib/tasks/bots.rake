@@ -166,7 +166,7 @@ namespace :bots do
     bot.activate
     puts "Activated!"
   end
-
+=begin
   desc "List recently retired bots"
   task :list_retired, [:sort_by] => :environment do |t, args|
     # default to sorting by last action
@@ -192,6 +192,35 @@ namespace :bots do
 
     label = sort_key == 'profit' ? 'profit %' : 'last action'
     puts "\n== Recently Retired Bots (#{bots.count}) — sorted by #{label} =="
+    list_bots(bots)
+  end
+=end
+
+  desc "List recently retired bots"
+  task :list_retired, [:sort_by, :days] => :environment do |t, args|
+    # default to sorting by last action and default days to 7
+    args.with_defaults(sort_by: 'last_action', days: '7')
+    days     = args[:days].to_i
+    sort_key = args[:sort_by]
+
+    bots = Bot.inactive
+              .joins(:trades)
+              .where(
+                created_at: days.days.ago..Time.current,
+                trades:      { status: 'completed' }
+              )
+              .distinct
+              .to_a
+
+    bots = case sort_key
+          when 'profit'
+            bots.sort_by(&:profit_percentage).reverse
+          else
+            bots.sort_by(&:last_action_at).reverse
+          end
+
+    label = sort_key == 'profit' ? 'profit %' : 'last action'
+    puts "\n== Recently Retired Bots (#{bots.count}) — sorted by #{label} (last #{days} days) =="
     list_bots(bots)
   end
 
