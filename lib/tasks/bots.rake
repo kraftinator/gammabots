@@ -166,35 +166,6 @@ namespace :bots do
     bot.activate
     puts "Activated!"
   end
-=begin
-  desc "List recently retired bots"
-  task :list_retired, [:sort_by] => :environment do |t, args|
-    # default to sorting by last action
-    args.with_defaults(sort_by: 'last_action')
-    sort_key = args[:sort_by]
-
-    bots = Bot.inactive
-              .joins(:trades)
-              .where(
-                created_at: 1.week.ago..Time.current,
-                #created_at: 2.days.ago..Time.current,
-                trades:      { status: 'completed' }
-              )
-              .distinct
-              .to_a
-
-    bots = case sort_key
-           when 'profit'
-             bots.sort_by(&:profit_percentage).reverse
-           else
-             bots.sort_by(&:last_action_at).reverse
-           end
-
-    label = sort_key == 'profit' ? 'profit %' : 'last action'
-    puts "\n== Recently Retired Bots (#{bots.count}) — sorted by #{label} =="
-    list_bots(bots)
-  end
-=end
 
   desc "List recently retired bots"
   task :list_retired, [:sort_by, :days] => :environment do |t, args|
@@ -303,6 +274,7 @@ namespace :bots do
     puts "scn (sell_count):                           #{vars[:scn]}"
     puts "mam (moving_avg_minutes):                   #{vars[:mam]}"
     puts "ndp (price_non_decreasing):                 #{vars[:ndp]}"
+    puts "nd2 (price_non_decreasing_2):               #{vars[:nd2]}"
     puts ""
     puts "ssd (short_standard_dev_volatility):        #{vars[:ssd].nan? ? '---' : format('%.5f', vars[:ssd])}"
     puts "lsd (long_standard_dev_volatility):         #{vars[:lsd].nan? ? '---' : format('%.5f', vars[:lsd])}"
