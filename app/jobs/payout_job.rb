@@ -24,7 +24,8 @@ class PayoutJob < ApplicationJob
     )
 
     sleep 5
-    receipt = poll_receipt(result['txHash'], token_pair, 60, provider_url)
+    wallet_address = bot.user.wallet_for_chain(bot.chain).address
+    receipt = poll_receipt(result['txHash'], wallet_address, token_pair, 60, provider_url)
     
     amount_out = BigDecimal(receipt["amountOut"].to_s)
     amount_in = BigDecimal(receipt["amountIn"].to_s)
@@ -44,10 +45,10 @@ class PayoutJob < ApplicationJob
 
   private
 
-  def poll_receipt(tx_hash, token_pair, timeout_seconds, provider_url)
+  def poll_receipt(tx_hash, wallet_address, token_pair, timeout_seconds, provider_url)
     deadline = Time.now + timeout_seconds
     loop do
-      receipt = EthersService.get_transaction_receipt(tx_hash, token_pair, provider_url)
+      receipt = EthersService.get_transaction_receipt(tx_hash, wallet_address, token_pair, provider_url)
       return receipt if receipt
       raise "Timed out waiting for #{tx_hash}" if Time.now > deadline
       sleep 5

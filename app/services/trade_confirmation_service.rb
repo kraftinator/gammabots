@@ -13,7 +13,9 @@ class TradeConfirmationService
 
   def self.confirm_buy_trade(trade, provider_url)
     begin
-      transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash,  trade.bot.token_pair, provider_url)
+      bot = trade.bot
+      wallet_address = bot.user.wallet_for_chain(bot.chain).address
+      transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, wallet_address, bot.token_pair, provider_url)
     rescue StandardError => e
       BotEvent.create!(
         bot: trade.bot,
@@ -50,7 +52,9 @@ class TradeConfirmationService
 
   def self.confirm_sell_trade(trade, provider_url)
     begin
-      transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, trade.bot.token_pair, provider_url)
+      bot = trade.bot
+      wallet_address = bot.user.wallet_for_chain(bot.chain).address
+      transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, wallet_address, bot.token_pair, provider_url)
     rescue StandardError => e
       BotEvent.create!(
         bot: trade.bot,
