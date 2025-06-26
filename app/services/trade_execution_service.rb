@@ -168,6 +168,8 @@ class TradeExecutionService
       llt: vars[:llt],
       cma: vars[:cma],
       lma: vars[:lma],
+      pcm: vars[:pcm],
+      plm: vars[:plm],
       tma: vars[:tma],
       lmc: vars[:lmc],
       hma: vars[:hma],

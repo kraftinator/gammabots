@@ -49,6 +49,8 @@ class Trade < ApplicationRecord
     # Extract string values (or nil)
     cma_str = metrics["cma"]
     lma_str = metrics["lma"]
+    pcm_str = metrics["pcm"]
+    plm_str = metrics["plm"]
     tma_str = metrics["tma"]
     cpr_str = metrics["cpr"]
     ppr_str = metrics["ppr"]
@@ -63,6 +65,16 @@ class Trade < ApplicationRecord
       unless lma.zero?
         cma_lma_pct = (cma - lma) / lma * 100
         puts "cma > lma: #{cma_lma_pct.to_f.round(6)}%"
+      end
+    end
+
+    # pcm > plm
+    if pcm_str && plm_str
+      pcm = BigDecimal(pcm_str)
+      plm = BigDecimal(plm_str)
+      unless plm.zero?
+        pcm_plm_pct = (pcm - plm) / plm * 100
+        puts "pcm > plm: #{pcm_plm_pct.to_f.round(6)}%"
       end
     end
 
