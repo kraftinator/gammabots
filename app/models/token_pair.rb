@@ -27,23 +27,6 @@ class TokenPair < ApplicationRecord
   end
 
 =begin
-  def moving_average(minutes = 5)
-    # Get prices recorded within the specified time window
-    start_time = minutes.minutes.ago
-    recent_prices = token_pair_prices.where('created_at >= ?', start_time).order(created_at: :desc)
-    
-    # Return nil if no prices are available in the time window
-    #return nil if recent_prices.empty? || recent_prices.count < 2
-    return nil if recent_prices.empty? || recent_prices.count < minutes
-    
-    # Calculate the average of the available price values
-    total = recent_prices.sum(&:price)
-    average = total / recent_prices.count
-    
-    return average
-  end
-=end
-
   # Simple Moving Average over the past `minutes` minutes,
   # aggregating multiple ticks per minute via averaging
   def moving_average(minutes = 5)
@@ -62,6 +45,26 @@ class TokenPair < ApplicationRecord
     return nil if avg_prices.size < minutes
 
     # Calculate the average of the minute-averages
+    avg_prices.sum(0.0) / avg_prices.size
+  end
+=end
+
+  # Calculate the simple moving average over a window of `minutes` bars,
+  # optionally shifted back by `shift` minutes (0 = include current bar).
+  def moving_average(minutes = 5, shift: 0)
+    # Determine time window end and start
+    end_time   = shift.minutes.ago
+    start_time = (minutes + shift).minutes.ago
+
+    avg_prices = token_pair_prices
+      .where('created_at >= ? AND created_at <= ?', start_time, end_time)
+      .group(Arel.sql("date_trunc('minute', created_at)"))
+      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
+      .limit(minutes)
+      .pluck(Arel.sql('AVG(price)'))
+
+    return nil if avg_prices.size < minutes
+
     avg_prices.sum(0.0) / avg_prices.size
   end
 
