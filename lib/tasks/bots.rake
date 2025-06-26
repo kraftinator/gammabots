@@ -309,7 +309,7 @@ namespace :bots do
     puts "crt (created_at):                           #{vars[:crt]}"
     puts "lba (last_buy_at):                          #{vars[:lba].nil? ? '---' : "#{vars[:lba]}"}"
     puts "lta (last_trade_at):                        #{vars[:lta].nil? ? '---' : "#{vars[:lta]}"}"
-    
+=begin
     puts "\nTRADES"
     puts "---------"
     bot.trades.order(:id).each do |trade|
@@ -328,7 +328,7 @@ namespace :bots do
       puts "  Cycle:         #{trade.bot_cycle_id}"
       puts ""
     end  
-
+=end
     strategy = JSON.parse(bot.strategy_json)
 
     puts "\nSTRATEGY"
