@@ -365,6 +365,7 @@ namespace :bots do
     puts "scn (sell_count):                           #{vars[:scn]}"
     puts "mam (moving_avg_minutes):                   #{vars[:mam]}"
     puts "ndp (price_non_decreasing):                 #{vars[:ndp]}"
+    puts "nd2 (price_non_decreasing):                 #{vars[:nd2]}"
     puts ""
     
     puts "lcp (previous_cycle_profit):                #{vars[:lcp].nil? ? '---' : format('%.5f', vars[:lcp])}"
@@ -379,6 +380,9 @@ namespace :bots do
     puts "cma (current_moving_avg):                   #{vars[:cma].nan? ? '---' : format('%.18f %s', vars[:cma], symbol_quote)}"
     puts "lma (longterm_moving_avg):                  #{vars[:lma].nan? ? '---' : format('%.18f %s', vars[:lma], symbol_quote)}"
     puts "tma (triterm_moving_avg):                   #{vars[:tma].nan? ? '---' : format('%.18f %s', vars[:tma], symbol_quote)}"
+    puts "pcm (prev_current_moving_avg):              #{vars[:pcm].nan? ? '---' : format('%.18f %s', vars[:pcm], symbol_quote)}"
+    puts "plm (prev_longterm_moving_avg):             #{vars[:plm].nan? ? '---' : format('%.18f %s', vars[:plm], symbol_quote)}"
+
     puts "rhi (rolling_high):                         #{vars[:rhi].nan? ? '---' : format('%.18f %s', vars[:rhi], symbol_quote)}"
     puts ""
     puts "ibp (initial_buy_price):                    #{vars[:ibp].nil? ? '---' : "#{vars[:ibp]} #{symbol_quote}"}"
