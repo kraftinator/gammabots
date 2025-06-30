@@ -38,7 +38,8 @@ class TradeExecutionService
         nonce: nonce,
         status: :pending,
         executed_at: Time.current,
-        metrics: build_metrics(vars)
+        metrics: build_metrics(vars),
+        listed_price: bot.token_pair.current_price
       )
       puts "Trade (buy) created: #{trade.id}"
     end
@@ -107,7 +108,8 @@ class TradeExecutionService
         nonce: nonce,
         status: :pending,
         executed_at: Time.current,
-        metrics: build_metrics(vars)
+        metrics: build_metrics(vars),
+        listed_price: bot.token_pair.current_price
       )
 
       puts "Trade (sell) created: #{trade.id}"

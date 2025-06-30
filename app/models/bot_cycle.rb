@@ -25,6 +25,10 @@ class BotCycle < ApplicationRecord
     trades.where(trade_type: "buy", status: "completed").order(created_at: :desc).first&.created_at
   end
 
+  def listed_buy_price
+    trades.where(trade_type: "buy", status: "completed").order(created_at: :desc).first&.listed_price
+  end
+
   def last_sell_at
     trades.where(trade_type: "sell", status: "completed").order(created_at: :desc).first&.created_at
   end
@@ -89,6 +93,7 @@ class BotCycle < ApplicationRecord
       ppr: token_pair.previous_price || Float::NAN,
       rhi: token_pair.rolling_high(moving_avg_minutes) || Float::NAN,
       ibp: initial_buy_price,
+      lbp: listed_buy_price,
       bcn: buy_count,
       scn: sell_count,
       bta: base_token_amount,
