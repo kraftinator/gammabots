@@ -100,8 +100,9 @@ class BotCycle < ApplicationRecord
       mam: moving_avg_minutes,
       ndp: token_pair.price_non_decreasing?,
       nd2: token_pair.price_non_decreasing?(5, 2),
-      #ndp: token_pair.price_non_decreasing?(moving_avg_minutes),
-      #nd2: token_pair.price_non_decreasing?(moving_avg_minutes, 2),
+      # voume
+      pdi: token_pair.volume_indicator(moving_avg_minutes) || Float::NAN,
+      # volatility
       vst: token_pair.volatility_by_range(moving_avg_minutes) || Float::NAN,
       vlt: token_pair.volatility_by_range(moving_avg_minutes * 2) || Float::NAN,
       ssd: token_pair.volatility_by_std_dev(moving_avg_minutes) || Float::NAN,

@@ -68,6 +68,25 @@ class TokenPair < ApplicationRecord
     avg_prices.sum(0.0) / avg_prices.size
   end
 
+  def volume_indicator(minutes = 5, shift: 0)
+    # Determine time window end and start
+    end_time   = shift.minutes.ago
+    start_time = (minutes + shift).minutes.ago
+
+    # Fetch all prices from the time window
+    prices = token_pair_prices
+      .where('created_at >= ? AND created_at <= ?', start_time, end_time)
+      .pluck(:price)
+
+    # Calculate percentage of unique values
+    unique_count = prices.uniq.size
+    total_count = prices.size
+    
+    return nil if total_count < minutes
+    
+    unique_count.to_f / total_count
+  end
+
   def volatility_by_range(minutes = 5)
     start_time = minutes.minutes.ago
     prices = token_pair_prices
