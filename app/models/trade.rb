@@ -57,7 +57,7 @@ class Trade < ApplicationRecord
     rhi_str = metrics["rhi"]
     lps_str = metrics["lps"]
     lmc_str = metrics["lmc"]
-    pdi_str = metrics["pdi"]
+    pdi_str = metrics["pdi"].to_s
 
     # cma > lma
     if cma_str && lma_str
