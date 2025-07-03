@@ -311,26 +311,7 @@ namespace :bots do
     puts "crt (created_at):                           #{vars[:crt]}"
     puts "lba (last_buy_at):                          #{vars[:lba].nil? ? '---' : "#{vars[:lba]}"}"
     puts "lta (last_trade_at):                        #{vars[:lta].nil? ? '---' : "#{vars[:lta]}"}"
-=begin
-    puts "\nTRADES"
-    puts "---------"
-    bot.trades.order(:id).each do |trade|
-      puts "Trade ##{trade.id} (#{trade.trade_type.upcase}):"
-      puts "  Price:         #{trade.price} #{symbol_quote}"
-      puts "  Amount In:     #{trade.amount_in.nil? ? '---' : "#{trade.amount_in} #{trade.buy? ? symbol_quote : symbol_base}"}"
-      puts "  Amount Out:    #{trade.amount_out.nil? ? '---' : "#{trade.amount_out} #{trade.sell? ? symbol_quote : symbol_base}"}"
 
-      puts "  Executed At:   #{trade.executed_at}"
-      puts "  Confirmed At:  #{trade.confirmed_at || '---'}"
-      puts "  Tx Hash:       #{trade.tx_hash}"
-      puts "  Nonce:         #{trade.nonce}"
-      puts "  Block Number:  #{trade.block_number}"
-      puts "  Gas Used:      #{trade.gas_used}"
-      puts "  Status:        #{trade.status}"
-      puts "  Cycle:         #{trade.bot_cycle_id}"
-      puts ""
-    end  
-=end
     strategy = JSON.parse(bot.strategy_json)
 
     puts "\nSTRATEGY"
