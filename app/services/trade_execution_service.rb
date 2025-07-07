@@ -161,6 +161,7 @@ class TradeExecutionService
       ndp: vars[:ndp],
       nd2: vars[:nd2],
       pdi: vars[:pdi],
+      mom: vars[:mom],
       vst: vars[:vst],
       vlt: vars[:vlt],
       ssd: vars[:ssd],

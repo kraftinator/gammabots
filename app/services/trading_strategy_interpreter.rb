@@ -114,7 +114,7 @@ class TradingStrategyInterpreter
   # Constructs a binding with only the strategy variables.
   def binding_from_variables
     b = binding
-    allowed_keys = [:cpr, :ppr, :rhi, :vst, :vlt, :ssd, :pdi, :lsd, :ibp, :lbp, :scn, :bcn, :bta, :mam, :hip, :hlt, :lip, :llt, :lta, :lba, :lsp, :lps, :crt, :cma, :pcm, :plm, :lmc, :hma, :lma, :hmt, :lmt, :lmi, :tma, :lcp, :scp, :bpp, :ndp, :nd2]
+    allowed_keys = [:cpr, :ppr, :rhi, :vst, :vlt, :ssd, :pdi, :mom, :lsd, :ibp, :lbp, :scn, :bcn, :bta, :mam, :hip, :hlt, :lip, :llt, :lta, :lba, :lsp, :lps, :crt, :cma, :pcm, :plm, :lmc, :hma, :lma, :hmt, :lmt, :lmi, :tma, :lcp, :scp, :bpp, :ndp, :nd2]
     @variables.each do |key, value|
       b.local_variable_set(key.to_sym, value) if allowed_keys.include?(key.to_sym)
     end

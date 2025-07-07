@@ -58,6 +58,7 @@ class Trade < ApplicationRecord
     lps_str = metrics["lps"]
     lmc_str = metrics["lmc"]
     pdi_str = metrics["pdi"].to_s
+    mom_str = metrics["mom"].to_s
 
     # cma > lma
     if cma_str && lma_str
@@ -210,6 +211,7 @@ class Trade < ApplicationRecord
     puts "vst: #{vst_str[0..6]}, vlt: #{vlt_str[0..6]}" if vst_str && vlt_str
 
     puts "pdi: #{pdi_str[0..6]}" if pdi_str
+    puts "mom: #{mom_str[0..6]}" if mom_str
   end
 
   private

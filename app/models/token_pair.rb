@@ -87,6 +87,32 @@ class TokenPair < ApplicationRecord
     unique_count.to_f / total_count
   end
 
+  def momentum_indicator(minutes = 5, shift: 0)
+    # Determine time window end and start
+    end_time   = shift.minutes.ago
+    start_time = (minutes + shift).minutes.ago
+
+    # Fetch all prices from the time window, ordered by creation time
+    prices = token_pair_prices
+      .where('created_at >= ? AND created_at <= ?', start_time, end_time)
+      .order(:created_at)
+      .pluck(:price)
+
+    # Return nil if we don't have enough data points
+    return nil if prices.size < 2
+
+    # Count consecutive increases
+    increasing_count = 0
+    total_comparisons = prices.size - 1
+
+    (1...prices.size).each do |i|
+      increasing_count += 1 if prices[i] > prices[i-1]
+    end
+
+    # Return the ratio of increasing price movements
+    increasing_count.to_f / total_comparisons
+  end
+
   def volatility_by_range(minutes = 5)
     start_time = minutes.minutes.ago
     prices = token_pair_prices
