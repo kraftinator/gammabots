@@ -1,4 +1,6 @@
 class Bot < ApplicationRecord
+  DEFAULT_PROFIT_THRESHOLD = 0.01
+
   # Associations
   belongs_to :chain
   belongs_to :user
@@ -237,7 +239,11 @@ class Bot < ApplicationRecord
 
   def take_profit(full_share: false)
     cycle = current_cycle
-    return unless cycle && profit_fraction > profit_threshold
+    return unless cycle
+
+    #return unless cycle && profit_fraction > profit_threshold
+    threshold = active ? profit_threshold : DEFAULT_PROFIT_THRESHOLD
+    return unless profit_fraction >= threshold
 
     # compute raw profit and share
     profit = cycle.quote_token_amount - initial_buy_amount
