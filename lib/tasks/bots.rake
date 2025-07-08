@@ -550,9 +550,8 @@ namespace :bots do
   private
 
   def list_bots(bots)
-    #    ID     Token           Strat          Tokens            ETH       Init      Value   Profit%  Cycles Sells  Last Action At
-    header_fmt = "%-6s %-14s %-8s %15s %10s %9s %10s %9s %7s %6s  %-20s"
-    row_fmt    = "%-6s %-14s %-8s %15.5f %10.6f %9.4f %10.6f %+9.2f %7d %6d  %-20s"
+    header_fmt = "%-6s %-14s %-8s %15s %10s %10s %10s %9s %10s %7s %6s  %-20s"
+    row_fmt    = "%-6s %-14s %-8s %15.5f %10.6f %10.6f %10.6f %+9.2f %10.6f %7d %6d  %-20s"
 
     puts header_fmt % [
       "ID",
@@ -563,17 +562,17 @@ namespace :bots do
       "Init",
       "Value",
       "Profit%",
+      "Profit+",
       "Cycles",
       "Sells",
       "Last Action At"
     ]
-    puts "-" * 114
+    puts "-" * 131
 
     bots.each do |bot|
       token_symbol = bot.token_pair.base_token.symbol.delete("\r\n").strip  
       puts row_fmt % [
         bot.id,
-        #bot.token_pair.base_token.symbol[0...12],
         token_symbol[0...12],
         "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
         bot.current_cycle.base_token_amount.round(6),
@@ -581,6 +580,7 @@ namespace :bots do
         bot.initial_buy_amount,
         bot.current_value,
         bot.profit_percentage(include_profit_withdrawals: true),
+        bot.profit_taken,
         bot.bot_cycles.count,
         bot.sell_count,
         "#{time_ago_in_words(bot.last_action_at)} ago"
