@@ -9,6 +9,10 @@ class BotCycle < ApplicationRecord
     ids.index(id) + 1
   end
 
+  def profit_taken
+    profit_withdrawals.any? ? profit_withdrawals.sum(:amount_withdrawn) : 0
+  end
+
   def buy_count
     trades.where(trade_type: "buy", status: "completed").count
   end
@@ -51,19 +55,24 @@ class BotCycle < ApplicationRecord
     total_value
   end
 
-  def profit_percentage
+  def profit_percentage(include_profit_withdrawals: false)
     # guard against divide-by-zero
     return 0.0 if initial_buy_amount.to_f.zero?
 
     # ((current – initial) / initial) × 100, rounded to 2 decimal places
-    change    = current_value - initial_buy_amount.to_f
-    percent   = change / initial_buy_amount.to_f * 100
+    change = current_value - initial_buy_amount.to_f
+    change += profit_taken if include_profit_withdrawals
+    percent = change / initial_buy_amount.to_f * 100
     percent.round(2)
   end
 
-  def profit_fraction
+  # TODO: Add profit_fraction with profit
+  def profit_fraction(include_profit_withdrawals: false)
     return 0.0 if initial_buy_amount.to_f.zero?
-    (current_value - initial_buy_amount.to_f) / initial_buy_amount.to_f
+    #(current_value - initial_buy_amount.to_f) / initial_buy_amount.to_f
+    change = current_value - initial_buy_amount.to_f
+    change += profit_taken if include_profit_withdrawals
+    change / initial_buy_amount.to_f
   end
 
   def previous_cycle

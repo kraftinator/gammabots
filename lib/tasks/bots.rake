@@ -185,7 +185,7 @@ namespace :bots do
 
     bots = case sort_key
           when 'profit'
-            bots.sort_by(&:profit_percentage).reverse
+            bots.sort_by { |bot| bot.profit_percentage(include_profit_withdrawals: true) }.reverse
           else
             bots.sort_by(&:last_action_at).reverse
           end
@@ -209,7 +209,7 @@ namespace :bots do
 
     bots = case sort_key
            when 'profit'
-             bots.sort_by(&:profit_percentage).reverse
+             bots.sort_by { |bot| bot.profit_percentage(include_profit_withdrawals: true) }.reverse
            else
              bots.sort_by(&:last_action_at).reverse
            end
@@ -407,8 +407,8 @@ namespace :bots do
 
     puts "\n== Cycles for Bot ##{bot.id} - Strategy: #{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes}) =="
 
-    header = "%-6s %-20s %-20s %8s %12s %12s %10s" % [
-      "#", "Started At", "Ended At", "Duration", "ETH In", "ETH Out", "Profit %"
+    header = "%-6s %-20s %-20s %8s %12s %12s %10s %12s %12s" % [
+      "#", "Started At", "Ended At", "Duration", "ETH In", "ETH Out", "Profit %", "Profit Out", "Adj ETH"
     ]
     puts header
     puts "-" * header.length
@@ -422,17 +422,21 @@ namespace :bots do
       duration_minutes = (( (cycle.ended_at || Time.current) - cycle.started_at ) / 60).to_i
 
       eth_in   = cycle.initial_buy_amount.to_f
-      eth_out  = (!cycle.open? && cycle.initial_buy_made?) ? cycle.quote_token_amount.to_f : 0.0
-      profit   = cycle.profit_percentage.to_f
+      #eth_out  = (!cycle.open? && cycle.initial_buy_made?) ? cycle.quote_token_amount.to_f : 0.0
+      adj_eth_out  = (!cycle.open? && cycle.initial_buy_made?) ? cycle.quote_token_amount.to_f : 0.0
+      eth_out = adj_eth_out + cycle.profit_taken
+      profit   = cycle.profit_percentage(include_profit_withdrawals: true).to_f
 
-      puts "%-6d %-20s %-20s %8d %12.6f %12.6f %9.2f%%" % [
+      puts "%-6d %-20s %-20s %8d %12.6f %12.6f %9.2f%% %12.6f %12.6f" % [
         cycle_num,
         started_at,
         ended_at,
         duration_minutes,
         eth_in,
         eth_out,
-        profit
+        profit,
+        cycle.profit_taken,
+        adj_eth_out
       ]
 
       if show_analysis
@@ -461,7 +465,7 @@ namespace :bots do
 
     bots = case sort_key
            when 'profit'
-             bots.sort_by(&:profit_percentage).reverse
+             bots.sort_by { |bot| bot.profit_percentage(include_profit_withdrawals: true) }.reverse
            else
              bots.sort_by(&:last_action_at).reverse
            end
@@ -576,7 +580,7 @@ namespace :bots do
         bot.current_cycle.quote_token_amount.round(6),
         bot.initial_buy_amount,
         bot.current_value,
-        bot.profit_percentage,
+        bot.profit_percentage(include_profit_withdrawals: true),
         bot.bot_cycles.count,
         bot.sell_count,
         "#{time_ago_in_words(bot.last_action_at)} ago"
