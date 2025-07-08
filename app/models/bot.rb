@@ -68,6 +68,7 @@ class Bot < ApplicationRecord
 
   def forced_deactivate
     update!(active: false)
+    take_profit(full_share: true)
     current_cycle.update!(ended_at: Time.current)
   end
 
