@@ -276,6 +276,7 @@ namespace :bots do
     puts "ndp (price_non_decreasing):                 #{vars[:ndp]}"
     puts "nd2 (price_non_decreasing_2):               #{vars[:nd2]}"
     puts "pdi (price_diversity_indicator):            #{vars[:pdi].nan? ? '---' : format('%.5f', vars[:pdi])}"
+    puts "mom (momentum_indicator):                   #{vars[:mom].nan? ? '---' : format('%.5f', vars[:mom])}"
     puts ""
     puts "ssd (short_standard_dev_volatility):        #{vars[:ssd].nan? ? '---' : format('%.5f', vars[:ssd])}"
     puts "lsd (long_standard_dev_volatility):         #{vars[:lsd].nan? ? '---' : format('%.5f', vars[:lsd])}"
