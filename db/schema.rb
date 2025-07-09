@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_30_174504) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_09_024018) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -154,7 +154,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_30_174504) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["chain_id", "contract_address"], name: "index_tokens_on_chain_id_and_contract_address", unique: true
-    t.index ["chain_id", "symbol"], name: "index_tokens_on_chain_id_and_symbol", unique: true
+    t.index ["chain_id", "symbol"], name: "index_tokens_on_chain_id_and_symbol"
     t.index ["chain_id"], name: "index_tokens_on_chain_id"
   end
 
