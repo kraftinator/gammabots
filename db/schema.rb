@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_09_024018) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_10_190228) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -78,6 +78,23 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_09_024018) do
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_chains_on_name", unique: true
     t.index ["native_chain_id"], name: "index_chains_on_native_chain_id", unique: true
+  end
+
+  create_table "pending_copy_trades", force: :cascade do |t|
+    t.string "wallet_address", null: false
+    t.string "token_address", null: false
+    t.decimal "amount_out", precision: 30, scale: 18, null: false
+    t.string "tx_hash", null: false
+    t.bigint "block_number", null: false
+    t.string "status", default: "pending"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "chain_id", null: false
+    t.index ["chain_id"], name: "index_pending_copy_trades_on_chain_id"
+    t.index ["status", "created_at"], name: "index_pending_copy_trades_on_status_and_created_at"
+    t.index ["status"], name: "index_pending_copy_trades_on_status"
+    t.index ["token_address"], name: "index_pending_copy_trades_on_token_address"
+    t.index ["tx_hash"], name: "index_pending_copy_trades_on_tx_hash", unique: true
   end
 
   create_table "profit_withdrawals", force: :cascade do |t|
@@ -215,6 +232,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_09_024018) do
   add_foreign_key "bots", "strategies"
   add_foreign_key "bots", "token_pairs"
   add_foreign_key "bots", "users"
+  add_foreign_key "pending_copy_trades", "chains"
   add_foreign_key "profit_withdrawals", "bot_cycles"
   add_foreign_key "profit_withdrawals", "bots"
   add_foreign_key "strategies", "chains"
