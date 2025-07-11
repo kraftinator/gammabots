@@ -45,6 +45,7 @@ class CreateBotService
       token_pair: token_pair,
       initial_buy_amount: amount
     )
+    
     if bot
       current_price = token_pair.latest_price
       moving_avg = token_pair.moving_average(moving_avg_minutes.to_i)

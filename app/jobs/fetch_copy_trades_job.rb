@@ -5,7 +5,7 @@ class FetchCopyTradesJob < ApplicationJob
     provider_url = ProviderUrlService.get_provider_url(chain.name)
     current_block = EthersService.current_block_number(provider_url)
     last_processed_block = EthersService.last_processed_block_number(chain.id, provider_url)
-    last_processed_block = 32645348
+    #last_processed_block = 32645348
     #current_block = 32648502
 
     copy_trade_addresses.each do |wallet_address|

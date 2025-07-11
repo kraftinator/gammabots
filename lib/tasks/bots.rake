@@ -91,6 +91,26 @@ namespace :bots do
     puts bot ? "Bot Created: #{bot.id}" : "Failed to create bot!"
   end
 
+  desc "Create copy bot from service"
+  # Usage:
+  # rake bots:create_from_service["1","XXXXX","0.0005","4","6","base_mainnet"]
+  task :create_copy_bot_from_service, [:user_id, :copy_wallet_address, :initial_amount, :strategy_token_id, :moving_avg_minutes, :chain_name] => :environment do |t, args|
+    if args[:user_id].nil? || args[:copy_wallet_address].nil? || args[:initial_amount].nil? || args[:strategy_token_id].nil? || args[:moving_avg_minutes].nil? || args[:chain_name].nil?
+      raise ArgumentError, "Missing parameters!"
+    end
+
+    bot = CreateCopyBotService.call(
+      user_id: args[:user_id],
+      copy_wallet_address: args[:copy_wallet_address],
+      initial_amount: args[:initial_amount],
+      strategy_token_id: args[:strategy_token_id],
+      moving_avg_minutes: args[:moving_avg_minutes],
+      chain_name: args[:chain_name]
+    )
+
+    puts bot ? "Copy Bot Created: #{bot.id}" : "Failed to create copy bot!"
+  end
+
   desc "Show prices"
   # Usage:
   # rake bots:show_prices["2"]
@@ -249,6 +269,11 @@ namespace :bots do
     bot = Bot.find(args[:bot_id])
     unless bot
       raise ArgumentError, "Invalid bot!"
+    end
+
+    unless bot.token_pair
+      puts "Bot ##{bot.id} has no token pair assigned yet!"
+      exit
     end
 
     symbol_base  = bot.token_pair.base_token.symbol
@@ -477,7 +502,9 @@ namespace :bots do
 
   desc "List all bots"
   task :list_all => :environment do
-    bots = Bot.active.to_a.sort_by(&:last_action_at).reverse
+    #bots = Bot.active.where(bot_type: 'default').to_a.sort_by(&:last_action_at).reverse
+    #bots = Bot.active.to_a.sort_by(&:last_action_at).reverse
+    bots = Bot.active.where.not(token_pair_id: nil).to_a.sort_by(&:last_action_at).reverse
     puts "\n== All Active Bots (#{bots.count}) =="
     list_bots(bots)
   end

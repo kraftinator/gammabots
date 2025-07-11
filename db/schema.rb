@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_11_150615) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_11_200935) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -55,7 +55,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_11_150615) do
   create_table "bots", force: :cascade do |t|
     t.bigint "chain_id", null: false
     t.bigint "user_id", null: false
-    t.bigint "token_pair_id", null: false
+    t.bigint "token_pair_id"
     t.decimal "initial_buy_amount", precision: 30, scale: 18, default: "0.0", null: false
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -64,7 +64,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_11_150615) do
     t.integer "moving_avg_minutes", default: 5, null: false
     t.decimal "profit_share", precision: 5, scale: 4, default: "0.5", null: false
     t.decimal "profit_threshold", precision: 5, scale: 4, default: "0.1", null: false
+    t.string "bot_type", default: "default", null: false
+    t.string "copy_wallet_address"
+    t.index ["bot_type", "copy_wallet_address", "token_pair_id"], name: "index_bots_on_copy_bot_fields"
+    t.index ["bot_type"], name: "index_bots_on_bot_type"
     t.index ["chain_id"], name: "index_bots_on_chain_id"
+    t.index ["copy_wallet_address"], name: "index_bots_on_copy_wallet_address"
     t.index ["strategy_id"], name: "index_bots_on_strategy_id"
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
     t.index ["user_id"], name: "index_bots_on_user_id"

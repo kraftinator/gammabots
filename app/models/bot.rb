@@ -4,7 +4,7 @@ class Bot < ApplicationRecord
   # Associations
   belongs_to :chain
   belongs_to :user
-  belongs_to :token_pair
+  belongs_to :token_pair, optional: true
   belongs_to :strategy
   has_many :bot_cycles
   has_many :bot_events
@@ -15,6 +15,8 @@ class Bot < ApplicationRecord
 
   # Validations
   validates :initial_buy_amount, numericality: { greater_than_or_equal_to: 0 }
+  validates :token_pair, presence: true, if: :default_bot?
+  validates :copy_wallet_address, presence: true, if: :copy_bot?
 
   # Scopes
   scope :active, -> { where(active: true) }
@@ -172,6 +174,14 @@ class Bot < ApplicationRecord
     (current_value - initial_buy_amount.to_f) / initial_buy_amount.to_f
   end
 
+  def copy_bot?
+    bot_type == 'copy'
+  end
+  
+  def default_bot?
+    bot_type == 'default'
+  end
+
   private
 
   def process_initial_buy(trade)
@@ -273,6 +283,7 @@ class Bot < ApplicationRecord
   end
 
   def enqueue_infinite_approval
+    return unless token_pair
     ApprovalManager.ensure_infinite!(
       wallet:       user.wallet_for_chain(chain),
       token:        token_pair.quote_token,
