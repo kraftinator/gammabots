@@ -88,7 +88,7 @@ namespace :bots do
       chain_name: args[:chain_name]
     )
 
-    puts "Bot Created: #{bot.id}"
+    puts bot ? "Bot Created: #{bot.id}" : "Failed to create bot!"
   end
 
   desc "Show prices"

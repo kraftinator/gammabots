@@ -27,39 +27,15 @@ class CreateBotService
     # Normalize the token contract address to lowercase
     token_contract_address = token_contract_address.downcase
 
-    # Get Token. If not found, create it by pulling data from Uniswap.
-    token = Token.find_by(chain: chain, contract_address: token_contract_address)
-    if token.nil?
-      token = Token.create_from_contract_address(token_contract_address, chain)
-      raise ArgumentError, "Token creation failed" unless token
-    end
-
-    # Get Quote Token - assume it's WETH
-    quote_token = Token.find_by(chain: chain, symbol: 'WETH')
-    raise ArgumentError, "Invalid quote token" unless quote_token
-
-    # Find Trading Pair (base token = token, quote token = WETH)
-    token_pair = TokenPair.find_by(chain: chain, base_token: token, quote_token: quote_token)
-    if token_pair.nil?
-      token_pair = TokenPair.create!(chain: chain, base_token: token, quote_token: quote_token)
-      # Initialize the token pair's price by calling latest_price
-      token_pair.latest_price
-    end
-
-=begin
-    bot = Bot.create!(
-      chain: chain,
-      strategy: strategy,
-      moving_avg_minutes: moving_avg_minutes,
-      user: user,
-      token_pair: token_pair,
-      quote_token_amount: amount,
-      created_at_price: token_pair.latest_price,
-      lowest_price_since_creation: token_pair.latest_price,
-      #lowest_moving_avg_since_creation: token_pair.latest_price
-      lowest_moving_avg_since_creation: token_pair.moving_average,
+    token_pair = CreateTokenPairService.call(
+      token_address: token_contract_address,
+      chain: chain
     )
-=end
+
+    unless token_pair
+      puts "Cannot create token pair."
+      return nil
+    end
     
     bot = Bot.create!(
       chain: chain,
