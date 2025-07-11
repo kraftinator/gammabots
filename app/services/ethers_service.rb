@@ -262,6 +262,7 @@ class EthersService
     )
   end
 
+  # Not used
   def self.get_pool_data(token_pair, provider_url)
     puts "Calling getPoolData for #{token_pair.base_token.symbol}"
     call_function(
@@ -273,6 +274,10 @@ class EthersService
       token_pair.pool_address,
       provider_url
     )
+  end
+
+  def self.find_most_liquid_pool(token_0, token_1, provider_url)
+    call_function('findMostLiquidPool', token_0, token_1, provider_url)
   end
 
   def self.get_token_price(token_pair, provider_url)
