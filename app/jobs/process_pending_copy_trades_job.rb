@@ -1,4 +1,5 @@
-class ProcessPendingCopyTradesJob < ApplicationJob
+class ProcessPendingCopyTradesJob
+  include Sidekiq::Job
 
   def perform
    PendingCopyTrade.ready_to_process.find_each do |pending_trade|

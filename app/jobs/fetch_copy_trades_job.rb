@@ -1,4 +1,5 @@
-class FetchCopyTradesJob < ApplicationJob
+class FetchCopyTradesJob
+  include Sidekiq::Job
 
   def perform
     chain = Chain.find_by(name: 'base_mainnet')
