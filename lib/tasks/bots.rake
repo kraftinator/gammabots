@@ -509,6 +509,33 @@ namespace :bots do
     list_bots(bots)
   end
 
+  desc "List copy bots"
+  task :list_copy_bots => :environment do
+    bots = Bot.copy_bots.to_a.sort_by(&:last_action_at).reverse
+    
+    header_fmt = "%-6s %-44s %-12s %-10s  %-20s"
+    row_fmt    = "%-6s %-44s %-12s %-10.6f  %-20s"
+
+    puts header_fmt % [
+      "ID",
+      "Copy Address",
+      "Strategy",
+      "ETH",
+      "Last Action At"
+    ]
+    puts "-" * 105
+
+    bots.each do |bot|
+      puts row_fmt % [
+        bot.id,
+        bot.copy_wallet_address,
+        "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
+        bot.initial_buy_amount,
+        "#{time_ago_in_words(bot.last_action_at)} ago"
+      ]
+    end
+  end
+
   desc "List trades for a bot"
   # Usage:
   #   rake bots:trades[<bot_id>]
