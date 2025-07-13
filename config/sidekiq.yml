@@ -13,3 +13,13 @@
       cron: "*/5 * * * *"
       class: "NonceMonitorSchedulerJob"
       queue: default
+
+    fetch_copy_trades:
+      cron: "15 */1 * * * *"
+      class: "FetchCopyTradesJob"
+      queue: default
+
+    process_pending_copy_trades:
+      cron: "30 */1 * * * *"
+      class: "ProcessPendingCopyTradesJob"
+      queue: default

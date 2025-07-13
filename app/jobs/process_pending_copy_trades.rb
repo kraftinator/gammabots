@@ -46,9 +46,24 @@ class ProcessPendingCopyTrades < ApplicationJob
       amount_out: pending_trade.amount_out,
       amount_in: calculate_amount_in(pending_trade.amount_out, token_pair)
     )
+
+    assign_copy_bots(pending_trade.wallet_address, token_pair)
+    
   rescue ActiveRecord::RecordNotUnique
     # Trade already exists, mark as valid anyway
     Rails.logger.info "Copy trade already exists for tx: #{pending_trade.tx_hash}"
+  end
+
+  def assign_copy_bots(wallet_address, token_pair)
+    unassigned_bots = Bot.copy_bots
+                        .active
+                        .where(copy_wallet_address: wallet_address)
+                        .where(token_pair_id: nil)
+    
+    unassigned_bots.each do |bot|
+      bot.update!(token_pair: token_pair)
+      Rails.logger.info "Assigned token pair #{token_pair.id} to copy bot #{bot.id}"
+    end
   end
 
   def calculate_amount_in(amount_out, token_pair)

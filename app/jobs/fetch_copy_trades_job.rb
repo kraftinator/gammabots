@@ -5,8 +5,6 @@ class FetchCopyTradesJob < ApplicationJob
     provider_url = ProviderUrlService.get_provider_url(chain.name)
     current_block = EthersService.current_block_number(provider_url)
     last_processed_block = EthersService.last_processed_block_number(chain.id, provider_url)
-    #last_processed_block = 32645348
-    #current_block = 32648502
 
     copy_trade_addresses.each do |wallet_address|
       swaps = EthersService.get_swaps(wallet_address, last_processed_block, current_block, provider_url)
@@ -23,12 +21,18 @@ class FetchCopyTradesJob < ApplicationJob
         )
       end
     end
+
+    EthersService.update_last_processed_block(chain.id, current_block)
   end
 
   private
 
   def copy_trade_addresses
-    []
+    Bot.copy_bots
+      .active
+      .where(token_pair_id: nil)
+      .distinct
+      .pluck(:copy_wallet_address)
   end
 
   def valid_swap?(swap)

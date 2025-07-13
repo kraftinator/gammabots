@@ -437,8 +437,7 @@ class EthersService
 
   def self.get_swaps(wallet_address, last_processed_block, current_block, provider_url)
     puts "Fetching swaps for #{wallet_address} from block #{last_processed_block} to #{current_block}"
-    result = call_function('getSwaps', wallet_address, last_processed_block, current_block, provider_url)
-    result
+    call_function('getSwaps', wallet_address, last_processed_block, current_block, provider_url)
   end
 
   def self.last_processed_block_number(chain_id, provider_url)
@@ -450,5 +449,10 @@ class EthersService
     end
 
     $redis.get(key).to_i
+  end
+
+  def self.update_last_processed_block(chain_id, block_number)
+    key = "last_block:#{chain_id}"
+    $redis.set(key, block_number)
   end
 end

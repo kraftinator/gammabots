@@ -5,7 +5,7 @@ class BotRunner
       return
     end
 
-    return unless bot.active?
+    return unless bot.active? && bot.token_pair
 
     strategy = TradingStrategy.new(bot, bot.provider_url)
     strategy.process
