@@ -1,4 +1,4 @@
-class ProcessPendingCopyTrades < ApplicationJob
+class ProcessPendingCopyTradesJob < ApplicationJob
 
   def perform
    PendingCopyTrade.ready_to_process.find_each do |pending_trade|
