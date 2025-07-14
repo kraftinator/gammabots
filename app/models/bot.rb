@@ -147,7 +147,7 @@ class Bot < ApplicationRecord
 
   def last_action_at
     trade = trades.where(status: "completed").order(created_at: :desc).first
-    trade ? trade.executed_at : created_at
+    trade ? trade.executed_at : updated_at
   end
 
   def current_value

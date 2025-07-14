@@ -511,7 +511,7 @@ namespace :bots do
 
   desc "List copy bots"
   task :list_copy_bots => :environment do
-    bots = Bot.copy_bots.to_a.sort_by(&:last_action_at).reverse
+    bots = Bot.copy_bots.active.to_a.sort_by(&:last_action_at).reverse
     
     header_fmt = "%-6s %-44s %-12s %-10s %-14s  %-20s"
     row_fmt    = "%-6s %-44s %-12s %-10.6f %-14s  %-20s"
