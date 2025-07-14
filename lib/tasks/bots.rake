@@ -603,9 +603,10 @@ namespace :bots do
 
   private
 
+
   def list_bots(bots)
-    header_fmt = "%-6s %-14s %-8s %15s %10s %10s %10s %9s %10s %7s %6s %7s  %-20s"
-    row_fmt    = "%-6s %-14s %-8s %15.5f %10.6f %10.6f %10.6f %+9.2f %10.6f %7d %6d %7d  %-20s"
+    header_fmt = "%-6s %-14s %-8s %15s %10s %10s %10s %9s %10s %7s %6s %7s   %-8s  %-20s"
+    row_fmt    = "%-6s %-14s %-8s %15.5f %10.6f %10.6f %10.6f %+9.2f %10.6f %7d %6d %7d   %-8s  %-20s"
 
     puts header_fmt % [
       "ID",
@@ -620,9 +621,10 @@ namespace :bots do
       "Cycles",
       "Sells",
       "Errors",
+      "Type",
       "Last Action At"
     ]
-    puts "-" * 139
+    puts "-" * 147
 
     bots.each do |bot|
       token_symbol = bot.token_pair.base_token.symbol.delete("\r\n").strip  
@@ -639,6 +641,7 @@ namespace :bots do
         bot.bot_cycles.count,
         bot.sell_count,
         bot.bot_events.count,
+        bot.bot_type,
         "#{time_ago_in_words(bot.last_action_at)} ago"
       ]
     end

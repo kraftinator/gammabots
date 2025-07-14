@@ -63,6 +63,17 @@ class ProcessPendingCopyTradesJob
     
     unassigned_bots.each do |bot|
       bot.update!(token_pair: token_pair)
+
+      current_price = token_pair.latest_price
+      moving_avg = token_pair.moving_average(bot.moving_avg_minutes.to_i)
+      bot.bot_cycles.create!(
+        started_at: Time.current,
+        quote_token_amount: bot.initial_buy_amount,
+        created_at_price: current_price,
+        lowest_price_since_creation: current_price,
+        lowest_moving_avg_since_creation: moving_avg
+      )
+
       Rails.logger.info "Assigned token pair #{token_pair.id} to copy bot #{bot.id}"
     end
   end
