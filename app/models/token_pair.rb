@@ -53,11 +53,14 @@ class TokenPair < ApplicationRecord
   # optionally shifted back by `shift` minutes (0 = include current bar).
   def moving_average(minutes = 5, shift: 0)
     # Determine time window end and start
-    end_time   = shift.minutes.ago
-    start_time = (minutes + shift).minutes.ago
+    #end_time   = shift.minutes.ago
+    #start_time = (minutes + shift).minutes.ago
+    now        = Time.current.beginning_of_minute
+    end_time   = now - shift.minutes
+    start_time = end_time - minutes.minutes
 
     avg_prices = token_pair_prices
-      .where('created_at >= ? AND created_at <= ?', start_time, end_time)
+      .where('created_at >= ? AND created_at < ?', start_time, end_time)
       .group(Arel.sql("date_trunc('minute', created_at)"))
       .order(Arel.sql("date_trunc('minute', created_at) DESC"))
       .limit(minutes)
