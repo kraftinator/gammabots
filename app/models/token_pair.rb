@@ -60,7 +60,7 @@ class TokenPair < ApplicationRecord
     start_time = end_time - minutes.minutes
 
     avg_prices = token_pair_prices
-      .where('created_at >= ? AND created_at < ?', start_time, end_time)
+      .where('created_at >= ? AND created_at <= ?', start_time, end_time)
       .group(Arel.sql("date_trunc('minute', created_at)"))
       .order(Arel.sql("date_trunc('minute', created_at) DESC"))
       .limit(minutes)
@@ -199,10 +199,6 @@ class TokenPair < ApplicationRecord
 
     false
   end
-
-  #def price_stale?
-  #  price_updated_at.nil? || price_updated_at < 30.seconds.ago
-  #end
 
   def update_price
     TokenPriceService.update_price_for_pair(self)
