@@ -477,10 +477,15 @@ namespace :bots do
   end
 
   desc "List active bots; pass 'profit' to sort by profit percentage"
-  task :list, [:sort_by] => :environment do |t, args|
+  # Usage
+  #   rake bots:list
+  #   rake bots:list[profit]
+  #   rake bots:list[profit,nft_token_id]
+  task :list, [:sort_by, :strategy_key] => :environment do |t, args|
     # default to last_action if no arg given
     args.with_defaults(sort_by: 'last_action')
     sort_key = args[:sort_by]
+    strategy_key  = args[:strategy_key]
 
     bots = Bot.active
               .joins(:trades)
@@ -495,7 +500,14 @@ namespace :bots do
              bots.sort_by(&:last_action_at).reverse
            end
 
+    # Apply strategy_key filter if provided
+    if strategy_key
+      bots.select! { |bot| bot.strategy.nft_token_id.to_s == strategy_key }
+    end
+    
     header_label = sort_key == 'profit' ? 'profit %' : 'last action'
+    header_label += strategy_key ? " — strategy #{strategy_key}" : ''
+
     puts "\n== Active Bots (#{bots.count}) — sorted by #{header_label} =="
     list_bots(bots)
   end
