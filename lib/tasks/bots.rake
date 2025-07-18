@@ -71,22 +71,41 @@ namespace :bots do
     puts "Bot Created: #{bot.id.to_s}"
   end
 
-  desc "Create bot from service"
-  # Usage:
-  # rake bots:create_from_service["1","0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed","0.0005","4","base_mainnet"]
-  task :create_from_service, [:user_id, :token_contract_address, :initial_amount, :strategy_token_id, :moving_avg_minutes, :chain_name] => :environment do |t, args|
-    if args[:user_id].nil? || args[:token_contract_address].nil? || args[:initial_amount].nil? || args[:strategy_token_id].nil? || args[:moving_avg_minutes].nil? || args[:chain_name].nil?
-      raise ArgumentError, "Missing parameters!"
-    end
+  desc "Create bot via CreateBotService"
+  # Usage (examples):
+  #   rake bots:create_from_service["1","0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed","0.0005","4","6","base_mainnet"]
+  #   rake bots:create_from_service["1","0x4ed4E...","0.0005","4","6","base_mainnet","0.40","0.08"]
+  task :create_from_service,
+       [:user_id,
+        :token_contract_address,
+        :initial_amount,
+        :strategy_token_id,
+        :moving_avg_minutes,
+        :chain_name,
+        :profit_share,
+        :profit_threshold] => :environment do |_, args|
 
-    bot = CreateBotService.call(
-      user_id: args[:user_id],
+    mandatory = %i[
+      user_id token_contract_address initial_amount
+      strategy_token_id moving_avg_minutes chain_name
+    ]
+    missing = mandatory.select { |key| args[key].nil? }
+    raise ArgumentError, "Missing parameters: #{missing.join(', ')}" unless missing.empty?
+
+    service_args = {
+      user_id:               args[:user_id],
       token_contract_address: args[:token_contract_address],
-      initial_amount: args[:initial_amount],
-      strategy_token_id: args[:strategy_token_id],
-      moving_avg_minutes: args[:moving_avg_minutes],
-      chain_name: args[:chain_name]
-    )
+      initial_amount:         args[:initial_amount],
+      strategy_token_id:      args[:strategy_token_id],
+      moving_avg_minutes:     args[:moving_avg_minutes],
+      chain_name:             args[:chain_name]
+    }
+
+    # Include optional params only if supplied
+    service_args[:profit_share]     = args[:profit_share]     if args[:profit_share].present?
+    service_args[:profit_threshold] = args[:profit_threshold] if args[:profit_threshold].present?
+
+    bot = CreateBotService.call(**service_args)
 
     puts bot ? "Bot Created: #{bot.id}" : "Failed to create bot!"
   end
