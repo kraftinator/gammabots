@@ -75,6 +75,10 @@ class BotCycle < ApplicationRecord
     change / initial_buy_amount.to_f
   end
 
+  def first_cycle?
+    ordinal == 1
+  end
+
   def previous_cycle
     bot.bot_cycles
        .where("created_at < ?", created_at)
@@ -103,6 +107,7 @@ class BotCycle < ApplicationRecord
       rhi: token_pair.rolling_high(moving_avg_minutes) || Float::NAN,
       ibp: initial_buy_price,
       lbp: listed_buy_price,
+      bep: bot.break_even_price || initial_buy_price,
       bcn: buy_count,
       scn: sell_count,
       bta: base_token_amount,

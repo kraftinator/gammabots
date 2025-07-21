@@ -154,6 +154,7 @@ class TradeExecutionService
       rhi: vars[:rhi],
       ibp: vars[:ibp],
       lbp: vars[:lbp],
+      bep: vars[:bep],
       bcn: vars[:bcn],    
       scn: vars[:scn],
       bta: vars[:bta],

@@ -164,7 +164,6 @@ class Bot < ApplicationRecord
     # guard against divide-by-zero
     return 0.0 if initial_buy_amount.to_f.zero?
 
-    # ((current – initial) / initial) × 100, rounded to 2 decimal places
     change    = current_value - initial_buy_amount.to_f
     change += profit_taken if include_profit_withdrawals
     percent   = change / initial_buy_amount.to_f * 100
@@ -174,6 +173,22 @@ class Bot < ApplicationRecord
   def profit_fraction
     return 0.0 if initial_buy_amount.to_f.zero?
     (current_value - initial_buy_amount.to_f) / initial_buy_amount.to_f
+  end
+
+  #{ "c":"bcn>0 && lba>5 && bpp<=0 && cpr<ibp0.99","a":["sell all","reset"] },
+  #{ "c":"bcn>0 && lba>5 && bpp>0  && cpr<bep",   "a":["sell all","reset"] }
+  def break_even_price
+    return nil unless initial_buy_made?
+
+    cycle = current_cycle
+    return nil unless cycle
+    #return nil if cycle.first_cycle?
+
+    base_amount  = cycle.base_token_amount
+    quote_amount = cycle.quote_token_amount
+    return nil if base_amount.zero?
+
+    ((initial_buy_amount - quote_amount) / base_amount).round(18)
   end
 
   def copy_bot?
