@@ -540,6 +540,7 @@ namespace :bots do
               .distinct
               .to_a
 
+    bots.sort_by(&:last_action_at).reverse
     puts "\n== Active Bots with No Trades Yet (#{bots.count}) =="
     list_bots(bots)
   end
@@ -671,7 +672,7 @@ namespace :bots do
       "Type",
       "Last Action At"
     ]
-    puts "-" * 147
+    puts "-" * 150
 
     bots.each do |bot|
       if bot.default_bot?
