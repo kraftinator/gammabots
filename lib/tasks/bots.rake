@@ -675,7 +675,7 @@ namespace :bots do
     puts "-" * 150
 
     bots.each do |bot|
-      if bot.default_bot?
+      if bot.current_cycle
         token_symbol = bot.token_pair.base_token.symbol.delete("\r\n").strip
         puts row_fmt % [
           bot.id,
@@ -693,7 +693,7 @@ namespace :bots do
           bot.bot_type,
           "#{time_ago_in_words(bot.last_action_at)} ago"
         ]
-      elsif bot.copy_bot?
+      else
         puts row_fmt % [
           bot.id,
           '---',
