@@ -437,7 +437,6 @@ namespace :bots do
     list_strategy(bot)
   end
 
-  # AAK
   desc "Cycles"
   # Usage:
   #   rake bots:cycles[2]
@@ -532,11 +531,24 @@ namespace :bots do
     list_bots(bots)
   end
 
+  desc "List active bots that haven't made any trades yet"
+  task :list_untraded => :environment do
+    bots = Bot.active
+              .left_outer_joins(:trades)
+              .where(trades: { id: nil })
+              .order(created_at: :desc)
+              .distinct
+              .to_a
+
+    puts "\n== Active Bots with No Trades Yet (#{bots.count}) =="
+    list_bots(bots)
+  end
+
   desc "List all bots"
   task :list_all => :environment do
-    #bots = Bot.active.where(bot_type: 'default').to_a.sort_by(&:last_action_at).reverse
     #bots = Bot.active.to_a.sort_by(&:last_action_at).reverse
-    bots = Bot.active.where.not(token_pair_id: nil).to_a.sort_by(&:last_action_at).reverse
+    #bots = Bot.active.where.not(token_pair_id: nil).to_a.sort_by(&:last_action_at).reverse
+    bots = Bot.active.to_a.sort_by(&:last_action_at).reverse
     puts "\n== All Active Bots (#{bots.count}) =="
     list_bots(bots)
   end
@@ -662,23 +674,42 @@ namespace :bots do
     puts "-" * 147
 
     bots.each do |bot|
-      token_symbol = bot.token_pair.base_token.symbol.delete("\r\n").strip  
-      puts row_fmt % [
-        bot.id,
-        token_symbol[0...12],
-        "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
-        bot.current_cycle.base_token_amount.round(6),
-        bot.current_cycle.quote_token_amount.round(6),
-        bot.initial_buy_amount,
-        bot.current_value,
-        bot.profit_percentage(include_profit_withdrawals: true),
-        bot.profit_taken,
-        bot.bot_cycles.count,
-        bot.sell_count,
-        bot.bot_events.count,
-        bot.bot_type,
-        "#{time_ago_in_words(bot.last_action_at)} ago"
-      ]
+      if bot.default_bot?
+        token_symbol = bot.token_pair.base_token.symbol.delete("\r\n").strip
+        puts row_fmt % [
+          bot.id,
+          token_symbol[0...12],
+          "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
+          bot.current_cycle.base_token_amount.round(6),
+          bot.current_cycle.quote_token_amount.round(6),
+          bot.initial_buy_amount,
+          bot.current_value,
+          bot.profit_percentage(include_profit_withdrawals: true),
+          bot.profit_taken,
+          bot.bot_cycles.count,
+          bot.sell_count,
+          bot.bot_events.count,
+          bot.bot_type,
+          "#{time_ago_in_words(bot.last_action_at)} ago"
+        ]
+      elsif bot.copy_bot?
+        puts row_fmt % [
+          bot.id,
+          '---',
+          "#{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes})",
+          0.0,
+          0.0,
+          bot.initial_buy_amount,
+          bot.initial_buy_amount,
+          0.0,
+          0.0,
+          bot.bot_cycles.count,
+          bot.sell_count,
+          bot.bot_events.count,
+          bot.bot_type,
+          "#{time_ago_in_words(bot.last_action_at)} ago"
+        ]
+      end
     end
   end
 
