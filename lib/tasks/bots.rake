@@ -277,6 +277,54 @@ namespace :bots do
     prices.each { |p| puts "#{p.created_at} - #{p.price.to_s}" }
   end
 
+  # Usage:
+  # rake bots:metrics["2"]
+  task :metrics, [:bot_id, :minutes] => :environment do |t, args|
+    args.with_defaults(minutes: 1440)  # default to last 24h
+
+    if args[:bot_id].nil?
+      raise ArgumentError, "Missing parameters!"
+    end
+
+    bot = Bot.find(args[:bot_id])
+    unless bot
+      raise ArgumentError, "Invalid bot!"
+    end
+
+    since   = args[:minutes].to_i.minutes.ago
+    metrics = bot.bot_price_metrics.where('created_at >= ?', since).order(:created_at)
+    puts "\nMETRICS (#{bot.token_pair.name})"
+    puts "---------"
+
+    metrics.each do |metric|
+      vars = metric.metrics
+      puts "#{metric.created_at} - #{metric.price.to_s}"
+      puts
+      puts "                          mam (moving_avg_minutes):     #{vars[:mam]}"
+
+      puts "                          cpr (current_price):          #{vars[:cpr]}"
+      puts "                          ppr (previous_price):         #{vars[:ppr]}"
+      puts "                          rhi (rolling_high):           #{vars[:rhi].nil? || vars[:rhi] == 'NaN' ? '' : format('%.18f %s', vars[:rhi], '')}"
+      puts "                          cma (current_moving_avg):     #{vars[:cma] == 'NaN' ? '' : format('%.18f %s', vars[:cma], '')}"
+      puts "                          lma (longterm_moving_avg):    #{vars[:lma] == 'NaN' ? '' : format('%.18f %s', vars[:lma], '')}"
+      puts "                          tma (triterm_moving_avg):     #{vars[:tma] == 'NaN' ? '' : format('%.18f %s', vars[:tma], '')}"
+      puts "                          pcm (previous_cma):           #{vars[:pcm].nil? || vars[:pcm] == 'NaN' ? '' : format('%.18f %s', vars[:pcm], '')}"
+      puts "                          plm (previous_lma):           #{vars[:plm].nil? || vars[:plm] == 'NaN' ? '' : format('%.18f %s', vars[:plm], '')}"
+
+      puts "                          ssd (short_stdev):            #{vars[:ssd].nil? || vars[:ssd] == 'NaN' ? '' : format('%.5f', vars[:ssd])}"
+      puts "                          lsd (long_stdev):             #{vars[:lsd].nil? || vars[:lsd] == 'NaN' ? '' : format('%.5f', vars[:lsd])}"
+      puts "                          vst (short_term_volatility):  #{vars[:vst].nil? || vars[:vst] == 'NaN' ? '' : format('%.5f', vars[:vst])}"
+      puts "                          vlt (long_term_volatility):   #{vars[:vlt].nil? || vars[:vlt] == 'NaN' ? '' : format('%.5f', vars[:vlt])}"
+
+      puts "                          ndp (price_non_decreasing):   #{vars[:ndp]}"
+      puts "                          nd2 (price_non_decreasing_2): #{vars[:nd2]}"
+      puts "                          pdi (price_diversity):        #{vars[:pdi].nil? || vars[:pdi] == 'NaN' ? '' : format('%.5f', vars[:pdi])}"
+      puts "                          mom (momentum):               #{vars[:mom].nil? || vars[:mom] == 'NaN' ? '' : format('%.5f', vars[:mom])}"
+
+      puts
+    end
+  end
+
   desc "Show"
   # Usage:
   # rake bots:show["2"]
