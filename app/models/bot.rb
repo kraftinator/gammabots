@@ -8,6 +8,7 @@ class Bot < ApplicationRecord
   belongs_to :strategy
   has_many :bot_cycles
   has_many :bot_events
+  has_many :bot_price_metrics
   has_many :profit_withdrawals
   has_many :trades
 

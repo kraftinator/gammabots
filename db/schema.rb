@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_11_200935) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_24_180658) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -52,6 +52,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_11_200935) do
     t.index ["created_at"], name: "index_bot_events_on_created_at"
   end
 
+  create_table "bot_price_metrics", force: :cascade do |t|
+    t.bigint "bot_id", null: false
+    t.decimal "price", precision: 30, scale: 18, null: false
+    t.jsonb "metrics", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bot_id"], name: "index_bot_price_metrics_on_bot_id"
+  end
+
   create_table "bots", force: :cascade do |t|
     t.bigint "chain_id", null: false
     t.bigint "user_id", null: false
@@ -66,6 +75,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_11_200935) do
     t.decimal "profit_threshold", precision: 5, scale: 4, default: "0.1", null: false
     t.string "bot_type", default: "default", null: false
     t.string "copy_wallet_address"
+    t.boolean "catch_metrics", default: false, null: false
     t.index ["bot_type", "copy_wallet_address", "token_pair_id"], name: "index_bots_on_copy_bot_fields"
     t.index ["bot_type"], name: "index_bots_on_bot_type"
     t.index ["chain_id"], name: "index_bots_on_chain_id"
@@ -249,6 +259,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_11_200935) do
 
   add_foreign_key "bot_cycles", "bots"
   add_foreign_key "bot_events", "bots"
+  add_foreign_key "bot_price_metrics", "bots"
   add_foreign_key "bots", "chains"
   add_foreign_key "bots", "strategies"
   add_foreign_key "bots", "token_pairs"
