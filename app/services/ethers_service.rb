@@ -379,14 +379,6 @@ class EthersService
     call_function('generateWallet')
   end
 
-  def self.convert_ETH_to_WETH(private_key, provider_url, amount, eth_reserve_percentage = 1)
-    call_function('convertETHToWETH', private_key, provider_url, amount, eth_reserve_percentage)
-  end
-
-  def self.convert_WETH_to_ETH(private_key, provider_url, amount)
-    call_function('convertWETHToETH', private_key, provider_url, amount)
-  end
-
   def self.is_infinite_approval(private_key, token_address, provider_url)
     call_function(
       'isInfiniteApproval',
@@ -394,6 +386,46 @@ class EthersService
       token_address,
       provider_url
     )
+  end
+
+  def self.convert_WETH_to_ETH(private_key, provider_url, amount)
+    call_function('convertWETHToETH', private_key, provider_url, amount)
+  end
+
+  #def self.convert_ETH_to_WETH(private_key, provider_url, amount, eth_reserve_percentage = 1)
+  #  call_function('convertETHToWETH', private_key, provider_url, amount, eth_reserve_percentage)
+  #end
+
+  def self.convert_ETH_to_WETH(wallet, provider_url, amount, eth_reserve_percentage = 1)
+    begin
+      fees = get_gas_fees(wallet.chain_id, provider_url)
+    rescue => e
+      return { "success" => false, "error" => "gas lookup failed: #{e.message}" }
+    end
+
+    with_nonce_lock do
+      nonce = current_nonce(wallet.address, provider_url)
+      begin
+        result = call_function(
+          'convertETHToWETH',
+          wallet.private_key,
+          provider_url,
+          amount,
+          eth_reserve_percentage,
+          nonce,
+          fees['maxFeePerGas'],
+          fees['maxPriorityFeePerGas']
+        )
+
+        if result['success'] && result['txHash'].present?
+          increment_nonce(wallet.address)
+        end
+
+        result
+      rescue StandardError => e
+        { "success" => false, "error" => e.message, "nonce" => nonce }
+      end
+    end
   end
 
   def self.send_erc20(wallet, token_address, to_address, amount, decimals, provider_url)
