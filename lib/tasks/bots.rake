@@ -296,9 +296,22 @@ namespace :bots do
     puts "\nMETRICS (#{bot.token_pair.name})"
     puts "---------"
 
+    previous_price = nil
     metrics.each do |metric|
+      
+      price_diff_pct = if previous_price
+                         ((metric.price - previous_price) / previous_price * 100).round(2)
+                       else
+                         0
+                       end
+      price_diff_sign = ' '
+      if previous_price
+        price_diff_sign = '-' if price_diff_pct < 0
+        price_diff_sign = '+' if price_diff_pct > 0
+      end
       vars = metric.metrics
-      puts "#{metric.created_at} - #{metric.price.to_s}"
+    
+      puts "#{metric.created_at} - #{metric.price.to_s}  #{price_diff_sign}#{price_diff_pct.abs}%"
       puts
       puts "                          mam (moving_avg_minutes):     #{vars[:mam]}"
 
@@ -322,6 +335,7 @@ namespace :bots do
       puts "                          mom (momentum):               #{vars[:mom].nil? || vars[:mom] == 'NaN' ? '' : format('%.5f', vars[:mom])}"
 
       puts
+      previous_price = metric.price
     end
   end
 
