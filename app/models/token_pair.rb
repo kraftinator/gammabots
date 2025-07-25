@@ -47,7 +47,7 @@ class TokenPair < ApplicationRecord
     # Calculate the average of the minute-averages
     avg_prices.sum(0.0) / avg_prices.size
   end
-=end
+
 
   # Calculate the simple moving average over a window of `minutes` bars,
   # optionally shifted back by `shift` minutes (0 = include current bar).
@@ -69,6 +69,31 @@ class TokenPair < ApplicationRecord
     return nil if avg_prices.size < minutes
 
     avg_prices.sum(0.0) / avg_prices.size
+  end
+=end
+
+  # Calculate the simple moving average over a window of `minutes` bars,
+  # optionally shifted back by `shift` minutes (0 = include current bar).
+  def moving_average(minutes = 6, shift: 0)
+    # 1) Determine the end of the target window: the end of the minute `shift` minutes ago
+    bucket_end   = shift.minutes.ago.end_of_minute
+    # 2) Determine the start of the earliest minute bucket you want
+    #    We need (minutes - 1) buckets before bucket_end, plus shift
+    bucket_start = (minutes - 1 + shift).minutes.ago.beginning_of_minute
+
+    # 3) Aggregate one average per minute‐bucket in the range
+    per_minute_avgs = token_pair_prices
+      .where(created_at: bucket_start..bucket_end)
+      .group(Arel.sql("date_trunc('minute', created_at)"))
+      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
+      .limit(minutes)
+      .pluck(Arel.sql("AVG(price)"))
+
+    # 4) If we don’t have a full set of `minutes` buckets, bail out
+    return nil if per_minute_avgs.size < minutes
+
+    # 5) Compute the SMA as the mean of those per-minute averages
+    per_minute_avgs.sum(0.0) / per_minute_avgs.size
   end
 
   def volume_indicator(minutes = 5, shift: 0)
