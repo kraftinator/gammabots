@@ -101,13 +101,17 @@ class BotCycle < ApplicationRecord
   def strategy_variables(use_cached_price: false)
     token_pair = bot.token_pair
     moving_avg_minutes = bot.moving_avg_minutes
+    break_even_price = bot.break_even_price
+    if break_even_price
+      break_even_price = initial_buy_price if break_even_price > initial_buy_price
+    end
     {
       cpr: use_cached_price ? token_pair.current_price : token_pair.latest_price,
       ppr: token_pair.previous_price || Float::NAN,
       rhi: token_pair.rolling_high(moving_avg_minutes) || Float::NAN,
       ibp: initial_buy_price,
       lbp: listed_buy_price,
-      bep: bot.break_even_price || initial_buy_price,
+      bep: break_even_price || initial_buy_price,
       bcn: buy_count,
       scn: sell_count,
       bta: base_token_amount,
