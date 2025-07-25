@@ -607,6 +607,19 @@ namespace :bots do
     list_bots(bots)
   end
 
+  desc "List metrics catchers"
+  task :list_metrics_catchers => :environment do
+    bots = Bot.active
+              .where(catch_metrics: true)
+              .order(created_at: :desc)
+              .distinct
+              .to_a
+
+    bots.sort_by(&:last_action_at).reverse
+    puts "\n== Active Bots Catching Metrics (#{bots.count}) =="
+    list_bots(bots)
+  end
+
   desc "List all bots"
   task :list_all => :environment do
     #bots = Bot.active.to_a.sort_by(&:last_action_at).reverse
