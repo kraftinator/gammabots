@@ -310,7 +310,15 @@ namespace :bots do
         price_diff_sign = '+' if price_diff_pct > 0
       end
       vars = metric.metrics
-    
+
+      cma = vars[:cma] == 'NaN' ? nil : vars[:cma].to_d
+      lma = vars[:lma] == 'NaN' ? nil : vars[:lma].to_d
+      pcm = vars[:pcm] == 'NaN' ? nil : vars[:pcm].to_d
+      plm = vars[:plm] == 'NaN' ? nil : vars[:plm].to_d 
+      
+      golden_crossover = false
+      golden_crossover = (cma>lma && pcm<plm) if cma && lma && pcm && plm
+
       puts "#{metric.created_at} - #{metric.price.to_s}  #{price_diff_sign}#{price_diff_pct.abs}%"
       puts
       puts "                          mam (moving_avg_minutes):     #{vars[:mam]}"
@@ -333,6 +341,7 @@ namespace :bots do
       puts "                          nd2 (price_non_decreasing_2): #{vars[:nd2]}"
       puts "                          pdi (price_diversity):        #{vars[:pdi].nil? || vars[:pdi] == 'NaN' ? '' : format('%.5f', vars[:pdi])}"
       puts "                          mom (momentum):               #{vars[:mom].nil? || vars[:mom] == 'NaN' ? '' : format('%.5f', vars[:mom])}"
+      puts "                          golden crossover:             #{golden_crossover}"
 
       puts
       previous_price = metric.price
