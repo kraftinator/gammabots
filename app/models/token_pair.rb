@@ -96,23 +96,28 @@ class TokenPair < ApplicationRecord
     per_minute_avgs.sum(0.0) / per_minute_avgs.size
   end
 
+  # Calculate the “volume diversity” over a window of `minutes` bars,
+  # optionally shifted back by `shift` minutes (0 = include current bar).
   def volume_indicator(minutes = 5, shift: 0)
-    # Determine time window end and start
-    end_time   = shift.minutes.ago
-    start_time = (minutes + shift).minutes.ago
+    # 1) Determine the end of the target window: end of the minute `shift` minutes ago
+    bucket_end   = shift.minutes.ago.end_of_minute
+    # 2) Determine the start of the earliest minute bucket you want
+    bucket_start = (minutes - 1 + shift).minutes.ago.beginning_of_minute
 
-    # Fetch all prices from the time window
-    prices = token_pair_prices
-      .where('created_at >= ? AND created_at <= ?', start_time, end_time)
-      .pluck(:price)
+    # 3) Build one aggregated price per minute‐bucket
+    per_minute_avgs = token_pair_prices
+      .where(created_at: bucket_start..bucket_end)
+      .group(Arel.sql("date_trunc('minute', created_at)"))
+      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
+      .limit(minutes)
+      .pluck(Arel.sql("AVG(price)"))
 
-    # Calculate percentage of unique values
-    unique_count = prices.uniq.size
-    total_count = prices.size
-    
-    return nil if total_count < minutes
-    
-    unique_count.to_f / total_count
+    # 4) Bail out if we don’t have a full set of `minutes` buckets
+    return nil if per_minute_avgs.size < minutes
+
+    # 5) Compute the ratio of unique bars over total bars (== minutes)
+    unique_count = per_minute_avgs.uniq.size
+    unique_count.to_f / per_minute_avgs.size
   end
 
   def momentum_indicator(minutes = 5, shift: 0)
