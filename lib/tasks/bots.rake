@@ -278,8 +278,181 @@ namespace :bots do
   end
 
   # Usage:
+# rake bots:metrics["2"]
+task :metrics, [:bot_id, :minutes] => :environment do |t, args|
+  args.with_defaults(minutes: 1440)  # default to last 24h
+
+  if args[:bot_id].nil?
+    raise ArgumentError, "Missing parameters!"
+  end
+
+  bot = Bot.find(args[:bot_id])
+  unless bot
+    raise ArgumentError, "Invalid bot!"
+  end
+
+  since   = args[:minutes].to_i.minutes.ago
+  metrics = bot.bot_price_metrics.where('created_at >= ?', since).order(:created_at)
+  puts "\nMETRICS (#{bot.token_pair.name})"
+  puts "---------"
+
+  previous_price = nil
+  metrics.each do |metric|
+    
+    price_diff_pct = if previous_price
+                       ((metric.price - previous_price) / previous_price * 100).round(2)
+                     else
+                       0
+                     end
+    price_diff_sign = ' '
+    if previous_price
+      price_diff_sign = '-' if price_diff_pct < 0
+      price_diff_sign = '+' if price_diff_pct > 0
+    end
+    vars = metric.metrics
+
+    cma = vars[:cma] == 'NaN' ? nil : vars[:cma].to_d
+    lma = vars[:lma] == 'NaN' ? nil : vars[:lma].to_d
+    tma = vars[:tma] == 'NaN' ? nil : vars[:tma].to_d
+    pcm = vars[:pcm] == 'NaN' ? nil : vars[:pcm].to_d
+    plm = vars[:plm] == 'NaN' ? nil : vars[:plm].to_d
+    rhi = vars[:rhi] == 'NaN' ? nil : vars[:rhi].to_d
+    lps = vars[:lps] == 'NaN' ? nil : vars[:lps].to_d
+    lmc = vars[:lmc] == 'NaN' ? nil : vars[:lmc].to_d
+    ssd = vars[:ssd] == 'NaN' ? nil : vars[:ssd].to_d
+    lsd = vars[:lsd] == 'NaN' ? nil : vars[:lsd].to_d
+    vst = vars[:vst] == 'NaN' ? nil : vars[:vst].to_d
+    vlt = vars[:vlt] == 'NaN' ? nil : vars[:vlt].to_d
+    
+    golden_crossover = false
+    golden_crossover = (cma>lma && pcm<plm) if cma && lma && pcm && plm
+
+    cpr_ppr_pct = if vars[:cpr] && vars[:ppr] && vars[:ppr] != 0
+                ((vars[:cpr].to_f - vars[:ppr].to_f) / vars[:ppr].to_f * 100).round(2)
+              else
+                0.0
+              end
+
+    cma_lma_pct = if cma && lma && lma != 0
+                    ((cma.to_f - lma.to_f) / lma.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+        pcm_plm_pct = if pcm && plm && plm != 0
+                    ((pcm.to_f - plm.to_f) / plm.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    lma_tma_pct = if lma && tma && tma != 0
+                    ((lma.to_f - tma.to_f) / tma.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    cpr_cma_pct = if vars[:cpr] && cma && cma != 0
+                    ((vars[:cpr].to_f - cma.to_f) / cma.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    cpr_rhi_pct = if vars[:cpr] && rhi && rhi != 0
+                    ((vars[:cpr].to_f - rhi.to_f) / rhi.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    ppr_rhi_pct = if vars[:ppr] && rhi && rhi != 0
+                    ((vars[:ppr].to_f - rhi.to_f) / rhi.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    cpr_lps_pct = if vars[:cpr] && lps && lps != 0
+                    ((vars[:cpr].to_f - lps.to_f) / lps.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    cma_lmc_pct = if cma && lmc && lmc != 0
+                    ((cma.to_f - lmc.to_f) / lmc.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    lsd_ssd_pct = if lsd && ssd && ssd != 0
+                    ((lsd.to_f - ssd.to_f) / ssd.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    vlt_vst_pct = if vlt && vst && vst != 0
+                    ((vlt.to_f - vst.to_f) / vst.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    puts "#{metric.created_at} - #{metric.price.to_s}  #{price_diff_sign}#{price_diff_pct.abs}%"
+    puts
+
+    # Left column - existing metrics
+    left_lines = [
+      "golden crossover:             #{golden_crossover}",
+      "mam (moving_avg_minutes):     #{vars[:mam]}",
+      "cpr (current_price):          #{vars[:cpr]}",
+      "ppr (previous_price):         #{vars[:ppr]}",
+      "rhi (rolling_high):           #{vars[:rhi].nil? || vars[:rhi] == 'NaN' ? '' : format('%.18f %s', vars[:rhi], '')}",
+      "cma (current_moving_avg):     #{vars[:cma] == 'NaN' ? '' : format('%.18f %s', vars[:cma], '')}",
+      "lma (longterm_moving_avg):    #{vars[:lma] == 'NaN' ? '' : format('%.18f %s', vars[:lma], '')}",
+      "tma (triterm_moving_avg):     #{vars[:tma] == 'NaN' ? '' : format('%.18f %s', vars[:tma], '')}",
+      "pcm (previous_cma):           #{vars[:pcm].nil? || vars[:pcm] == 'NaN' ? '' : format('%.18f %s', vars[:pcm], '')}",
+      "plm (previous_lma):           #{vars[:plm].nil? || vars[:plm] == 'NaN' ? '' : format('%.18f %s', vars[:plm], '')}",
+      "ssd (short_stdev):            #{vars[:ssd].nil? || vars[:ssd] == 'NaN' ? '' : format('%.5f', vars[:ssd])}",
+      "lsd (long_stdev):             #{vars[:lsd].nil? || vars[:lsd] == 'NaN' ? '' : format('%.5f', vars[:lsd])}",
+      "vst (short_term_volatility):  #{vars[:vst].nil? || vars[:vst] == 'NaN' ? '' : format('%.5f', vars[:vst])}",
+      "vlt (long_term_volatility):   #{vars[:vlt].nil? || vars[:vlt] == 'NaN' ? '' : format('%.5f', vars[:vlt])}",
+      "ndp (price_non_decreasing):   #{vars[:ndp]}",
+      "nd2 (price_non_decreasing_2): #{vars[:nd2]}",
+      "pdi (price_diversity):        #{vars[:pdi].nil? || vars[:pdi] == 'NaN' ? '' : format('%.5f', vars[:pdi])}",
+      "mom (momentum):               #{vars[:mom].nil? || vars[:mom] == 'NaN' ? '' : format('%.5f', vars[:mom])}"
+    ]
+
+    # Right column - additional metrics
+    right_lines = [
+      "cma > lma: #{format('%.2f', cma_lma_pct)}%",
+      "pcm > plm: #{format('%.2f', pcm_plm_pct)}%",
+      "lma > tma: #{format('%.2f', lma_tma_pct)}%",
+      "cpr > ppr: #{format('%.2f', cpr_ppr_pct)}%",
+      "cpr > cma: #{format('%.2f', cpr_cma_pct)}%",
+      "cpr > rhi: #{format('%.2f', cpr_rhi_pct)}%",
+      "ppr > rhi: #{format('%.2f', ppr_rhi_pct)}%",
+      "cpr > lps: #{format('%.2f', cpr_lps_pct)}%",
+      "cma > lmc: #{format('%.2f', cma_lmc_pct)}%",
+      "lsd > ssd: #{format('%.2f', lsd_ssd_pct)}%",
+      "vlt > vst: #{format('%.2f', vlt_vst_pct)}%",
+      
+    ]
+
+    # Print both columns side by side
+    max_lines = [left_lines.length, right_lines.length].max
+    (0...max_lines).each do |i|
+      left_text = left_lines[i] || ""
+      right_text = right_lines[i] || ""
+      
+      # Pad left column to consistent width (adjust 70 as needed)
+      left_padded = "#{' ' * 26}#{left_text}".ljust(80)
+      puts "#{left_padded} | #{right_text}"
+    end
+
+    puts
+    previous_price = metric.price
+  end
+end
+
+  # Usage:
   # rake bots:metrics["2"]
-  task :metrics, [:bot_id, :minutes] => :environment do |t, args|
+  task :metrics2, [:bot_id, :minutes] => :environment do |t, args|
     args.with_defaults(minutes: 1440)  # default to last 24h
 
     if args[:bot_id].nil?
@@ -315,7 +488,7 @@ namespace :bots do
       lma = vars[:lma] == 'NaN' ? nil : vars[:lma].to_d
       pcm = vars[:pcm] == 'NaN' ? nil : vars[:pcm].to_d
       plm = vars[:plm] == 'NaN' ? nil : vars[:plm].to_d 
-      
+
       golden_crossover = false
       golden_crossover = (cma>lma && pcm<plm) if cma && lma && pcm && plm
 
