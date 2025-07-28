@@ -116,28 +116,25 @@ class TokenPair < ApplicationRecord
   end
 
   def momentum_indicator(minutes = 5, shift: 0)
-    # Determine time window end and start
-    end_time   = shift.minutes.ago
-    start_time = (minutes + shift).minutes.ago
+    # 1) Determine end of the window: end of the minute `shift` minutes ago
+    bucket_end   = shift.minutes.ago.end_of_minute
+    # 2) Determine start of the earliest minute bucket you want
+    bucket_start = (minutes - 1 + shift).minutes.ago.beginning_of_minute
 
-    # Fetch all prices from the time window, ordered by creation time
+    # 3) Fetch all raw ticks in that time range, oldest first
     prices = token_pair_prices
-      .where('created_at >= ? AND created_at <= ?', start_time, end_time)
+      .where(created_at: bucket_start..bucket_end)
       .order(:created_at)
       .pluck(:price)
 
-    # Return nil if we don't have enough data points
+    # 4) Need at least two points to compute momentum
     return nil if prices.size < 2
 
-    # Count consecutive increases
-    increasing_count = 0
+    # 5) Count how many times price increased from one tick to the next
+    increasing_count = prices.each_cons(2).count { |prev, curr| curr > prev }
     total_comparisons = prices.size - 1
 
-    (1...prices.size).each do |i|
-      increasing_count += 1 if prices[i] > prices[i-1]
-    end
-
-    # Return the ratio of increasing price movements
+    # 6) Return the ratio of increases
     increasing_count.to_f / total_comparisons
   end
 
