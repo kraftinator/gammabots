@@ -26,52 +26,6 @@ class TokenPair < ApplicationRecord
     current_price
   end
 
-=begin
-  # Simple Moving Average over the past `minutes` minutes,
-  # aggregating multiple ticks per minute via averaging
-  def moving_average(minutes = 5)
-    # Define window to include the current minute and the previous minutes
-    start_time = minutes.minutes.ago
-
-    # Bucket ticks by minute and compute average price per bucket
-    avg_prices = token_pair_prices
-      .where('created_at >= ? AND created_at <= ?', start_time, Time.current)
-      .group(Arel.sql("date_trunc('minute', created_at)"))
-      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
-      .limit(minutes)             # take the latest `minutes` buckets
-      .pluck(Arel.sql("AVG(price)"))
-
-    # Ensure we have a full set of minutes
-    return nil if avg_prices.size < minutes
-
-    # Calculate the average of the minute-averages
-    avg_prices.sum(0.0) / avg_prices.size
-  end
-
-
-  # Calculate the simple moving average over a window of `minutes` bars,
-  # optionally shifted back by `shift` minutes (0 = include current bar).
-  def moving_average(minutes = 5, shift: 0)
-    # Determine time window end and start
-    #end_time   = shift.minutes.ago
-    #start_time = (minutes + shift).minutes.ago
-    now        = Time.current.beginning_of_minute
-    end_time   = now - shift.minutes
-    start_time = end_time - minutes.minutes
-
-    avg_prices = token_pair_prices
-      .where('created_at >= ? AND created_at <= ?', start_time, end_time)
-      .group(Arel.sql("date_trunc('minute', created_at)"))
-      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
-      .limit(minutes)
-      .pluck(Arel.sql('AVG(price)'))
-
-    return nil if avg_prices.size < minutes
-
-    avg_prices.sum(0.0) / avg_prices.size
-  end
-=end
-
   # Calculate the simple moving average over a window of `minutes` bars,
   # optionally shifted back by `shift` minutes (0 = include current bar).
   def moving_average(minutes = 6, shift: 0)
@@ -143,40 +97,60 @@ class TokenPair < ApplicationRecord
     increasing_count.to_f / total_comparisons
   end
 
-  def volatility_by_range(minutes = 5)
-    start_time = minutes.minutes.ago
-    prices = token_pair_prices
-      .where("created_at >= ?", start_time)
-      .order(created_at: :desc)
-      .pluck(:price)
+  # Calculate volatility over a window of `minutes` bars,
+  # optionally shifted back by `shift` minutes (0 = include current bar).
+  def volatility_by_range(minutes = 5, shift: 0)
+    # 1) End at the end of the minute `shift` minutes ago
+    bucket_end   = shift.minutes.ago.end_of_minute
+    # 2) Start at the beginning of the earliest minute bucket you want
+    bucket_start = (minutes - 1 + shift).minutes.ago.beginning_of_minute
 
-    return nil if prices.empty? || prices.count < minutes
+    # 3) Build one average per minute-bucket
+    per_minute_avgs = token_pair_prices
+      .where(created_at: bucket_start..bucket_end)
+      .group(Arel.sql("date_trunc('minute', created_at)"))
+      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
+      .limit(minutes)
+      .pluck(Arel.sql("AVG(price)"))
 
-    (prices.max - prices.min) / prices.min.to_f
+    # 4) Bail out if we don’t have a full set of `minutes` bars
+    return nil if per_minute_avgs.size < minutes
+
+    # 5) Compute volatility = (max – min) / min
+    max_price = per_minute_avgs.max
+    min_price = per_minute_avgs.min
+    (max_price - min_price) / min_price.to_f
   end
 
-  def volatility_by_std_dev(minutes = 5)
-    start_time = minutes.minutes.ago
-    prices = token_pair_prices
-      .where("created_at >= ?", start_time)
-      .order(created_at: :desc)
-      .pluck(:price)
+  # Calculate the standard‐deviation volatility over a window of `minutes` bars,
+  # optionally shifted back by `shift` minutes (0 = include current bar).
+  def volatility_by_std_dev(minutes = 5, shift: 0)
+    # 1) End at the end of the minute `shift` minutes ago
+    bucket_end   = shift.minutes.ago.end_of_minute
+    # 2) Start at the beginning of the earliest minute bucket you want
+    bucket_start = (minutes - 1 + shift).minutes.ago.beginning_of_minute
 
-    # Need at least two prices to compute returns
-    return nil if prices.size < 2
+    # 3) Build one average per minute‐bucket
+    per_minute_avgs = token_pair_prices
+      .where(created_at: bucket_start..bucket_end)
+      .group(Arel.sql("date_trunc('minute', created_at)"))
+      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
+      .limit(minutes)
+      .pluck(Arel.sql("AVG(price)"))
 
-    # 1) compute simple returns between consecutive prices
-    returns = prices.each_cons(2).map do |prev_price, cur_price|
-      (cur_price - prev_price) / prev_price.to_f
+    # 4) Bail if we don’t have a full set of `minutes` bars
+    return nil if per_minute_avgs.size < minutes
+
+    # 5) Compute simple returns between consecutive per‐minute bars
+    returns = per_minute_avgs.each_cons(2).map do |prev_bar, cur_bar|
+      (cur_bar - prev_bar) / prev_bar.to_f
     end
 
-    # 2) mean of returns
-    mean = returns.sum / returns.size.to_f
-
-    # 3) variance (population)
+    # 6) Population variance of returns
+    mean     = returns.sum / returns.size.to_f
     variance = returns.reduce(0.0) { |acc, r| acc + (r - mean)**2 } / returns.size.to_f
 
-    # 4) std-dev
+    # 7) Standard deviation
     Math.sqrt(variance)
   end
 
@@ -185,22 +159,21 @@ class TokenPair < ApplicationRecord
     ppr_record ? ppr_record.price : nil
   end
 
-  # Highest average price over the past `minutes` minutes (rolling high)
-  # aggregates multiple ticks per minute into one bar via averaging
-  def rolling_high(minutes = 5)
-    # Expand window by 1 to include the current minute bucket before dropping it
-    start_time = (minutes + 1).minutes.ago
+  def rolling_high(minutes = 5, shift: 0)
+    # 1) End at the end of the minute `shift` minutes ago
+    bucket_end   = shift.minutes.ago.end_of_minute
+    # 2) Start at the beginning of the earliest minute bucket
+    bucket_start = (minutes + shift).minutes.ago.beginning_of_minute
 
-    # Bucket ticks by minute and compute average price per bucket
+    # 3) Build one average per minute‐bucket
     avg_prices = token_pair_prices
-      .where('created_at >= ? AND created_at < ?', start_time, Time.current)
+      .where(created_at: bucket_start..bucket_end)
       .group(Arel.sql("date_trunc('minute', created_at)"))
       .order(Arel.sql("date_trunc('minute', created_at) DESC"))
-      .offset(1)                  # skip the current minute bucket
-      .limit(minutes)             # take the previous `minutes` buckets
+      .offset(1)                # drop the current minute
+      .limit(minutes)           # take the previous `minutes` buckets
       .pluck(Arel.sql("AVG(price)"))
 
-    # Ensure we have a full set of minutes before calculating
     return nil if avg_prices.size < minutes
 
     avg_prices.max
