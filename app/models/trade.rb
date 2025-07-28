@@ -223,7 +223,7 @@ class Trade < ApplicationRecord
       mom = BigDecimal(mom_str.to_s)
       if vst && mom && mom != 0
       	vst_mom_ratio = (vst.to_f / mom.to_f).round(6)
-				puts "vst > mom: #{vst_mom_ratio}"
+				puts "vst / mom: #{vst_mom_ratio}"
 			end
 		end
     
