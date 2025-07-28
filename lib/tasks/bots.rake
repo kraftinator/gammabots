@@ -323,6 +323,7 @@ task :metrics, [:bot_id, :minutes] => :environment do |t, args|
     lsd = vars[:lsd] == 'NaN' ? nil : vars[:lsd].to_d
     vst = vars[:vst] == 'NaN' ? nil : vars[:vst].to_d
     vlt = vars[:vlt] == 'NaN' ? nil : vars[:vlt].to_d
+    mom = vars[:mom] == 'NaN' ? nil : vars[:mom].to_d
     
     golden_crossover = false
     golden_crossover = (cma>lma && pcm<plm) if cma && lma && pcm && plm
@@ -393,6 +394,24 @@ task :metrics, [:bot_id, :minutes] => :environment do |t, args|
                     0.0
                   end
 
+    cpr_tma_pct = if vars[:cpr] && tma && tma != 0
+                    ((vars[:cpr].to_f - tma.to_f) / tma.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    rhi_cma_pct = if rhi && cma && cma != 0
+                    ((rhi.to_f - cma.to_f) / cma.to_f * 100).round(2)
+                  else
+                    0.0
+                  end
+
+    vst_mom_ratio = if vst && mom && mom != 0
+                      (vst.to_f / mom.to_f).round(5)
+                    else
+                      0.0
+                    end
+
     puts "#{metric.created_at} - #{metric.price.to_s}  #{price_diff_sign}#{price_diff_pct.abs}%"
     puts
 
@@ -426,12 +445,14 @@ task :metrics, [:bot_id, :minutes] => :environment do |t, args|
       "cpr > ppr: #{format('%.2f', cpr_ppr_pct)}%",
       "cpr > cma: #{format('%.2f', cpr_cma_pct)}%",
       "cpr > rhi: #{format('%.2f', cpr_rhi_pct)}%",
+      "cpr > tma: #{format('%.2f', cpr_tma_pct)}%",
+      "rhi > cma: #{format('%.2f', rhi_cma_pct)}%",
       "ppr > rhi: #{format('%.2f', ppr_rhi_pct)}%",
       "cpr > lps: #{format('%.2f', cpr_lps_pct)}%",
       "cma > lmc: #{format('%.2f', cma_lmc_pct)}%",
       "lsd > ssd: #{format('%.2f', lsd_ssd_pct)}%",
       "vlt > vst: #{format('%.2f', vlt_vst_pct)}%",
-      
+      "vst / mom: #{format('%.5f', vst_mom_ratio)}",
     ]
 
     # Print both columns side by side

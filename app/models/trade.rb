@@ -160,6 +160,16 @@ class Trade < ApplicationRecord
       end
     end
 
+    # rhi > cma
+    if rhi_str && cma_str
+      rhi = BigDecimal(rhi_str)
+      cma = BigDecimal(cma_str)
+      unless cma.zero?
+        rhi_cma_pct = (rhi - cma) / cma * 100
+        puts "rhi > cma: #{rhi_cma_pct.to_f.round(6)}%"
+      end
+    end
+
     # ppr == lps
     if ppr_str && lps_str
       ppr = BigDecimal(ppr_str)
@@ -206,6 +216,16 @@ class Trade < ApplicationRecord
         puts "ssd > lsd: #{diff_pct.to_f.round(6)}%"
       end
     end
+
+    # vst / mom ratio
+    if vst_str && mom_str.present?
+      vst = BigDecimal(vst_str.to_s)
+      mom = BigDecimal(mom_str.to_s)
+      if vst && mom && mom != 0
+      	vst_mom_ratio = (vst.to_f / mom.to_f).round(6)
+				puts "vst > mom: #{vst_mom_ratio}"
+			end
+		end
     
     puts "ssd: #{ssd_str.to_s[0..6]}, lsd: #{lsd_str.to_s[0..6]}" if ssd_str && lsd_str
     puts "vst: #{vst_str[0..6]}, vlt: #{vlt_str[0..6]}" if vst_str && vlt_str
