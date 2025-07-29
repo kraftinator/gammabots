@@ -48,6 +48,46 @@ class CreateTokenPairService
       quote_token.contract_address, 
       provider_url
     )
-    result["poolAddress"] && result["feeTier"]
+
+    unless result["poolAddress"] && result["feeTier"]
+      puts "Cannot find pool"
+      return false
+    end
+
+    price = EthersService.get_token_price_from_pool_with_fields(
+      base_token.contract_address,
+      base_token.decimals,
+      quote_token.contract_address,
+      quote_token.decimals,
+      result["poolAddress"],
+      provider_url
+    )
+
+    unless price
+      puts "Cannot get price for #{base_token.symbol}/#{quote_token.symbol}"
+      return false
+    end
+
+    price = price.to_d
+    test_amount = 0.5
+    sim = EthersService.quote_meets_minimum(
+      quote_token.contract_address,
+      base_token.contract_address,
+      result["feeTier"],
+      test_amount,
+      quote_token.decimals,
+      base_token.decimals,
+      (test_amount / price) * 0.5,
+      provider_url
+    )
+
+    return false unless sim['success']
+
+    if sim['valid']
+      return true
+    else
+      puts "Insufficient liquidity for #{base_token.symbol}/#{quote_token.symbol}"
+      return false
+    end
   end
 end

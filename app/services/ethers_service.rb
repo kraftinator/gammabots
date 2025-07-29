@@ -250,6 +250,19 @@ class EthersService
     )
   end
 
+  def self.get_token_price_from_pool_with_fields(base_token_address, base_token_decimals, quote_token_address, quote_token_decimals, pool_address, provider_url)
+    puts "Calling getPriceFromPool for #{base_token_address}"
+    call_function(
+      'getPriceFromPool', 
+      base_token_address, 
+      base_token_decimals, 
+      quote_token_address, 
+      quote_token_decimals,
+      pool_address,
+      provider_url
+    )
+  end
+
   def self.get_max_amount_in(token_pair, provider_url)
     puts "Calling getMaxAmountIn for #{token_pair.base_token.symbol}"
     call_function(
