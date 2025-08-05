@@ -190,7 +190,7 @@ class Trade < ApplicationRecord
 
       # absolute difference
       diff = vst - vlt
-      puts "vst - vlt: #{diff.to_f.round(6)}"
+      #puts "vst - vlt: #{diff.to_f.round(6)}"
 
       # percentage difference (relative to vlt), guard against zero
       unless vlt.zero?
@@ -208,7 +208,7 @@ class Trade < ApplicationRecord
 
       # absolute difference
       diff = ssd - lsd
-      puts "ssd - lsd: #{diff.to_f.round(6)}"
+      #puts "ssd - lsd: #{diff.to_f.round(6)}"
 
       # percentage difference (relative to lsd), guard against zero
       unless lsd.zero?
