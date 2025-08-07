@@ -2,7 +2,7 @@ module Api
   module V1
     class BotsController < Api::BaseController      
       def index
-        @bots = Bot.active.all
+        @bots = Bot.active.default_bots.all
         #render json: @bots
         formatted_bots = @bots.map do |bot|
           {
