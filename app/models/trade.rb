@@ -42,7 +42,12 @@ class Trade < ApplicationRecord
   end
 
   def total_value
-    amount_out * price
+    #amount_out * price
+    if buy?
+      amount_in  # ETH spent on the buy
+    else # sell
+      amount_out # ETH received from the sell
+    end
   end
 
   def analyze_metrics

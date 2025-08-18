@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_24_180658) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_18_185219) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -109,6 +109,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_24_180658) do
     t.index ["tx_hash"], name: "index_copy_trades_on_tx_hash", unique: true
     t.index ["wallet_address", "created_at"], name: "index_copy_trades_on_wallet_address_and_created_at"
     t.index ["wallet_address"], name: "index_copy_trades_on_wallet_address"
+  end
+
+  create_table "dashboard_metrics", force: :cascade do |t|
+    t.integer "active_bots", default: 0, null: false
+    t.bigint "tvl_cents", default: 0, null: false
+    t.bigint "volume_24h_cents", default: 0, null: false
+    t.integer "strategies_count", default: 0, null: false
+    t.bigint "total_profits_cents", default: 0, null: false
+    t.integer "win_rate_bps", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_dashboard_metrics_on_created_at"
   end
 
   create_table "pending_copy_trades", force: :cascade do |t|
