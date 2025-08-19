@@ -75,6 +75,10 @@ class BotCycle < ApplicationRecord
     change / initial_buy_amount.to_f
   end
 
+  def profitable?
+    profit_fraction(include_profit_withdrawals: true) > 0
+  end
+
   def first_cycle?
     ordinal == 1
   end

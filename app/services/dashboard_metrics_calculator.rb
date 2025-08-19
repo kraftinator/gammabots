@@ -12,7 +12,7 @@ class DashboardMetricsCalculator
       volume_24h_cents: calculate_24h_volume * 100,
       strategies_count: Strategy.count,
       total_profits_cents: calculate_total_profits * 100,
-      win_rate: calculate_win_rate
+      win_rate_bps: calculate_win_rate
     }
   end
 
@@ -36,11 +36,19 @@ class DashboardMetricsCalculator
   end
 
   def calculate_total_profits
-    # Total profits calculation
+    0
   end
 
   def calculate_win_rate
-    # Win rate calculation
+    cycles = BotCycle.joins(:bot)
+                   .where(bot: Bot.default_bots)
+                   .where.not(ended_at: nil)
+
+    return 0.0 if cycles.count == 0
+
+    profitable_cycles_count = cycles.count(&:profitable?)
+    win_rate_percentage = profitable_cycles_count.to_f / cycles.count * 100
+    (win_rate_percentage * 100).round # Convert to basis points
   end
 
   def get_eth_price_in_usd
