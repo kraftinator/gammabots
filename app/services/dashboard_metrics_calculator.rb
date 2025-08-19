@@ -13,7 +13,7 @@ class DashboardMetricsCalculator
       volume_24h_cents: calculate_24h_volume * @eth_price_usd * 100,
       strategies_count: Strategy.count,
       total_profits_cents: calculate_total_profits * @eth_price_usd * 100,
-      win_rate_bps: calculate_win_rate
+      #win_rate_bps: calculate_win_rate
     }
   end
 
@@ -35,21 +35,20 @@ class DashboardMetricsCalculator
   end
 
   def calculate_total_profits
-    cycles = BotCycle.joins(:bot)
-                     .where(bot: Bot.default_bots)
-                     .where.not(ended_at: nil)
+    cycle_profits = Trade.joins(:bot)
+                         .where(bot: Bot.default_bots)
+                         .where(status: 'completed')
+                         .where('executed_at >= ?', Date.new(2025, 7, 1))  # Added date filter
+                         .group(:bot_cycle_id)
+                         .having("COUNT(CASE WHEN trade_type = 'buy' THEN 1 END) >= 1")
+                         .having("COUNT(CASE WHEN trade_type = 'sell' THEN 1 END) >= 1")
+                         .select("
+                           bot_cycle_id,
+                           SUM(CASE WHEN trade_type = 'sell' THEN amount_out ELSE 0 END) - 
+                           SUM(CASE WHEN trade_type = 'buy' THEN amount_in ELSE 0 END) as cycle_profit
+                         ")
 
-    total_profit_eth = cycles.sum do |cycle|
-      # Calculate current profit in the cycle
-      current_profit = cycle.quote_token_amount - cycle.initial_buy_amount
-      
-      # Add any profit that was already taken
-      total_profit = current_profit + cycle.profit_taken
-      
-      # Only include if it's actually profitable
-      total_profit > 0 ? total_profit : 0
-    end
-
+    total_profit_eth = cycle_profits.map(&:cycle_profit).select { |profit| profit > 0 }.sum
     total_profit_eth
   end
 
