@@ -6,12 +6,13 @@ class DashboardMetricsCalculator
 
   def call
     @active_bots = Bot.active.default_bots
+    @eth_price_usd = get_eth_price_in_usd
     {
       active_bots: @active_bots.count,
-      tvl_cents: calculate_tvl * 100,
-      volume_24h_cents: calculate_24h_volume * 100,
+      tvl_cents: calculate_tvl * @eth_price_usd * 100,
+      volume_24h_cents: calculate_24h_volume * @eth_price_usd * 100,
       strategies_count: Strategy.count,
-      total_profits_cents: calculate_total_profits * 100,
+      total_profits_cents: calculate_total_profits * @eth_price_usd * 100,
       win_rate_bps: calculate_win_rate
     }
   end
@@ -20,8 +21,7 @@ class DashboardMetricsCalculator
 
   def calculate_tvl
     total_eth = @active_bots.sum(&:current_value)
-    eth_price_usd = get_eth_price_in_usd
-    total_eth * eth_price_usd
+    total_eth
   end
 
   def calculate_24h_volume
@@ -31,12 +31,26 @@ class DashboardMetricsCalculator
                          .where(status: 'completed')
 
     total_eth_volume = recent_trades.sum(&:total_value)
-    eth_price_usd = get_eth_price_in_usd
-    total_eth_volume * eth_price_usd
+    total_eth_volume
   end
 
   def calculate_total_profits
-    0
+    cycles = BotCycle.joins(:bot)
+                     .where(bot: Bot.default_bots)
+                     .where.not(ended_at: nil)
+
+    total_profit_eth = cycles.sum do |cycle|
+      # Calculate current profit in the cycle
+      current_profit = cycle.quote_token_amount - cycle.initial_buy_amount
+      
+      # Add any profit that was already taken
+      total_profit = current_profit + cycle.profit_taken
+      
+      # Only include if it's actually profitable
+      total_profit > 0 ? total_profit : 0
+    end
+
+    total_profit_eth
   end
 
   def calculate_win_rate
