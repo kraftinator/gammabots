@@ -17,6 +17,7 @@ module Api
           volume_24h: metrics.volume_24h_usd,
           strategies: metrics.strategies_count,
           total_profits: metrics.total_profits_usd,
+          trades_executed: metrics.trades_executed,
           last_updated: metrics.created_at.iso8601
         }
       end

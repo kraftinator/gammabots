@@ -13,7 +13,7 @@ class DashboardMetricsCalculator
       volume_24h_cents: calculate_24h_volume * @eth_price_usd * 100,
       strategies_count: Strategy.count,
       total_profits_cents: calculate_total_profits * @eth_price_usd * 100,
-      #win_rate_bps: calculate_win_rate
+      trades_executed: calculate_trades_executed
     }
   end
 
@@ -26,7 +26,7 @@ class DashboardMetricsCalculator
 
   def calculate_24h_volume
     recent_trades = Trade.joins(:bot)
-                         .where(bot: @active_bots)
+                         .where(bot: Bot.default_bots)
                          .where(executed_at: 24.hours.ago..Time.current)
                          .where(status: 'completed')
 
@@ -52,16 +52,12 @@ class DashboardMetricsCalculator
     total_profit_eth
   end
 
-  def calculate_win_rate
-    cycles = BotCycle.joins(:bot)
-                   .where(bot: Bot.default_bots)
-                   .where.not(ended_at: nil)
-
-    return 0.0 if cycles.count == 0
-
-    profitable_cycles_count = cycles.count(&:profitable?)
-    win_rate_percentage = profitable_cycles_count.to_f / cycles.count * 100
-    (win_rate_percentage * 100).round # Convert to basis points
+  def calculate_trades_executed
+    Trade.joins(:bot)
+         .where(bot: Bot.default_bots)
+         .where(status: 'completed')
+         .where('executed_at >= ?', Date.new(2025, 7, 1))
+         .count
   end
 
   def get_eth_price_in_usd

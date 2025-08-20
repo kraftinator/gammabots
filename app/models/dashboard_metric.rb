@@ -2,9 +2,9 @@
 class DashboardMetric < ApplicationRecord
   # --- Validations ---
   validates :active_bots, :tvl_cents, :volume_24h_cents,
-            :strategies_count, :total_profits_cents, presence: true
+            :strategies_count, :trades_executed, :total_profits_cents, presence: true
             
-  validates :active_bots, :strategies_count, numericality: { greater_than_or_equal_to: 0 }
+  validates :active_bots, :strategies_count, :trades_executed, numericality: { greater_than_or_equal_to: 0 }
   validates :tvl_cents, :volume_24h_cents, :total_profits_cents, 
             numericality: { greater_than_or_equal_to: 0 }
 
