@@ -50,8 +50,11 @@ module Api
 
         trades.map do |trade|
           token_amount = trade.buy? ? trade.amount_out : trade.amount_in
+          user = trade.bot.user
           
           {
+            farcaster_username: user.farcaster_username,
+            farcaster_avatar_url: user.farcaster_avatar_url,
             action: trade.trade_type.capitalize, # "Buy" or "Sell"
             amount: token_amount.round(0), # Token amount (not ETH)
             token_symbol: trade.bot.token_pair.base_token.symbol,

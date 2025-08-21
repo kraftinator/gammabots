@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_20_184740) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_21_174214) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -253,6 +253,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_184740) do
     t.string "created_by_signature"
     t.string "created_by_wallet"
     t.string "profit_withdrawal_address"
+    t.string "farcaster_username"
+    t.string "farcaster_avatar_url"
     t.index ["farcaster_id"], name: "index_users_on_farcaster_id", unique: true
   end
 
