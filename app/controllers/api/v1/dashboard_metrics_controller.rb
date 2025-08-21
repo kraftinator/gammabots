@@ -1,5 +1,6 @@
-
 # app/controllers/api/v1/dashboard_metrics_controller.rb
+include ActionView::Helpers::DateHelper
+
 module Api
   module V1
     class DashboardMetricsController < Api::BaseController
@@ -22,6 +23,7 @@ module Api
           total_profits: metrics.total_profits_usd,
           trades_executed: metrics.trades_executed,
           popular_tokens: calculate_popular_tokens,
+          recent_activity: calculate_recent_activity,
           last_updated: metrics.created_at.iso8601
         }
       end
@@ -37,6 +39,27 @@ module Api
 
         # Convert ETH to USD
         token_tvls.transform_values { |eth_amount| (eth_amount * @eth_price_usd).round(2) }
+      end
+
+      def calculate_recent_activity
+        trades = Trade.joins(:bot)
+                    .where(bot: Bot.default_bots)
+                    .where(status: 'completed')
+                    .order(executed_at: :desc)
+                    .limit(4)
+
+        trades.map do |trade|
+          token_amount = trade.buy? ? trade.amount_out : trade.amount_in
+          
+          {
+            action: trade.trade_type.capitalize, # "Buy" or "Sell"
+            amount: token_amount.round(0), # Token amount (not ETH)
+            token_symbol: trade.bot.token_pair.base_token.symbol,
+            strategy_id: trade.bot.strategy.nft_token_id,
+            bot_id: trade.bot.id,
+            time_ago: time_ago_in_words(trade.executed_at)
+          }
+        end
       end
     end
   end
