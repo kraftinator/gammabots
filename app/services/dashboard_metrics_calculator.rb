@@ -6,7 +6,7 @@ class DashboardMetricsCalculator
 
   def call
     @active_bots = Bot.active.default_bots
-    @eth_price_usd = get_eth_price_in_usd
+    @eth_price_usd = TokenPriceService.get_eth_price_in_usd(@active_bots.first&.chain)
     {
       active_bots: @active_bots.count,
       tvl_cents: calculate_tvl * @eth_price_usd * 100,
@@ -58,17 +58,5 @@ class DashboardMetricsCalculator
          .where(status: 'completed')
          .where('executed_at >= ?', Date.new(2025, 7, 1))
          .count
-  end
-
-  def get_eth_price_in_usd
-    chain = @active_bots.first&.chain
-    return 0 if chain.nil?
-    
-    base_token = Token.find_by(chain: chain, symbol: 'USDC')
-    quote_token = Token.find_by(chain: chain, symbol: 'WETH')
-    token_pair = TokenPair.find_by(chain: chain, base_token: base_token, quote_token: quote_token)
-    
-    price = token_pair.latest_price
-    1 / price  # Convert USDC/WETH to USD/ETH
   end
 end

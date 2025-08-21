@@ -47,6 +47,17 @@ class TokenPriceService
     end
   end
 
+  def self.get_eth_price_in_usd(chain)
+    return 0 if chain.nil?
+    
+    base_token = Token.find_by(chain: chain, symbol: 'USDC')
+    quote_token = Token.find_by(chain: chain, symbol: 'WETH')
+    token_pair = TokenPair.find_by(chain: chain, base_token: base_token, quote_token: quote_token)
+    
+    price = token_pair.latest_price
+    1 / price  # Convert USDC/WETH to USD/ETH
+  end
+
   private
 
   def self.pool_stale?(token_pair)
