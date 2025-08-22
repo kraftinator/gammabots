@@ -71,7 +71,7 @@ module Api
         recent_sell_trades = Trade.joins(:bot)
                                   .where(bot: Bot.default_bots)
                                   .where(status: 'completed', trade_type: 'sell')
-                                  #.where('executed_at >= ?', 7.days.ago)
+                                  .where('executed_at >= ?', 7.days.ago)
 
         # Get their associated bot_cycles
         cycle_ids = recent_sell_trades.pluck(:bot_cycle_id).uniq
