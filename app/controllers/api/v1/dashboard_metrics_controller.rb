@@ -44,23 +44,32 @@ module Api
 
       def calculate_recent_activity
         trades = Trade.joins(:bot)
-                    .where(bot: Bot.default_bots)
-                    .where(status: 'completed')
-                    .order(executed_at: :desc)
-                    .limit(4)
+                      .where(bot: Bot.default_bots)
+                      .where(status: 'completed')
+                      .order(executed_at: :desc)
+                      .limit(4)
 
         trades.map do |trade|
           token_amount = trade.buy? ? trade.amount_out : trade.amount_in
           user = trade.bot.user
           
+          # Only calculate performance for sell trades
+          performance_pct = if trade.sell?
+            cycle = trade.bot_cycle
+            (cycle.profit_fraction(include_profit_withdrawals: true) * 100).round(1)
+          else
+            nil # No percentage for buy trades
+          end
+          
           {
             farcaster_username: user.farcaster_username,
             farcaster_avatar_url: user.farcaster_avatar_url,
-            action: trade.trade_type.capitalize, # "Buy" or "Sell"
-            amount: token_amount.round(0), # Token amount (not ETH)
+            action: trade.trade_type.capitalize,
+            amount: token_amount.round(0),
             token_symbol: trade.bot.token_pair.base_token.symbol,
             strategy_id: trade.bot.strategy.nft_token_id,
             bot_id: trade.bot.id,
+            performance_pct: performance_pct, # nil for buys, percentage for sells
             time_ago: time_ago_in_words(trade.executed_at)
           }
         end
