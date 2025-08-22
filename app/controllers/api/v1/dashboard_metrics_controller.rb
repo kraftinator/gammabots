@@ -6,6 +6,9 @@ module Api
     class DashboardMetricsController < Api::BaseController
       def index
         metrics = DashboardMetric.latest
+        metrics_24h_ago = DashboardMetric.where('created_at <= ?', 24.hours.ago)
+                                         .order(created_at: :desc)
+                                         .first
         
         if metrics.nil?
           render json: { error: "No metrics available" }, status: 404
@@ -17,8 +20,11 @@ module Api
 
         render json: {
           active_bots: metrics.active_bots,
+          active_bots_change_24h: calculate_percentage_change(metrics.active_bots, metrics_24h_ago&.active_bots),
           tvl: metrics.tvl_usd,
+          tvl_change_24h: calculate_percentage_change(metrics.tvl_cents, metrics_24h_ago&.tvl_cents),
           volume_24h: metrics.volume_24h_usd,
+          volume_24h_change_24h: calculate_percentage_change(metrics.volume_24h_cents, metrics_24h_ago&.volume_24h_cents),
           strategies: metrics.strategies_count,
           total_profits: metrics.total_profits_usd,
           trades_executed: metrics.trades_executed,
@@ -105,6 +111,11 @@ module Api
             performance: (cycle.profit_fraction(include_profit_withdrawals: true) * 100).round(1)
           }
         end
+      end
+
+      def calculate_percentage_change(current, previous)
+        return nil unless previous && previous > 0
+        ((current - previous).to_f / previous * 100).round(1)
       end
     end
   end
