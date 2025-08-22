@@ -24,6 +24,7 @@ module Api
           trades_executed: metrics.trades_executed,
           popular_tokens: calculate_popular_tokens,
           recent_activity: calculate_recent_activity,
+          top_performers: calculate_top_performers,
           last_updated: metrics.created_at.iso8601
         }
       end
@@ -61,6 +62,38 @@ module Api
             strategy_id: trade.bot.strategy.nft_token_id,
             bot_id: trade.bot.id,
             time_ago: time_ago_in_words(trade.executed_at)
+          }
+        end
+      end
+
+      def calculate_top_performers
+        # Get sell trades from last 7 days
+        recent_sell_trades = Trade.joins(:bot)
+                                  .where(bot: Bot.default_bots)
+                                  .where(status: 'completed', trade_type: 'sell')
+                                  #.where('executed_at >= ?', 7.days.ago)
+
+        # Get their associated bot_cycles
+        cycle_ids = recent_sell_trades.pluck(:bot_cycle_id).uniq
+        cycles = BotCycle.where(id: cycle_ids)
+
+        # Filter to profitable cycles and sort by performance
+        profitable_cycles = cycles.select do |cycle|
+          cycle.profit_fraction(include_profit_withdrawals: true) > 0
+        end
+
+        top_performers = profitable_cycles.sort_by do |cycle|
+          -cycle.profit_fraction(include_profit_withdrawals: true)
+        end.first(3)
+
+        # Format for API response
+        top_performers.map do |cycle|
+          {
+            bot_id: cycle.bot.id,
+            username: cycle.bot.user.farcaster_username,
+            strategy_id: cycle.bot.strategy.nft_token_id,
+            token_symbol: cycle.bot.token_pair.base_token.symbol,
+            performance: (cycle.profit_fraction(include_profit_withdrawals: true) * 100).round(1)
           }
         end
       end
