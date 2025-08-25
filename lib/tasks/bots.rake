@@ -277,7 +277,7 @@ namespace :bots do
     prices.each { |p| puts "#{p.created_at} - #{p.price.to_s}" }
   end
 
-  # Usage:
+# Usage:
 # rake bots:metrics["2"]
 task :metrics, [:bot_id, :minutes] => :environment do |t, args|
   args.with_defaults(minutes: 1440)  # default to last 24h
@@ -825,8 +825,6 @@ end
 
   desc "List all bots"
   task :list_all => :environment do
-    #bots = Bot.active.to_a.sort_by(&:last_action_at).reverse
-    #bots = Bot.active.where.not(token_pair_id: nil).to_a.sort_by(&:last_action_at).reverse
     bots = Bot.active.to_a.sort_by(&:last_action_at).reverse
     puts "\n== All Active Bots (#{bots.count}) =="
     list_bots(bots)
