@@ -39,6 +39,11 @@ module Api
       @current_fid
     end
 
+    def current_user
+      return nil unless current_fid
+      @current_user ||= User.find_by(farcaster_id: current_fid)
+    end
+
     def bearer_token
       auth = request.authorization
       auth&.start_with?('Bearer ') ? auth.split(' ', 2).last : nil

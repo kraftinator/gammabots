@@ -1,9 +1,14 @@
 module Api
   module V1
-    class BotsController < Api::BaseController      
+    class BotsController < Api::BaseController
+      before_action :require_quick_auth!
+      
       def index
-        @bots = Bot.active.default_bots.all
-        #render json: @bots
+        unless current_user
+          return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
+        end
+
+        @bots = current_user.bots.active.default_bots
         formatted_bots = @bots.map do |bot|
           {
             bot_id: bot.id.to_s,

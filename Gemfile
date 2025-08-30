@@ -42,8 +42,14 @@ gem "bootsnap", require: false
 #gem 'mini_racer'
 #gem 'execjs'
 
+gem 'dotenv-rails', groups: [:development, :test]
+
 gem 'sidekiq'
 gem 'sidekiq-scheduler'
+
+# JWT verification for Farcaster Quick Auth
+gem 'jwt'
+gem 'faraday'
 
 group :development, :test do
   gem 'rspec-rails', '~> 6.1.2'
