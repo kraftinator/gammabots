@@ -8,6 +8,10 @@ class QuickAuthVerifier
 
   class << self
     def verify!(token)
+      if AUDIENCE.nil? || AUDIENCE.strip.empty?
+        raise JWT::InvalidAudError, 'FCAST_MINIAPP_AUD is not configured'
+      end
+
       header = JWT.decode(token, nil, false).last
       kid = header['kid'] or raise JWT::DecodeError, 'missing kid'
 
