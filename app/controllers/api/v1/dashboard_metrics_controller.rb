@@ -4,6 +4,8 @@ include ActionView::Helpers::DateHelper
 module Api
   module V1
     class DashboardMetricsController < Api::BaseController
+      before_action :require_quick_auth!
+
       def index
         metrics = DashboardMetric.latest
         metrics_24h_ago = DashboardMetric.where('created_at <= ?', 24.hours.ago)
@@ -20,6 +22,7 @@ module Api
 
         render json: {
           active_bots: metrics.active_bots,
+          user_bot_count: current_user.bots.active.default_bots.count,
           active_bots_change_24h: calculate_percentage_change(metrics.active_bots, metrics_24h_ago&.active_bots),
           tvl: metrics.tvl_usd,
           tvl_change_24h: calculate_percentage_change(metrics.tvl_cents, metrics_24h_ago&.tvl_cents),
