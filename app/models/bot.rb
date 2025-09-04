@@ -24,6 +24,7 @@ class Bot < ApplicationRecord
   scope :inactive, -> { where(active: false) }
   scope :copy_bots, -> { where(bot_type: 'copy') }
   scope :default_bots, -> { where(bot_type: 'default') }
+  scope :funding_pending, -> { where(status: 'pending_funding') }
 
   def latest_trade
     trades.order(created_at: :desc).first

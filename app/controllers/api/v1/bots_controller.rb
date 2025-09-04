@@ -19,6 +19,136 @@ module Api
         
         render json: formatted_bots
       end
+
+      def create
+        unless current_user
+          return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
+        end
+
+        puts "params = #{params}"
+        puts "current_user.id = #{current_user.id}"
+
+        moving_avg_minutes = validate_moving_average_param!
+        amount = validate_eth_amount_param!
+        strategy = validate_strategy_param!
+
+        token_param = params[:token_address].to_s.strip
+        if token_param.match?(/\A0x[a-fA-F0-9]{40}\z/)
+          token_contract_address = token_param.downcase
+        else
+          render json: {
+            error: "Invalid token address format.",
+            code:  "INVALID_TOKEN_ADDRESS"
+          }, status: :bad_request and return
+        end
+
+        chain = Chain.find_by(name: 'base_mainnet')
+        token_pair = CreateTokenPairService.call(
+          token_address: token_contract_address,
+          chain: chain
+        )
+
+        unless token_pair          
+          render json: {
+            error: "Invalid token",
+            code:  "INVALID_TOKEN"
+          }, status: :bad_request and return
+        end
+
+        bot_attrs = {
+          chain: chain,
+          strategy: strategy,
+          moving_avg_minutes: moving_avg_minutes,
+          user: current_user,
+          token_pair: token_pair,
+          initial_buy_amount: amount,
+          active: false
+        }
+
+        bot = Bot.create!(bot_attrs)
+
+        if bot
+          render json: { bot_id: bot.id.to_s }, status: :ok and return
+        else
+          render json: {
+            error: "Failed to create bot",
+            code:  "BOT_CREATE_ERROR"
+          }, status: :bad_request and return
+        end
+      end
+
+      private
+
+      def validate_strategy_param!
+        raw = params[:strategy_id].to_s.strip
+
+        if raw.blank?
+          render json: {
+            error: "Missing required parameter: strategy_id",
+            code:  "MISSING_STRATEGY_ID"
+          }, status: :bad_request and return
+        end
+
+        # Only allow integers
+        unless raw.match?(/\A\d+\z/)
+          render json: {
+            error: "Invalid strategy_id. Must be an integer.",
+            code:  "INVALID_STRATEGY_ID"
+          }, status: :bad_request and return
+        end
+
+        strategy = Strategy.find_by(nft_token_id: raw.to_i)
+
+        unless strategy
+          render json: {
+            error: "Strategy not found",
+            code:  "STRATEGY_NOT_FOUND"
+          }, status: :not_found and return
+        end
+
+        strategy
+      end
+
+      def validate_eth_amount_param!
+        raw = params[:eth_amount].to_s.strip
+
+        if raw.blank?
+          render json: {
+            error: "Missing required parameter: eth_amount",
+            code:  "MISSING_ETH_AMOUNT"
+          }, status: :bad_request and return
+        end
+
+        # Allow integers or decimals, no letters, no weird symbols
+        unless raw.match?(/\A\d+(\.\d+)?\z/)
+          render json: {
+            error: "Invalid eth_amount. Must be a numeric value.",
+            code:  "INVALID_ETH_AMOUNT"
+          }, status: :bad_request and return
+        end
+
+        BigDecimal(raw)
+      end
+
+      def validate_moving_average_param!
+        raw = params[:moving_average].to_s.strip
+
+        if raw.blank?
+          render json: {
+            error: "Missing required parameter: moving_average",
+            code:  "MISSING_MOVING_AVERAGE"
+          }, status: :bad_request and return
+        end
+
+        unless raw.match?(/\A\d+\z/)
+          render json: {
+            error: "Invalid moving_average. Must be an integer.",
+            code:  "INVALID_MOVING_AVERAGE"
+          }, status: :bad_request and return
+        end
+
+        raw.to_i
+      end
     end
   end
 end

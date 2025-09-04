@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_21_174214) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_04_161719) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -76,10 +76,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_21_174214) do
     t.string "bot_type", default: "default", null: false
     t.string "copy_wallet_address"
     t.boolean "catch_metrics", default: false, null: false
+    t.string "status", default: "pending_funding", null: false
     t.index ["bot_type", "copy_wallet_address", "token_pair_id"], name: "index_bots_on_copy_bot_fields"
     t.index ["bot_type"], name: "index_bots_on_bot_type"
     t.index ["chain_id"], name: "index_bots_on_chain_id"
     t.index ["copy_wallet_address"], name: "index_bots_on_copy_wallet_address"
+    t.index ["status"], name: "index_bots_on_status"
     t.index ["strategy_id"], name: "index_bots_on_strategy_id"
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
     t.index ["user_id"], name: "index_bots_on_user_id"
