@@ -20,6 +20,18 @@ module Api
         render json: formatted_bots
       end
 
+      # POST /api/v1/bots/:id/fund
+      def fund
+        bot = current_user.bots.find(params[:id])
+        tx_hash = params[:tx_hash]
+
+        # For now, just log / stub
+        Rails.logger.info "Attach tx #{tx_hash} to bot #{bot.id}"
+        bot.update!(funding_tx_hash: tx_hash)
+
+        render json: { ok: true, bot_id: bot.id, tx_hash: tx_hash }
+      end
+
       def create
         unless current_user
           return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
