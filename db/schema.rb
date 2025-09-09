@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_08_160421) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_09_172738) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -80,6 +80,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_08_160421) do
     t.string "funding_tx_hash"
     t.datetime "funding_confirmed_at"
     t.string "funder_address"
+    t.string "weth_wrap_tx_hash"
+    t.datetime "weth_wrapped_at"
     t.index ["bot_type", "copy_wallet_address", "token_pair_id"], name: "index_bots_on_copy_bot_fields"
     t.index ["bot_type"], name: "index_bots_on_bot_type"
     t.index ["chain_id"], name: "index_bots_on_chain_id"
@@ -90,6 +92,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_08_160421) do
     t.index ["strategy_id"], name: "index_bots_on_strategy_id"
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
     t.index ["user_id"], name: "index_bots_on_user_id"
+    t.index ["weth_wrap_tx_hash"], name: "index_bots_on_weth_wrap_tx_hash", unique: true
   end
 
   create_table "chains", force: :cascade do |t|

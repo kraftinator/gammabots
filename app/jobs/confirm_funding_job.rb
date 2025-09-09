@@ -67,12 +67,12 @@ class ConfirmFundingJob < ApplicationJob
 
     # All checks passed — mark funded/active
     bot.update!(
-      status:                'active',
-      active:                true,
+      status:                'funded',
       funder_address:        normalize_addr(details['fromAddress']),
       funding_confirmed_at:  Time.current
     )
     Rails.logger.info "[ConfirmFundingJob] Bot##{bot_id} funding confirmed; now active"
+    ConvertToWethJob.perform_later(bot.id)
   end
 
   private
