@@ -201,6 +201,10 @@ class Bot < ApplicationRecord
     bot_type == 'default'
   end
 
+  def pending_funding?
+    status == 'pending_funding'
+  end
+
   private
 
   def process_initial_buy(trade)

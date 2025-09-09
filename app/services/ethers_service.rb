@@ -309,6 +309,10 @@ class EthersService
     call_function('getTokenPrice', token_0, token_0_decimals, token_1, token_1_decimals, provider_url)
   end
 
+  def self.get_ETH_transfer_details(tx_hash, provider_url)
+    call_function('getEthTransferDetails', tx_hash, provider_url)
+  end
+
   def self.get_transaction_receipt(tx_hash, wallet_address, token_pair, provider_url)
     # txHash,
     # poolAddress,

@@ -27,7 +27,8 @@ module Api
 
         # For now, just log / stub
         Rails.logger.info "Attach tx #{tx_hash} to bot #{bot.id}"
-        bot.update!(funding_tx_hash: tx_hash)
+        bot.update!(funding_tx_hash: tx_hash.to_s.strip.downcase)
+        FundingManager.confirm_funding!(bot)
 
         render json: { ok: true, bot_id: bot.id, tx_hash: tx_hash }
       end
