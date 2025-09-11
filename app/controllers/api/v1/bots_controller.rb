@@ -1,3 +1,5 @@
+include ActionView::Helpers::DateHelper
+
 module Api
   module V1
     class BotsController < Api::BaseController
@@ -13,8 +15,17 @@ module Api
           {
             bot_id: bot.id.to_s,
             token_symbol: bot.token_pair.base_token.symbol,
-            strategy_id: bot.strategy.id.to_s
-          }
+            strategy_id: bot.strategy.nft_token_id.to_s,
+            tokens: bot.current_cycle.base_token_amount.round(6),
+            eth: bot.current_cycle.quote_token_amount.round(6),
+            init: bot.initial_buy_amount,
+            value: bot.current_value,
+            profit_percent: bot.profit_percentage(include_profit_withdrawals: true),
+            cycles:bot.bot_cycles.count,
+            trades: bot.buy_count + bot.sell_count,
+            is_active: bot.active,
+            last_action: "#{time_ago_in_words(bot.last_action_at)} ago"
+          }   
         end
         
         render json: formatted_bots
