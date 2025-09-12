@@ -10,7 +10,19 @@ module Api
           return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
         end
 
-        @bots = current_user.bots.active.default_bots
+        status = params[:status]          
+        if status == 'retired'
+          @bots = Bot.inactive
+              .joins(:trades)
+              .where(trades: { status: 'completed' })
+              .order(updated_at: :desc)
+              .distinct                      
+              .limit(100)
+              .to_a
+        else
+          @bots = current_user.bots.active.default_bots
+        end
+
         formatted_bots = @bots.map do |bot|
           {
             bot_id: bot.id.to_s,
