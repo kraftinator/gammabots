@@ -42,7 +42,8 @@ class CreateBotService
       moving_avg_minutes: moving_avg_minutes,
       user: user,
       token_pair: token_pair,
-      initial_buy_amount: amount
+      initial_buy_amount: amount,
+      status: 'active'
     }
     bot_attrs[:profit_share]     = BigDecimal(profit_share.to_s)     if profit_share.present?
     bot_attrs[:profit_threshold] = BigDecimal(profit_threshold.to_s) if profit_threshold.present?
