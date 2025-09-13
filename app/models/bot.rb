@@ -25,6 +25,7 @@ class Bot < ApplicationRecord
   scope :copy_bots, -> { where(bot_type: 'copy') }
   scope :default_bots, -> { where(bot_type: 'default') }
   scope :funding_pending, -> { where(status: 'pending_funding') }
+  scope :unfunded, -> { where(status: ['pending_funding', 'converting_to_weth']) }
 
   def latest_trade
     trades.order(created_at: :desc).first
@@ -48,6 +49,10 @@ class Bot < ApplicationRecord
 
   def sell_count
     trades.where(trade_type: "sell", status: "completed").count
+  end
+
+  def completed_trade_count
+    trades.where(status: "completed").count
   end
 
   def process_trade(trade)
@@ -203,6 +208,10 @@ class Bot < ApplicationRecord
 
   def pending_funding?
     status == 'pending_funding'
+  end
+
+  def unfunded?
+    status == 'pending_funding' || status == 'converting_to_weth'
   end
 
   private

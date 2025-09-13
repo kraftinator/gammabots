@@ -20,25 +20,45 @@ module Api
               .limit(100)
               .to_a
         else
-          @bots = current_user.bots.active.default_bots
+          @bots = current_user.bots.active.default_bots + current_user.bots.inactive.unfunded
         end
 
         formatted_bots = @bots.map do |bot|
-          {
-            bot_id: bot.id.to_s,
-            token_symbol: bot.token_pair.base_token.symbol,
-            strategy_id: bot.strategy.nft_token_id.to_s,
-            moving_average: bot.moving_avg_minutes,
-            tokens: bot.current_cycle.trades.any? ? bot.current_cycle.base_token_amount.round(6) : 0,
-            eth: bot.current_cycle.quote_token_amount.round(6),
-            init: bot.initial_buy_amount,
-            value: bot.current_value,
-            profit_percent: bot.profit_percentage(include_profit_withdrawals: true),
-            cycles:bot.bot_cycles.count,
-            trades: bot.buy_count + bot.sell_count,
-            is_active: bot.active,
-            last_action: "#{time_ago_in_words(bot.last_action_at)} ago"
-          }   
+          if bot.unfunded?
+            {
+              bot_id: bot.id.to_s,
+              token_symbol: bot.token_pair.base_token.symbol,
+              strategy_id: bot.strategy.nft_token_id.to_s,
+              moving_average: bot.moving_avg_minutes,
+              tokens: 0,
+              eth: 0,
+              init: bot.initial_buy_amount,
+              value: 0,
+              profit_percent: 0,
+              cycles: 0,
+              trades: 0,
+              is_active: false,
+              status: 'unfunded',
+              last_action: "#{time_ago_in_words(bot.updated_at)} ago"
+            }
+          else
+            {
+              bot_id: bot.id.to_s,
+              token_symbol: bot.token_pair.base_token.symbol,
+              strategy_id: bot.strategy.nft_token_id.to_s,
+              moving_average: bot.moving_avg_minutes,
+              tokens: bot.current_cycle.trades.any? ? bot.current_cycle.base_token_amount.round(6) : 0,
+              eth: bot.current_cycle.quote_token_amount.round(6),
+              init: bot.initial_buy_amount,
+              value: bot.current_value,
+              profit_percent: bot.profit_percentage(include_profit_withdrawals: true),
+              cycles: bot.bot_cycles.count,
+              trades: bot.buy_count + bot.sell_count,
+              is_active: bot.active,
+              status: bot.status,
+              last_action: "#{time_ago_in_words(bot.last_action_at)} ago"
+            }
+          end
         end
         
         render json: formatted_bots
