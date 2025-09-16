@@ -345,6 +345,10 @@ class EthersService
     #)
   end
 
+  def self.get_wrap_receipt(tx_hash, provider_url)
+    call_function('getWrapReceipt', tx_hash, provider_url)
+  end
+
   def self.get_wallet_address(private_key, provider_url)
     call_function('getWalletAddress', private_key, provider_url)
   end
