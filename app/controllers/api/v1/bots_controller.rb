@@ -127,16 +127,33 @@ module Api
         if bot
           # build payment hash
           wallet = current_user.wallet_for_chain(chain)
+          provider_url = ProviderUrlService.get_provider_url(chain.name)
+
+          reserve_info = GasReserveService.needed_for(
+            user: current_user,
+            chain: chain,
+            bot_amount_eth: amount,
+            provider_url: provider_url
+          )
+
           payment = {
             to: wallet.address,
-            value: eth_to_wei(bot.initial_buy_amount),
+            #value: eth_to_wei(bot.initial_buy_amount),
+            value: reserve_info[:total_required_wei],
             chainId: chain.native_chain_id
+          }
+
+          gas = {
+            target_wei:       reserve_info[:target_wei],
+            current_balance:  reserve_info[:current_balance_wei],
+            needed_topup_wei: reserve_info[:needed_topup_wei]
           }
 
           render json: { 
             bot_id: bot.id.to_s, 
             status: bot.status,
-            payment: payment
+            payment: payment,
+            gas: gas,
           }, status: :ok and return
         else
           render json: {
