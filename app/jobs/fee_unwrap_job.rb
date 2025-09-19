@@ -15,7 +15,7 @@ class FeeUnwrapJob < ApplicationJob
     result = EthersService.convert_WETH_to_ETH(
       router_wallet,
       provider_url,
-      fee.amount
+      fee.amount * 0.9999999999
     )
 
     unless result["success"] && result["txHash"].present?
