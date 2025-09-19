@@ -12,10 +12,13 @@ class FeeUnwrapJob < ApplicationJob
     router_wallet = Wallet.find_by!(kind: "router", chain: bot.chain)
     provider_url  = bot.provider_url
 
+    unwrap_amount = fee.amount * BigDecimal("0.999999999")
+    unwrap_amount = unwrap_amount.round(18, BigDecimal::ROUND_DOWN)
+
     result = EthersService.convert_WETH_to_ETH(
       router_wallet,
       provider_url,
-      fee.amount * 0.9999999999
+      unwrap_amount
     )
 
     unless result["success"] && result["txHash"].present?
