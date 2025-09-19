@@ -86,6 +86,23 @@ class TradeConfirmationService
     update_trade(trade, amount_in, amount_out, trade_price, transaction_receipt)
     
     trade.reload
+    if trade.completed? && trade.sell?
+      fee = (trade.amount_out.to_d * BigDecimal("0.003")).round(18, BigDecimal::ROUND_DOWN)
+      fee_collection = trade.create_fee_collection!(
+        amount: fee,
+        status: "pending",
+        unwrap_status: "pending"
+      )
+
+      # Subtract the fee from the bot cycle immediately
+      cycle = trade.bot_cycle
+      if cycle
+        new_quote_amount = cycle.quote_token_amount.to_d - fee
+        cycle.update!(quote_token_amount: new_quote_amount)
+      end
+
+      FeeCollectionJob.perform_later(fee_collection.id)
+    end
     trade.bot.process_trade(trade)
   end
 

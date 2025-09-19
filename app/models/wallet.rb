@@ -1,5 +1,7 @@
 class Wallet < ApplicationRecord
-  belongs_to :user
+  VALID_KINDS = %w[user router treasury].freeze
+
+  belongs_to :user, optional: true
   belongs_to :chain
   has_many :token_approvals, dependent: :destroy
 
@@ -10,6 +12,7 @@ class Wallet < ApplicationRecord
   validates :private_key, presence: true
   validates :address, presence: true, uniqueness: true, 
     format: { with: /\A0x[a-f0-9]{40}\z/, message: "must be a valid Ethereum address" }
+  validates :kind, inclusion: { in: VALID_KINDS }
 
   def wallet_address
     provider_url = ProviderUrlService.get_provider_url(chain.name)

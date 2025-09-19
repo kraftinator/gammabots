@@ -18,8 +18,7 @@ class ConvertToWethJob < ApplicationJob
     result = EthersService.convert_ETH_to_WETH(
       wallet,
       provider_url,
-      bot.initial_buy_amount, # ETH (BigDecimal)
-      1                       # keep 1% ETH for gas
+      bot.initial_buy_amount # ETH (BigDecimal)
     )
 
     unless result.is_a?(Hash) && result['success']

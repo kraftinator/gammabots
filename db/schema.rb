@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_09_172738) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_19_163827) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -131,6 +131,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_09_172738) do
     t.datetime "updated_at", null: false
     t.bigint "trades_executed", default: 0, null: false
     t.index ["created_at"], name: "index_dashboard_metrics_on_created_at"
+  end
+
+  create_table "fee_collections", force: :cascade do |t|
+    t.bigint "trade_id", null: false
+    t.decimal "amount", precision: 30, scale: 18, null: false
+    t.string "status", default: "pending", null: false
+    t.string "tx_hash"
+    t.datetime "collected_at"
+    t.string "unwrap_status", default: "pending", null: false
+    t.string "unwrap_tx_hash"
+    t.datetime "unwrapped_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["trade_id"], name: "index_fee_collections_on_trade_id"
   end
 
   create_table "pending_copy_trades", force: :cascade do |t|
@@ -269,12 +283,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_09_172738) do
   end
 
   create_table "wallets", force: :cascade do |t|
-    t.bigint "user_id", null: false
+    t.bigint "user_id"
     t.bigint "chain_id", null: false
     t.string "private_key", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "address"
+    t.string "kind", default: "user", null: false
     t.index ["address"], name: "index_wallets_on_address", unique: true
     t.index ["chain_id"], name: "index_wallets_on_chain_id"
     t.index ["user_id", "chain_id"], name: "index_wallets_on_user_id_and_chain_id", unique: true
@@ -289,6 +304,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_09_172738) do
   add_foreign_key "bots", "token_pairs"
   add_foreign_key "bots", "users"
   add_foreign_key "copy_trades", "token_pairs"
+  add_foreign_key "fee_collections", "trades"
   add_foreign_key "pending_copy_trades", "chains"
   add_foreign_key "profit_withdrawals", "bot_cycles"
   add_foreign_key "profit_withdrawals", "bots"

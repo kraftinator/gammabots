@@ -3,6 +3,7 @@ class GasReserveService
   # Hardcoded per-chain targets
   DEFAULT_TARGETS = {
     'base_mainnet' => BigDecimal('0.00002')
+    #'base_mainnet' => BigDecimal('0.0042')
   }.freeze
 
   # Public: compute the gas top-up needed for this user before creating a bot

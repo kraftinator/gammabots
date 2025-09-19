@@ -3,6 +3,7 @@ class Trade < ApplicationRecord
 
   belongs_to :bot
   belongs_to :bot_cycle
+  has_one    :fee_collection, dependent: :destroy
   before_validation :assign_bot_cycle, on: :create
   after_commit :schedule_confirmation, :enqueue_infinite_approval, on: :create
   after_update :clear_reset_request_on_failed_sell, if: :saved_change_to_status?
@@ -16,6 +17,10 @@ class Trade < ApplicationRecord
   validates :total_value, numericality: { greater_than: 0 }, if: -> { completed? }
 
   validates :executed_at, presence: true
+
+  #validates :fee_amount, numericality: { greater_than_or_equal_to: 0 }
+  #validates :fee_collected_at, presence: true, if: -> { fee_collected? }
+  #validates :fee_collection_tx_hash, presence: true, if: -> { fee_collected? }
 
   def pending?
     status == "pending"

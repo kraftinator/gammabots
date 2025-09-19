@@ -349,6 +349,11 @@ class EthersService
     call_function('getWrapReceipt', tx_hash, provider_url)
   end
 
+  # Same as wrap receipt. Change name of JS function.
+  def self.get_transfer_receipt(tx_hash, provider_url)
+    call_function('getWrapReceipt', tx_hash, provider_url)
+  end
+
   def self.get_wallet_address(private_key, provider_url)
     call_function('getWalletAddress', private_key, provider_url)
   end
@@ -409,15 +414,81 @@ class EthersService
     )
   end
 
-  def self.convert_WETH_to_ETH(private_key, provider_url, amount)
-    call_function('convertWETHToETH', private_key, provider_url, amount)
+  def self.send_ETH(wallet, to_address, amount, provider_url)
+    begin
+      fees = get_gas_fees(wallet.chain_id, provider_url)
+    rescue => e
+      return { "success" => false, "error" => "gas lookup failed: #{e.message}" }
+    end
+
+    with_nonce_lock do
+      nonce = current_nonce(wallet.address, provider_url)
+      begin
+        # privateKey,
+        # toAddress,
+        # amountEth,
+        # providerUrl,
+        # nonce,
+        # maxFeePerGasString,
+        # maxPriorityFeePerGasString
+        result = call_function(
+          'sendEth',
+          wallet.private_key,
+          to_address,
+          amount,
+          provider_url,
+          nonce,
+          fees['maxFeePerGas'],
+          fees['maxPriorityFeePerGas']
+        )
+
+        if result['success'] && result['txHash'].present?
+          increment_nonce(wallet.address)
+        end
+
+        result
+      rescue StandardError => e
+        { "success" => false, "error" => e.message, "nonce" => nonce }
+      end
+    end
+  end
+
+  def self.convert_WETH_to_ETH(wallet, provider_url, amount)
+    begin
+      fees = get_gas_fees(wallet.chain_id, provider_url)
+    rescue => e
+      return { "success" => false, "error" => "gas lookup failed: #{e.message}" }
+    end
+
+    with_nonce_lock do
+      nonce = current_nonce(wallet.address, provider_url)
+      begin
+        result = call_function(
+          'unwrapWETH',
+          wallet.private_key,
+          provider_url,
+          amount,
+          nonce,
+          fees['maxFeePerGas'],
+          fees['maxPriorityFeePerGas']
+        )
+
+        if result['success'] && result['txHash'].present?
+          increment_nonce(wallet.address)
+        end
+
+        result
+      rescue StandardError => e
+        { "success" => false, "error" => e.message, "nonce" => nonce }
+      end
+    end
   end
 
   #def self.convert_ETH_to_WETH(private_key, provider_url, amount, eth_reserve_percentage = 1)
   #  call_function('convertETHToWETH', private_key, provider_url, amount, eth_reserve_percentage)
   #end
 
-  def self.convert_ETH_to_WETH(wallet, provider_url, amount, eth_reserve_percentage = 1)
+  def self.convert_ETH_to_WETH(wallet, provider_url, amount, eth_reserve_percentage = 0)
     begin
       fees = get_gas_fees(wallet.chain_id, provider_url)
     rescue => e
