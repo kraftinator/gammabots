@@ -7,7 +7,9 @@ class FeeCollectionConfirmJob < ApplicationJob
     fee = FeeCollection.find_by(id: fee_collection_id)
     return unless fee && fee.tx_hash.present? && fee.collection_pending?
 
-    provider_url = ProviderUrlService.get_provider_url(fee.trade.bot.chain.name)
+    #provider_url = ProviderUrlService.get_provider_url(fee.trade.bot.chain.name)
+    bot = fee.trade.bot
+    provider_url = bot.provider_url
     receipt      = EthersService.get_transfer_receipt(fee.tx_hash, provider_url)
 
     if receipt.nil?
@@ -25,6 +27,12 @@ class FeeCollectionConfirmJob < ApplicationJob
       fee.update!(status: "collected", collected_at: Time.current)
       Rails.logger.info "[FeeCollectionConfirmJob] Fee collected for FeeCollection##{fee.id} (tx: #{fee.tx_hash})"
       FeeUnwrapJob.perform_later(fee.id)
+
+      # If the bot is already inactive, start return-funds flow
+      unless bot.active?
+        Rails.logger.info "[FeeCollectionConfirmJob] Bot##{bot.id} inactive after fee collection, scheduling return funds"
+        bot.return_funds_to_user
+      end
     else
       fee.update!(status: "failed")
       Rails.logger.error "[FeeCollectionConfirmJob] Fee collection tx reverted for FeeCollection##{fee.id} (tx: #{fee.tx_hash})"

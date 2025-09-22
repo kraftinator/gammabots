@@ -83,7 +83,8 @@ namespace :bots do
         :moving_avg_minutes,
         :chain_name,
         :profit_share,
-        :profit_threshold] => :environment do |_, args|
+        :profit_threshold,
+        :funder_address] => :environment do |_, args|
 
     mandatory = %i[
       user_id token_contract_address initial_amount
@@ -104,6 +105,7 @@ namespace :bots do
     # Include optional params only if supplied
     service_args[:profit_share]     = args[:profit_share]     if args[:profit_share].present?
     service_args[:profit_threshold] = args[:profit_threshold] if args[:profit_threshold].present?
+    service_args[:funder_address] = args[:funder_address] if args[:funder_address].present?
 
     bot = CreateBotService.call(**service_args)
 

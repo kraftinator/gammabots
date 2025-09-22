@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_19_163827) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_22_182139) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -82,16 +82,25 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_19_163827) do
     t.string "funder_address"
     t.string "weth_wrap_tx_hash"
     t.datetime "weth_wrapped_at"
+    t.string "weth_unwrap_tx_hash"
+    t.string "weth_unwrap_status"
+    t.datetime "weth_unwrapped_at"
+    t.string "funds_return_tx_hash"
+    t.string "funds_return_status"
+    t.datetime "funds_returned_at"
+    t.decimal "weth_unwrapped_amount", precision: 30, scale: 18
     t.index ["bot_type", "copy_wallet_address", "token_pair_id"], name: "index_bots_on_copy_bot_fields"
     t.index ["bot_type"], name: "index_bots_on_bot_type"
     t.index ["chain_id"], name: "index_bots_on_chain_id"
     t.index ["copy_wallet_address"], name: "index_bots_on_copy_wallet_address"
     t.index ["funder_address"], name: "index_bots_on_funder_address"
     t.index ["funding_tx_hash"], name: "index_bots_on_funding_tx_hash", unique: true
+    t.index ["funds_return_tx_hash"], name: "index_bots_on_funds_return_tx_hash"
     t.index ["status"], name: "index_bots_on_status"
     t.index ["strategy_id"], name: "index_bots_on_strategy_id"
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
     t.index ["user_id"], name: "index_bots_on_user_id"
+    t.index ["weth_unwrap_tx_hash"], name: "index_bots_on_weth_unwrap_tx_hash"
     t.index ["weth_wrap_tx_hash"], name: "index_bots_on_weth_wrap_tx_hash", unique: true
   end
 

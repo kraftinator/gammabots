@@ -1,5 +1,6 @@
 class Bot < ApplicationRecord
   DEFAULT_PROFIT_THRESHOLD = 0.01
+  CONFIRMATION_DELAY = 5.seconds
 
   # Associations
   belongs_to :chain
@@ -81,6 +82,10 @@ class Bot < ApplicationRecord
     update!(active: false)
     take_profit(full_share: true)
     current_cycle.update!(ended_at: Time.current)
+  end
+
+  def return_funds_to_user
+    BotFunds::UnwrapWethJob.set(wait: CONFIRMATION_DELAY).perform_later(self.id)
   end
 
   def activate

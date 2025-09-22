@@ -19,7 +19,8 @@ class CreateBotService
     moving_avg_minutes:,
     chain_name:,
     profit_share: nil,
-    profit_threshold: nil
+    profit_threshold: nil,
+    funder_address:
   )
     # == Look-ups & validations ==
     chain    = Chain.find_by(name: chain_name)           or raise ArgumentError, "Invalid chain"
@@ -43,7 +44,8 @@ class CreateBotService
       user: user,
       token_pair: token_pair,
       initial_buy_amount: amount,
-      status: 'active'
+      status: 'active',
+      funder_address: funder_address.downcase
     }
     bot_attrs[:profit_share]     = BigDecimal(profit_share.to_s)     if profit_share.present?
     bot_attrs[:profit_threshold] = BigDecimal(profit_threshold.to_s) if profit_threshold.present?

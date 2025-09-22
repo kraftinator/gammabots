@@ -102,6 +102,12 @@ class TradeConfirmationService
       end
 
       FeeCollectionJob.perform_later(fee_collection.id)
+
+      # ---- If bot is inactive, kick off return funds ----
+      #unless bot.active?
+      #  Rails.logger.info "[TradeConfirmationService] Bot##{bot.id} is inactive, scheduling return funds"
+      #  bot.return_funds_to_user
+      #end
     end
     trade.bot.process_trade(trade)
   end
