@@ -27,12 +27,6 @@ class FeeCollectionConfirmJob < ApplicationJob
       fee.update!(status: "collected", collected_at: Time.current)
       Rails.logger.info "[FeeCollectionConfirmJob] Fee collected for FeeCollection##{fee.id} (tx: #{fee.tx_hash})"
       FeeUnwrapJob.perform_later(fee.id)
-
-      # If the bot is already inactive, start return-funds flow
-      unless bot.active?
-        Rails.logger.info "[FeeCollectionConfirmJob] Bot##{bot.id} inactive after fee collection, scheduling return funds"
-        bot.return_funds_to_user
-      end
     else
       fee.update!(status: "failed")
       Rails.logger.error "[FeeCollectionConfirmJob] Fee collection tx reverted for FeeCollection##{fee.id} (tx: #{fee.tx_hash})"

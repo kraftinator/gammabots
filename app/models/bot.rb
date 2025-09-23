@@ -62,8 +62,8 @@ class Bot < ApplicationRecord
       process_initial_buy(trade)
     elsif trade.sell?
       process_sell(trade)
-      process_reset if current_cycle.reset_requested_at
-      # TODO: Update bot to indicate that it's done.
+      #process_reset if current_cycle.reset_requested_at
+      PostSellService.call(self, trade)
     end
   end
 
@@ -82,6 +82,7 @@ class Bot < ApplicationRecord
     update!(active: false)
     take_profit(full_share: true)
     current_cycle.update!(ended_at: Time.current)
+    return_funds_to_user
   end
 
   def return_funds_to_user
@@ -219,6 +220,26 @@ class Bot < ApplicationRecord
     status == 'pending_funding' || status == 'converting_to_weth'
   end
 
+  def process_reset
+    active? ? take_profit : take_profit(full_share: true)
+
+    old_cycle = current_cycle
+    old_cycle.update!(ended_at: Time.current)
+
+    return unless active
+
+    current_price = token_pair.latest_price
+    moving_avg = token_pair.moving_average(moving_avg_minutes)
+    bot_cycles.create!(
+      started_at: Time.current,
+      base_token_amount: old_cycle.base_token_amount,
+      quote_token_amount: old_cycle.quote_token_amount,
+      created_at_price: current_price,
+      lowest_price_since_creation: current_price,
+      lowest_moving_avg_since_creation: moving_avg
+    )
+  end
+
   private
 
   def process_initial_buy(trade)
@@ -267,26 +288,6 @@ class Bot < ApplicationRecord
       lowest_price_since_last_trade: trade_price,
       highest_moving_avg_since_last_trade: moving_avg,
       lowest_moving_avg_since_last_trade: moving_avg
-    )
-  end
-
-  def process_reset
-    active? ? take_profit : take_profit(full_share: true)
-
-    old_cycle = current_cycle
-    old_cycle.update!(ended_at: Time.current)
-
-    return unless active
-
-    current_price = token_pair.latest_price
-    moving_avg = token_pair.moving_average(moving_avg_minutes)
-    bot_cycles.create!(
-      started_at: Time.current,
-      base_token_amount: old_cycle.base_token_amount,
-      quote_token_amount: old_cycle.quote_token_amount,
-      created_at_price: current_price,
-      lowest_price_since_creation: current_price,
-      lowest_moving_avg_since_creation: moving_avg
     )
   end
 

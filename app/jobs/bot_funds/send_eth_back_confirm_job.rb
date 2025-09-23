@@ -29,8 +29,13 @@ module BotFunds
         Rails.logger.info "[BotFunds::SendEthBackConfirmJob] ETH return confirmed for Bot##{bot.id} (tx: #{tx_hash})"
         bot.update!(
           funds_return_status: "returned",
+          funds_returned_amount: receipt["amountEth"].to_d,
           funds_returned_at: Time.current
         )
+
+        if (cycle = bot.current_cycle)
+          cycle.update!(quote_token_amount: 0)
+        end
       else
         Rails.logger.error "[BotFunds::SendEthBackConfirmJob] ETH return tx reverted for Bot##{bot.id} (tx: #{tx_hash})"
         bot.update!(funds_return_status: "failed")
