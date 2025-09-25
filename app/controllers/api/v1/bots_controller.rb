@@ -136,6 +136,10 @@ module Api
             provider_url: provider_url
           )
 
+          bot.update!(
+            funding_expected_amount: wei_to_eth(reserve_info[:total_required_wei])
+          )
+
           payment = {
             to: wallet.address,
             #value: eth_to_wei(bot.initial_buy_amount),
@@ -169,6 +173,10 @@ module Api
         # eth_decimal is a BigDecimal representing ETH (e.g., 0.25)
         # multiply by 10^18 and cast to integer (floor) — then stringify
         (BigDecimal(eth_decimal.to_s) * BigDecimal('1000000000000000000')).to_i.to_s
+      end
+
+      def wei_to_eth(wei)
+        BigDecimal(wei.to_s) / (10**18)
       end
 
       def validate_strategy_param!

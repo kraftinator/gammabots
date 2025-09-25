@@ -42,7 +42,13 @@ class ConfirmFundingJob < ApplicationJob
     to_ok    = normalize_addr(details['toAddress'])   == normalize_addr(deposit_addr)
     hash_ok  = details['txHash'].to_s.downcase        == bot.funding_tx_hash.to_s.downcase
     amount_ok = begin
-      BigDecimal(details['amountEth'].to_s) == bot.initial_buy_amount
+      #BigDecimal(details['amountEth'].to_s) == bot.initial_buy_amount
+      sent_amount = BigDecimal(details['amountEth'].to_s)
+
+      meets_minimum     = sent_amount >= bot.initial_buy_amount
+      matches_expected  = bot.funding_expected_amount.present? && sent_amount == bot.funding_expected_amount
+
+      meets_minimum && matches_expected
     rescue
       false
     end
