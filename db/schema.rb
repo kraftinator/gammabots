@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_23_173204) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_24_143933) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -182,8 +182,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_23_173204) do
     t.decimal "amount_withdrawn", precision: 30, scale: 18, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "payout_token_id"
+    t.decimal "payout_amount", precision: 30, scale: 18
+    t.string "convert_status", default: "pending", null: false
+    t.string "convert_tx_hash"
+    t.datetime "converted_at"
+    t.string "transfer_status", default: "pending", null: false
+    t.string "transfer_tx_hash"
+    t.datetime "transferred_at"
+    t.text "error_message"
     t.index ["bot_cycle_id"], name: "index_profit_withdrawals_on_bot_cycle_id"
     t.index ["bot_id"], name: "index_profit_withdrawals_on_bot_id"
+    t.index ["convert_status"], name: "index_profit_withdrawals_on_convert_status"
+    t.index ["payout_token_id"], name: "index_profit_withdrawals_on_payout_token_id"
+    t.index ["transfer_status"], name: "index_profit_withdrawals_on_transfer_status"
   end
 
   create_table "strategies", force: :cascade do |t|
@@ -318,6 +330,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_23_173204) do
   add_foreign_key "pending_copy_trades", "chains"
   add_foreign_key "profit_withdrawals", "bot_cycles"
   add_foreign_key "profit_withdrawals", "bots"
+  add_foreign_key "profit_withdrawals", "tokens", column: "payout_token_id"
   add_foreign_key "strategies", "chains"
   add_foreign_key "token_approvals", "tokens"
   add_foreign_key "token_approvals", "wallets"

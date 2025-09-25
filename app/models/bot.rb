@@ -305,16 +305,18 @@ class Bot < ApplicationRecord
     amount = profit * share
 
     # record the withdrawal
+    payout_token = Token.find_by!(chain: chain, symbol: "USDC")
     withdrawal = ProfitWithdrawal.create!(
       bot:              self,
       bot_cycle:        cycle,
       raw_profit:       profit,
       profit_share:     share,
-      amount_withdrawn: amount
+      amount_withdrawn: amount,
+      payout_token:     payout_token
     )
 
     # Convert to USDC and send
-    PayoutJob.perform_later(withdrawal.id)
+    ProfitWithdrawals::ProfitConvertJob.perform_later(withdrawal.id)
 
     # subtract the sent amount so it's not reinvested
     cycle.update!(quote_token_amount: cycle.quote_token_amount - amount)
