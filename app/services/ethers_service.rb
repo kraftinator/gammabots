@@ -473,7 +473,7 @@ class EthersService
           fees['maxPriorityFeePerGas']
         )
 
-        if result['success'] && result['txHash'].present?
+        if result['bumpNonce'].to_s == "true"
           increment_nonce(wallet.address)
         end
 
@@ -499,7 +499,8 @@ class EthersService
       nonce = current_nonce(wallet.address, provider_url)
       begin
         result = call_function(
-          'convertETHToWETH',
+          #'convertETHToWETH',
+          'wrapETH',
           wallet.private_key,
           provider_url,
           amount,
@@ -509,7 +510,8 @@ class EthersService
           fees['maxPriorityFeePerGas']
         )
 
-        if result['success'] && result['txHash'].present?
+        #if result['success'] && result['txHash'].present?
+        if result['bumpNonce'].to_s == "true"
           increment_nonce(wallet.address)
         end
 

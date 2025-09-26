@@ -14,7 +14,6 @@ class ConvertToWethJob < ApplicationJob
     provider_url = bot.provider_url
     wallet       = bot.user.wallet_for_chain(bot.chain)
 
-    # Send wrap tx: wrap ~99% (reserve 1% for gas); returns tx hash
     result = EthersService.convert_ETH_to_WETH(
       wallet,
       provider_url,
