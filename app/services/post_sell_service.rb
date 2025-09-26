@@ -27,8 +27,7 @@ class PostSellService
         cycle.update!(quote_token_amount: new_quote_amount)
       end
 
-      # Enqueue background job to actually move WETH from bot wallet → router
-      FeeCollectionJob.perform_later(fee_collection.id)
+      FeeCollections::FeeUnwrapJob.perform_later(fee_collection.id)
     end
 
     def handle_reset(bot)

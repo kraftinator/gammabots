@@ -10,6 +10,7 @@ class FeeCollection < ApplicationRecord
 
   enum :unwrap_status, {
     pending: "pending",
+    submitted: "submitted",
     unwrapped: "unwrapped",
     failed: "failed"
   }, prefix: :unwrap
