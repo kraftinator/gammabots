@@ -84,7 +84,7 @@ class EthersService
       return { success: false, error: "gas lookup failed: #{e.message}" }
     end
 
-    tx_response = with_nonce_lock do
+    tx_response = with_wallet_nonce_lock(wallet) do
       nonce = current_nonce(wallet.address, provider_url)
       begin
         result = call_function('sellWithMinAmount', wallet.private_key, base_token_amount, base_token, quote_token, base_token_decimals, quote_token_decimals, fee_tier, min_amount_out, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
@@ -108,7 +108,7 @@ class EthersService
       return { success: false, error: "gas lookup failed: #{e.message}" }
     end
 
-    tx_response = with_nonce_lock do
+    tx_response = with_wallet_nonce_lock(wallet) do
       begin
         result = call_function('clearNonce', wallet.private_key, nonce_to_clear, provider_url, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
         if result['success'] || result['txHash'].present?
@@ -122,6 +122,7 @@ class EthersService
     end
   end
 
+=begin
   def self.with_nonce_lock(&block)
     REDLOCK_CLIENT.lock!(
       "eth_nonce_lock",   # lock key
@@ -131,6 +132,24 @@ class EthersService
     ) { yield }
   rescue Redlock::LockError
     raise "Could not acquire nonce lock—please retry later"
+  end
+=end
+
+  def self.with_nonce_lock(address, chain_id, &block)
+    lock_key = "eth_nonce_lock:#{chain_id}:#{address}"
+
+    REDLOCK_CLIENT.lock!(
+      lock_key,
+      5_000,
+      retry_count: 10,
+      retry_delay: 100
+    ) { yield }
+  rescue Redlock::LockError
+    raise "Could not acquire nonce lock for #{address} on chain #{chain_id}—please retry later"
+  end
+
+  def self.with_wallet_nonce_lock(wallet, &block)
+    with_nonce_lock(wallet.address, wallet.chain_id, &block)
   end
 
   def self.buy_with_min_amount(wallet, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
@@ -154,7 +173,7 @@ class EthersService
       return { success: false, error: "gas lookup failed: #{e.message}" }
     end
     
-    tx_response = with_nonce_lock do
+    tx_response = with_wallet_nonce_lock(wallet) do
       begin
         nonce = current_nonce(wallet.address, provider_url)
         result = call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
@@ -178,7 +197,7 @@ class EthersService
       return { success: false, error: "gas lookup failed: #{e.message}" }
     end
 
-    tx_response = with_nonce_lock do
+    tx_response = with_wallet_nonce_lock(wallet) do
       nonce = current_nonce(wallet.address, provider_url)
       begin
         result = call_function('infiniteApprove', wallet.private_key, token_address, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
@@ -421,7 +440,7 @@ class EthersService
       return { "success" => false, "error" => "gas lookup failed: #{e.message}" }
     end
 
-    with_nonce_lock do
+    with_wallet_nonce_lock(wallet) do
       nonce = current_nonce(wallet.address, provider_url)
       begin
         # privateKey,
@@ -460,7 +479,7 @@ class EthersService
       return { "success" => false, "error" => "gas lookup failed: #{e.message}" }
     end
 
-    with_nonce_lock do
+    with_wallet_nonce_lock(wallet) do
       nonce = current_nonce(wallet.address, provider_url)
       begin
         result = call_function(
@@ -495,7 +514,7 @@ class EthersService
       return { "success" => false, "error" => "gas lookup failed: #{e.message}" }
     end
 
-    with_nonce_lock do
+    with_wallet_nonce_lock(wallet) do
       nonce = current_nonce(wallet.address, provider_url)
       begin
         result = call_function(
@@ -529,7 +548,7 @@ class EthersService
       return { "success" => false, "error" => "gas lookup failed: #{e.message}" }
     end
 
-    with_nonce_lock do
+    with_wallet_nonce_lock(wallet) do
       nonce = current_nonce(wallet.address, provider_url)
       begin
         result = call_function(
