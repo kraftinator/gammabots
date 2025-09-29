@@ -37,6 +37,13 @@ class GasReserveService
     }
   end
 
+  def self.topup_needed_for_wallet(wallet:, provider_url:)
+    target_eth  = DEFAULT_TARGETS.fetch(wallet.chain.name) { BigDecimal('0') }
+    balance_eth = BigDecimal(EthersService.get_balance(wallet.address, provider_url).to_s)
+
+    [target_eth - balance_eth, 0].max
+  end
+
   def self.eth_to_wei_s(eth_bd)
     (eth_bd * BigDecimal('1000000000000000000')).to_i.to_s
   end

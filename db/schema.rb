@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_25_175556) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_29_181140) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -158,6 +158,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_25_175556) do
     t.index ["trade_id"], name: "index_fee_collections_on_trade_id"
   end
 
+  create_table "fee_recipients", force: :cascade do |t|
+    t.bigint "fee_collection_id", null: false
+    t.string "recipient_type", null: false
+    t.string "recipient_address", null: false
+    t.decimal "amount", precision: 30, scale: 18, null: false
+    t.string "status", default: "pending", null: false
+    t.string "tx_hash"
+    t.datetime "confirmed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fee_collection_id"], name: "index_fee_recipients_on_fee_collection_id"
+  end
+
   create_table "pending_copy_trades", force: :cascade do |t|
     t.string "wallet_address", null: false
     t.string "token_address", null: false
@@ -206,8 +219,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_25_175556) do
     t.text "strategy_json", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "owner_address"
+    t.datetime "owner_refreshed_at"
     t.index ["chain_id"], name: "index_strategies_on_chain_id"
     t.index ["contract_address", "nft_token_id"], name: "index_strategies_on_contract_address_and_nft_token_id", unique: true
+    t.index ["owner_address"], name: "index_strategies_on_owner_address"
     t.index ["strategy_json"], name: "index_strategies_on_strategy_json", unique: true
   end
 
@@ -328,6 +344,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_25_175556) do
   add_foreign_key "bots", "users"
   add_foreign_key "copy_trades", "token_pairs"
   add_foreign_key "fee_collections", "trades"
+  add_foreign_key "fee_recipients", "fee_collections"
   add_foreign_key "pending_copy_trades", "chains"
   add_foreign_key "profit_withdrawals", "bot_cycles"
   add_foreign_key "profit_withdrawals", "bots"

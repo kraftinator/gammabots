@@ -25,6 +25,7 @@ module FeeCollections
       if receipt["status"].to_i == 1
         fee.update!(status: "collected", collected_at: Time.current)
         Rails.logger.info "[FeeDepositConfirmJob] ETH deposited for FeeCollection##{fee.id} (tx: #{fee.tx_hash})"
+        FeeCollections::FeeDistributeJob.perform_later(fee.id)
       else
         fee.update!(status: "failed")
         Rails.logger.error "[FeeDepositConfirmJob] ETH deposit tx reverted for FeeCollection##{fee.id} (tx: #{fee.tx_hash})"

@@ -1,5 +1,6 @@
 class FeeCollection < ApplicationRecord
   belongs_to :trade
+  has_many :fee_recipients, dependent: :destroy 
 
   # Use positional args (Rails 7.2+) and correct options
   enum :status, {
