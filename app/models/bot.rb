@@ -173,6 +173,27 @@ class Bot < ApplicationRecord
     profit_withdrawals.sum(:amount_withdrawn)
   end
 
+  def profit_fraction(include_profit_withdrawals: false)
+    return 0.0 if initial_buy_amount.to_f.zero?
+
+    change = effective_current_value - initial_buy_amount.to_f
+    change += profit_taken if include_profit_withdrawals
+    change / initial_buy_amount.to_f
+  end
+
+  def profit_percentage(include_profit_withdrawals: false)
+    (profit_fraction(include_profit_withdrawals: include_profit_withdrawals) * 100).round(2)
+  end
+
+  def effective_current_value
+    if active
+      current_value
+    else
+      funds_returned_amount + current_value
+    end
+  end
+
+=begin
   def profit_percentage(include_profit_withdrawals: false)
     # guard against divide-by-zero
     return 0.0 if initial_buy_amount.to_f.zero?
@@ -187,6 +208,7 @@ class Bot < ApplicationRecord
     return 0.0 if initial_buy_amount.to_f.zero?
     (current_value - initial_buy_amount.to_f) / initial_buy_amount.to_f
   end
+=end
 
   #{ "c":"bcn>0 && lba>5 && bpp<=0 && cpr<ibp0.99","a":["sell all","reset"] },
   #{ "c":"bcn>0 && lba>5 && bpp>0  && cpr<bep",   "a":["sell all","reset"] }

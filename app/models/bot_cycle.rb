@@ -55,6 +55,19 @@ class BotCycle < ApplicationRecord
     total_value
   end
 
+  def profit_fraction(include_profit_withdrawals: false)
+    return 0.0 if initial_buy_amount.to_f.zero?
+
+    change = current_value.to_f - initial_buy_amount.to_f
+    change += profit_taken if include_profit_withdrawals
+    change / initial_buy_amount.to_f
+  end
+
+  def profit_percentage(include_profit_withdrawals: false)
+    (profit_fraction(include_profit_withdrawals: include_profit_withdrawals) * 100).round(2)
+  end
+
+=begin
   def profit_percentage(include_profit_withdrawals: false)
     # guard against divide-by-zero
     return 0.0 if initial_buy_amount.to_f.zero?
@@ -74,7 +87,7 @@ class BotCycle < ApplicationRecord
     change += profit_taken if include_profit_withdrawals
     change / initial_buy_amount.to_f
   end
-
+=end
   def profitable?
     profit_fraction(include_profit_withdrawals: true) > 0
   end
