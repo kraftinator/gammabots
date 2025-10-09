@@ -10,6 +10,9 @@ Rails.application.routes.draw do
         post :fund, on: :member
       end
       resources :users, only: [:show, :create]
+      resources :strategies, only: [:index, :show, :create] do
+        post :validate, on: :collection
+      end
     end
   end
   

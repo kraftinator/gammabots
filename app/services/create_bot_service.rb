@@ -1,5 +1,6 @@
 # app/services/create_bot_service.rb
 class CreateBotService
+  STRATEGY_NFT_CONTRACT_ADDRESS = "abcdef123456"
   # Example:
   # CreateBotService.call(
   #   user_id: 1,
@@ -24,7 +25,7 @@ class CreateBotService
   )
     # == Look-ups & validations ==
     chain    = Chain.find_by(name: chain_name)           or raise ArgumentError, "Invalid chain"
-    strategy = Strategy.find_by(nft_token_id: strategy_token_id) or raise ArgumentError, "Invalid strategy"
+    strategy = Strategy.find_by(contract_address: STRATEGY_NFT_CONTRACT_ADDRESS, nft_token_id: strategy_token_id) or raise ArgumentError, "Invalid strategy"
     user     = User.find_by(id: user_id)                 or raise ArgumentError, "Invalid user"
 
     amount = BigDecimal(initial_amount.to_s)

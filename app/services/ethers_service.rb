@@ -332,6 +332,10 @@ class EthersService
     call_function('getEthTransferDetails', tx_hash, provider_url)
   end
 
+  def self.get_strategy_NFT_details(tx_hash, provider_url)
+    call_function('getStrategyNftDetails', tx_hash, provider_url)
+  end
+
   def self.get_transaction_receipt(tx_hash, wallet_address, token_pair, provider_url)
     # txHash,
     # poolAddress,

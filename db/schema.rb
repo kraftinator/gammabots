@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_29_181140) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_07_191134) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -214,15 +214,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_29_181140) do
 
   create_table "strategies", force: :cascade do |t|
     t.bigint "chain_id", null: false
-    t.string "contract_address", null: false
-    t.string "nft_token_id", null: false
-    t.text "strategy_json", null: false
+    t.string "contract_address"
+    t.string "nft_token_id"
+    t.text "strategy_json"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "owner_address"
     t.datetime "owner_refreshed_at"
+    t.string "mint_tx_hash"
+    t.string "mint_status", default: "pending", null: false
     t.index ["chain_id"], name: "index_strategies_on_chain_id"
     t.index ["contract_address", "nft_token_id"], name: "index_strategies_on_contract_address_and_nft_token_id", unique: true
+    t.index ["mint_tx_hash"], name: "index_strategies_on_mint_tx_hash", unique: true
     t.index ["owner_address"], name: "index_strategies_on_owner_address"
     t.index ["strategy_json"], name: "index_strategies_on_strategy_json", unique: true
   end

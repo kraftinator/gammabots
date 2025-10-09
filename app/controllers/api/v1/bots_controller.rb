@@ -4,6 +4,7 @@ module Api
   module V1
     class BotsController < Api::BaseController
       before_action :require_quick_auth!
+      STRATEGY_NFT_CONTRACT_ADDRESS = "abcdef123456"
       
       def index
         unless current_user
@@ -197,7 +198,7 @@ module Api
           }, status: :bad_request and return
         end
 
-        strategy = Strategy.find_by(nft_token_id: raw.to_i)
+        strategy = Strategy.find_by(contract_address: STRATEGY_NFT_CONTRACT_ADDRESS, nft_token_id: raw.to_i)
 
         unless strategy
           render json: {
