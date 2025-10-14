@@ -14,8 +14,16 @@ class Strategy < ApplicationRecord
   validate  :strategy_json_must_be_valid_json
   validates :owner_address, allow_nil: true, format: { with: /\A0x[a-fA-F0-9]{40}\z/, message: "must be a valid Ethereum address" }
 
+  # Scopes
+  scope :active, -> { where(status: "active") }
+  scope :inactive, -> { where(status: "inactive") }
+
   def current_owner_address
     owner_address
+  end
+
+  def active?
+    status == 'active'
   end
 
   private

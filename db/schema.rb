@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_07_191134) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_14_145350) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -223,10 +223,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_191134) do
     t.datetime "owner_refreshed_at"
     t.string "mint_tx_hash"
     t.string "mint_status", default: "pending", null: false
+    t.string "status", default: "active", null: false
     t.index ["chain_id"], name: "index_strategies_on_chain_id"
     t.index ["contract_address", "nft_token_id"], name: "index_strategies_on_contract_address_and_nft_token_id", unique: true
     t.index ["mint_tx_hash"], name: "index_strategies_on_mint_tx_hash", unique: true
     t.index ["owner_address"], name: "index_strategies_on_owner_address"
+    t.index ["status"], name: "index_strategies_on_status"
     t.index ["strategy_json"], name: "index_strategies_on_strategy_json", unique: true
   end
 
