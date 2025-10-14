@@ -83,6 +83,9 @@ module Gammascript
       "llt" => "lowestPriceSinceLastTrade",
       "lowestPriceSinceLastTrade" => "llt",
 
+      "lsp" => "lastSellPrice",
+      "lastSellPrice" => "lsp",
+
       # --- Moving Averages ---
       "cma" => "currentMovingAverage",
       "currentMovingAverage" => "cma",

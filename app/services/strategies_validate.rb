@@ -1,15 +1,16 @@
-# app/services/strategies_validate.rb
 # frozen_string_literal: true
 
+require "dentaku"
 require "gammascript/constants"
 
 # ==============================================================
 #  Gammabots :: StrategiesValidate
 #
 #  Validates a Gammascript strategy JSON for syntax, variables, and actions.
-#  - Ensures the JSON is valid and is an array of rules
+#  - Ensures JSON is valid and an array of rules
 #  - Confirms all condition variables exist in VALID_FIELDS
 #  - Confirms all actions are valid and case-sensitive
+#  - Uses Dentaku to validate expression syntax and operators
 #  - Returns a compressed JSON form (with short field names)
 # ==============================================================
 
@@ -29,6 +30,12 @@ class StrategiesValidate
 
   def initialize(strategy_json)
     @strategy_json = strategy_json
+    @calc = Dentaku::Calculator.new
+
+    # Register valid variables (mock values so Dentaku can parse)
+    (VALID_FIELDS.keys + VALID_FIELDS.values).uniq.each do |field|
+      @calc.store(field.to_sym => 0)
+    end
   end
 
   def call
@@ -54,10 +61,16 @@ class StrategiesValidate
         condition_str = rule["c"] || rule["conditions"]
         action_arr    = rule["a"] || rule["actions"]
 
-        # --- Validate condition tokens ---
-        tokens = condition_str.scan(/[a-zA-Z_][a-zA-Z0-9_]*/)
+        # --- Normalize logical operators for Dentaku ---
+        normalized = condition_str
+          .gsub("&&", " and ")
+          .gsub("||", " or ")
+          .gsub("!", " not ")
+
+        # --- Validate condition tokens (field existence) ---
+        tokens = normalized.scan(/[a-zA-Z_][a-zA-Z0-9_]*/)
         tokens.each do |token|
-          next if %w[and or true false].include?(token)
+          next if %w[and or not true false].include?(token)
           unless VALID_FIELDS.key?(token)
             case_match = VALID_FIELDS.keys.find { |f| f.downcase == token.downcase }
             if case_match && case_match != token
@@ -68,6 +81,13 @@ class StrategiesValidate
           end
         end
 
+        # --- Validate operator syntax using Dentaku ---
+        begin
+          @calc.evaluate!(normalized)
+        rescue Dentaku::ParseError, Dentaku::UnboundVariableError => e
+          errors << "Rule #{i + 1} invalid expression: #{e.message}"
+        end
+
         # --- Validate actions ---
         unless action_arr.is_a?(Array)
           errors << "Rule #{i + 1} actions must be an array"
@@ -75,6 +95,24 @@ class StrategiesValidate
         end
 
         action_arr.each do |action|
+          if action.start_with?("sell ")
+            # skip literal "sell all"
+            if action.strip == "sell all"
+              next
+            end
+
+            expr = action.split("sell ", 2).last.strip
+
+            begin
+              @calc.evaluate!(expr)
+            rescue Dentaku::Error => e
+              errors << "Rule #{i + 1} invalid sell expression '#{expr}': #{e.message}"
+            end
+
+            next
+          end
+
+          # Normal whitelist validation
           unless VALID_ACTIONS.include?(action)
             case_match = VALID_ACTIONS.find { |a| a.downcase == action.downcase }
             if case_match && case_match != action
@@ -106,15 +144,28 @@ class StrategiesValidate
   def compress_rule(rule)
     {
       "c" => convert_conditions(rule["c"] || rule["conditions"]),
-      "a" => rule["a"] || rule["actions"]
+      "a" => (rule["a"] || rule["actions"]).map { |a| convert_action(a) }
     }
+  end
+
+  def convert_action(action)
+    return action unless action.start_with?("sell ")
+    expr = action.split("sell ").last
+    VALID_FIELDS.each { |key, short| expr.gsub!(/\b#{key}\b/, short) }
+    "sell #{expr.gsub(/\s+/, '')}"
   end
 
   def convert_conditions(condition_str)
     out = condition_str.dup
+
+    # Replace human-readable field names with compact Gammascript codes
     VALID_FIELDS.each do |key, short|
       out.gsub!(/\b#{key}\b/, short)
     end
+
+    # Remove all unnecessary whitespace (but preserve operator structure)
+    out.gsub!(/\s+/, "") # strips spaces between tokens and around operators
+
     out
   end
 end
