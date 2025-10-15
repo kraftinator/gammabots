@@ -132,6 +132,10 @@ class StrategiesValidate
         escape_html: false
       )
 
+      if Strategy.exists?(strategy_json: compressed)
+        return { valid: false, errors: ["Duplicate strategy JSON already exists"] }
+      end
+
       { valid: true, compressed: compressed }
 
     rescue JSON::ParserError

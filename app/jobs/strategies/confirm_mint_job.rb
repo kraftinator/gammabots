@@ -25,13 +25,18 @@ module Strategies
       end
 
       if receipt["status"].to_i == 1
+        strategy_json = receipt["strategyJson"]
+        validation_result = StrategiesValidate.call(strategy_json)
+        status = validation_result[:valid] ? "active" : "inactive"
+
         strategy.update!(
           nft_token_id: receipt["tokenId"].to_s,
-          strategy_json: receipt["strategyJson"],
+          strategy_json: strategy_json,
           owner_address: receipt["owner"],
           contract_address: receipt["contractAddress"],
           mint_status: "confirmed",
-          owner_refreshed_at: Time.current
+          owner_refreshed_at: Time.current,
+          status: status
         )
         Rails.logger.info "[Strategies::ConfirmMintJob] Mint confirmed for Strategy##{strategy.id} (token #{receipt["tokenId"]}, tx: #{tx_hash})"
       else
