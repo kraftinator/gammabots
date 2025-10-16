@@ -40,6 +40,7 @@ RSpec.describe TradingStrategyInterpreter do
 
   # Mock service that would normally handle the actual trading
   before do
+    allow(bot).to receive(:forced_deactivate)
     allow(TradeExecutionService).to receive(:sell).and_return(true)
     allow(TradeExecutionService).to receive(:buy).and_return(true)
     allow(Rails.logger).to receive(:error)

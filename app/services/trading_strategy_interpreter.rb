@@ -73,18 +73,22 @@ class TradingStrategyInterpreter
         result = TradeExecutionService.sell(@variables.merge({ step: step }), sell_amount, min_amount_out)
         swap_executed = true if result.present?
       when /\Adeact\s+force\z/i
-        # Force deactivation regardless of swap status
-        puts "Force deactivating bot: #{@variables[:bot].id}"
-        #@variables[:bot].deactivate
+        # 'deact force' is a legacy action
         @variables[:bot].forced_deactivate
-        puts "Bot force deactivated"
+        Rails.logger.info "Bot #{@variables[:bot].id}: Forced deactivated."
       when /\Adeact\z/i
-        if swap_executed
-          puts "Deactivating bot"
-          @variables[:bot].deactivate
+        has_bought = (@variables[:bcn] || 0).to_i > 0
+        if has_bought
+          if swap_executed
+            @variables[:bot].deactivate
+            Rails.logger.info "Bot #{@variables[:bot].id}: Deactivated."
+          else
+            Rails.logger.info "Bot #{@variables[:bot].id}: Swap did not occur; bot remains active."
+          end
         else
-          puts "Swap did not occur; bot remains active"
-        end
+          @variables[:bot].forced_deactivate
+          Rails.logger.info "Bot #{@variables[:bot].id}: Forced deactivated."
+        end        
       when /\Areset\z/i
         if swap_executed
           puts "Resetting bot"
