@@ -500,7 +500,7 @@ RSpec.describe TradingStrategyInterpreter do
       let(:strategy_json) { '[{"c":"true","a":["sell invalid_amount"]}]' }
       
       it 'logs errors when parsing invalid amount expressions' do
-        expect(Rails.logger).to receive(:error).with(/Error parsing amount expression/)
+        expect(Rails.logger).to receive(:error).with(/Invalid sell fraction/)
         
         interpreter = described_class.new(strategy_json, base_variables)
         interpreter.execute

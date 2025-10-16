@@ -10,7 +10,7 @@ require "gammascript/constants"
 #  - Ensures JSON is valid and an array of rules
 #  - Confirms all condition variables exist in VALID_FIELDS
 #  - Confirms all actions are valid and case-sensitive
-#  - Uses Dentaku to validate expression syntax and operators
+#  - Uses Dentaku to validate condition syntax and operators
 #  - Returns a compressed JSON form (with short field names)
 # ==============================================================
 
@@ -18,10 +18,11 @@ class StrategiesValidate
   include Gammascript::Constants
 
   VALID_ACTIONS = [
-    "buy init",
+    "buy",
     "sell all",
     "deact",
-    "reset"
+    "reset",
+    "skip"
   ].freeze
 
   def self.call(strategy_json)
@@ -96,23 +97,22 @@ class StrategiesValidate
 
         action_arr.each do |action|
           if action.start_with?("sell ")
-            # skip literal "sell all"
-            if action.strip == "sell all"
+            arg = action.split("sell ", 2).last.strip.downcase
+
+            if arg == "all"
               next
-            end
-
-            expr = action.split("sell ", 2).last.strip
-
-            begin
-              @calc.evaluate!(expr)
-            rescue Dentaku::Error => e
-              errors << "Rule #{i + 1} invalid sell expression '#{expr}': #{e.message}"
+            elsif arg.match?(/\A\d*\.?\d+\z/)
+              fraction = arg.to_f
+              if fraction <= 0 || fraction > 1
+                errors << "Rule #{i + 1} invalid sell fraction '#{arg}' (must be >0 and ≤1)"
+              end
+            else
+              errors << "Rule #{i + 1} invalid sell syntax '#{action}'"
             end
 
             next
           end
 
-          # Normal whitelist validation
           unless VALID_ACTIONS.include?(action)
             case_match = VALID_ACTIONS.find { |a| a.downcase == action.downcase }
             if case_match && case_match != action
@@ -148,15 +148,8 @@ class StrategiesValidate
   def compress_rule(rule)
     {
       "c" => convert_conditions(rule["c"] || rule["conditions"]),
-      "a" => (rule["a"] || rule["actions"]).map { |a| convert_action(a) }
+      "a" => (rule["a"] || rule["actions"]).map(&:strip)
     }
-  end
-
-  def convert_action(action)
-    return action unless action.start_with?("sell ")
-    expr = action.split("sell ").last
-    VALID_FIELDS.each { |key, short| expr.gsub!(/\b#{key}\b/, short) }
-    "sell #{expr.gsub(/\s+/, '')}"
   end
 
   def convert_conditions(condition_str)
@@ -167,9 +160,8 @@ class StrategiesValidate
       out.gsub!(/\b#{key}\b/, short)
     end
 
-    # Remove all unnecessary whitespace (but preserve operator structure)
-    out.gsub!(/\s+/, "") # strips spaces between tokens and around operators
-
+    # Remove all unnecessary whitespace
+    out.gsub!(/\s+/, "")
     out
   end
 end

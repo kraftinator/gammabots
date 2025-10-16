@@ -55,21 +55,30 @@ class TradingStrategyInterpreter
         # intentional no-op: skip this cycle
         Rails.logger.info "Bot #{@variables[:bot].id}: skipping trades for this cycle"
         return
-      when /\Abuy init\z/i
-        # For "buy init", execute initial buy
+      #when /\Abuy init\z/i
+      when /\Abuy(\s+init)?\z/i
+        # For "buy", execute initial buy
         result = TradeExecutionService.buy(@variables.merge({ step: step }))
         swap_executed = true if result.present?
       when /\Asell\s+(.*)\z/i
-        amount_expr = Regexp.last_match(1).strip
-        sell_amount = parse_amount(amount_expr)
-        if amount_expr.downcase == "all"
-          # For liquidation events ("sell all"), we ignore slippage and set min_amount_out to 0.
-          min_amount_out = 0
-        else
-            base_value = @variables[:cpr]            
-            safety_factor = 0.95
-            min_amount_out = sell_amount * base_value * safety_factor
+        arg = Regexp.last_match(1).strip.downcase
+        fraction =
+          if arg == "all"
+            1.0
+          elsif arg.start_with?("bta*")
+            arg.split("*").last.to_f
+          else
+            arg.to_f
+          end
+
+        if fraction <= 0 || fraction > 1
+          Rails.logger.error "Invalid sell fraction '#{arg}' for bot #{@variables[:bot].id}"
+          next
         end
+
+        sell_amount = @variables[:bot].current_cycle.base_token_amount * fraction
+        min_amount_out = fraction == 1 ? 0 : sell_amount * @variables[:cpr] * 0.95
+
         result = TradeExecutionService.sell(@variables.merge({ step: step }), sell_amount, min_amount_out)
         swap_executed = true if result.present?
       when /\Adeact\s+force\z/i
@@ -103,6 +112,7 @@ class TradingStrategyInterpreter
   end
 
   # Parses the sell amount from an expression like "bta*0.25" or "all"
+  # DEPRECATED
   def parse_amount(expression)
     if expression.downcase == "all"
       #@variables[:bot].base_token_amount

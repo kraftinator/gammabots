@@ -5,12 +5,12 @@ require "rails_helper"
 RSpec.describe StrategiesValidate, type: :service do
   let(:valid_strategy_json) do
     [
-      { "c" => "buyCount==0", "a" => ["buy init"] },
+      { "c" => "buyCount==0", "a" => ["buy"] },
       { "c" => "buyCount>0&&minutesSinceLastTrade>=1", "a" => ["sell all", "reset"] },
-      { "c" => "buyCount>0&&currentPrice<=initialBuyPrice*0.75", "a" => ["sell all", "reset"] },
+      { "c" => "buyCount>0&&currentPrice<=initialBuyPrice*0.75", "a" => ["sell 0.5", "deact"] },
       {
         "c" => "buyCount>0&&sellCount==0&&highestPriceSinceInitialBuy>=initialBuyPrice*2.0&&currentPrice<=highestPriceSinceInitialBuy*0.90",
-        "a" => ["sell tokenAmount * 0.50"]
+        "a" => ["sell 0.25"]
       }
     ].to_json
   end
@@ -33,7 +33,7 @@ RSpec.describe StrategiesValidate, type: :service do
       it "converts human-readable fields to compressed short codes" do
         result = described_class.call(valid_strategy_json)
         compressed = result[:compressed]
-        %w[bcn lta cpr ibp bta].each do |short_code|
+        %w[bcn lta cpr ibp scn].each do |short_code|
           expect(compressed).to include(short_code)
         end
       end
@@ -48,17 +48,17 @@ RSpec.describe StrategiesValidate, type: :service do
     end
 
     context "with missing keys" do
-      let(:missing_conditions_json) { [{ "a" => ["buy init"] }].to_json }
+      let(:missing_conditions_json) { [{ "a" => ["buy"] }].to_json }
 
       it "returns error for missing 'c'" do
         result = described_class.call(missing_conditions_json)
         expect(result[:valid]).to be(false)
-        expect(result[:errors].first).to match(/missing 'c'/)
+        expect(result[:errors].first).to match(/missing 'c'/i)
       end
     end
 
     context "with unknown variables" do
-      let(:unknown_var_json) { [{ "c" => "unknownField>0", "a" => ["buy init"] }].to_json }
+      let(:unknown_var_json) { [{ "c" => "unknownField>0", "a" => ["buy"] }].to_json }
 
       it "returns invalid and lists the unknown variable" do
         result = described_class.call(unknown_var_json)
@@ -78,7 +78,7 @@ RSpec.describe StrategiesValidate, type: :service do
     end
 
     context "with invalid Dentaku expression" do
-      let(:bad_operator_json) { [{ "c" => "bcn>==0", "a" => ["buy init"] }].to_json }
+      let(:bad_operator_json) { [{ "c" => "bcn>==0", "a" => ["buy"] }].to_json }
 
       it "returns invalid and includes a Dentaku parse error" do
         result = described_class.call(bad_operator_json)
@@ -88,7 +88,7 @@ RSpec.describe StrategiesValidate, type: :service do
     end
 
     context "when conditions contain extra whitespace" do
-      let(:whitespace_json) { [{ "c" => " bcn  ==  0  &&  lta  >=  1 ", "a" => ["buy init"] }].to_json }
+      let(:whitespace_json) { [{ "c" => " bcn  ==  0  &&  lta  >=  1 ", "a" => ["buy"] }].to_json }
 
       it "removes unnecessary spaces in compressed JSON" do
         result = described_class.call(whitespace_json)
@@ -98,18 +98,50 @@ RSpec.describe StrategiesValidate, type: :service do
       end
     end
 
-    context "when actions contain expressions with field names" do
+    context "when actions contain numeric sell fractions" do
       let(:sell_action_json) do
         [
-          { "c" => "buyCount>0", "a" => ["sell tokenAmount * 0.25"] }
+          { "c" => "buyCount>0", "a" => ["sell 0.25"] }
         ].to_json
       end
 
-      it "compresses field names inside sell expressions" do
+      it "passes validation for fractional sells" do
         result = described_class.call(sell_action_json)
         expect(result[:valid]).to be(true)
         compressed = JSON.parse(result[:compressed]).first["a"].first
-        expect(compressed).to eq("sell bta*0.25")
+        expect(compressed).to eq("sell 0.25")
+      end
+    end
+
+    context "rejects legacy action formats" do
+      let(:legacy_buy_json) { [{ "c" => "bcn==0", "a" => ["buy init"] }].to_json }
+      let(:legacy_sell_json) { [{ "c" => "bcn>0", "a" => ["sell bta*0.25"] }].to_json }
+
+      it "rejects buy init" do
+        result = described_class.call(legacy_buy_json)
+        expect(result[:valid]).to be(false)
+        expect(result[:errors].first).to match(/Unknown action 'buy init'/)
+      end
+
+      it "rejects sell bta* syntax" do
+        result = described_class.call(legacy_sell_json)
+        expect(result[:valid]).to be(false)
+        expect(result[:errors].first).to match(/invalid sell syntax/i)
+      end
+    end
+
+    context "rejects duplicates" do
+      it "returns error when same compressed JSON exists" do
+        chain = Chain.create!(name: "base_mainnet", native_chain_id: "8453")
+
+        first = described_class.call(valid_strategy_json)
+        compressed = first[:compressed]
+
+        Strategy.create!(chain: chain, strategy_json: compressed)
+
+        result = described_class.call(valid_strategy_json)
+        expect(result[:valid]).to be(false)
+        expect(result[:errors].first).to match(/Duplicate strategy JSON/)
       end
     end
   end
