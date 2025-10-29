@@ -68,6 +68,9 @@ module Gammascript
       "cap" => "creationPrice",
       "creationPrice" => "cap",
 
+      "hps" => "highestPriceSinceCreation",
+      "highestPriceSinceCreation" => "hps",
+
       "lps" => "lowestPriceSinceCreation",
       "lowestPriceSinceCreation" => "lps",
 

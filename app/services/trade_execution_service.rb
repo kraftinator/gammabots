@@ -167,6 +167,7 @@ class TradeExecutionService
       vlt: vars[:vlt],
       ssd: vars[:ssd],
       lsd: vars[:lsd],
+      hps: vars[:hps],
       lps: vars[:lps],
       hip: vars[:hip],
       hlt: vars[:hlt],

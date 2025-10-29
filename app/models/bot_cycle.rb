@@ -155,6 +155,7 @@ class BotCycle < ApplicationRecord
       lsd: token_pair.volatility_by_std_dev(moving_avg_minutes * 2) || Float::NAN,
       # prices
       cap: created_at_price,
+      hps: highest_price_since_creation,
       lps: lowest_price_since_creation,
       hip: highest_price_since_initial_buy,
       hlt: highest_price_since_last_trade,
