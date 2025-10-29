@@ -604,4 +604,27 @@ class EthersService
     key = "last_block:#{chain_id}"
     $redis.set(key, block_number)
   end
+
+  def self.get_0x_quote(
+    sell_token,
+    buy_token,
+    amount,
+    sell_token_decimals,
+    wallet_address,
+    zero_ex_api_key
+  )
+    call_function(
+      'get0xQuote', 
+      sell_token,
+      buy_token,
+      amount,
+      sell_token_decimals,
+      wallet_address,
+      zero_ex_api_key
+    )
+  end
+
+  def self.execute_0x_swap(private_key, quote, nonce, provider_url)
+    call_function('execute0xSwap', private_key, quote, nonce, provider_url)
+  end
 end
