@@ -70,6 +70,7 @@ class ProcessPendingCopyTradesJob
         started_at: Time.current,
         quote_token_amount: bot.initial_buy_amount,
         created_at_price: current_price,
+        highest_price_since_creation: current_price,
         lowest_price_since_creation: current_price,
         lowest_moving_avg_since_creation: moving_avg
       )

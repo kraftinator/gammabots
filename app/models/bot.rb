@@ -102,6 +102,7 @@ class Bot < ApplicationRecord
     bot_cycle = current_cycle
     if initial_buy_made?
       bot_cycle.update!(
+        highest_price_since_creation: [bot_cycle.highest_price_since_creation, current_price].compact.max,
         lowest_price_since_creation: [bot_cycle.lowest_price_since_creation, current_price].compact.min,
         highest_price_since_initial_buy: [bot_cycle.highest_price_since_initial_buy, current_price].compact.max,
         lowest_price_since_initial_buy: [bot_cycle.lowest_price_since_initial_buy, current_price].compact.min,
@@ -116,6 +117,7 @@ class Bot < ApplicationRecord
       )
     else
       bot_cycle.update!(
+        highest_price_since_creation: [bot_cycle.highest_price_since_creation, current_price].compact.max,
         lowest_price_since_creation: [bot_cycle.lowest_price_since_creation, current_price].compact.min,
         lowest_moving_avg_since_creation: [bot_cycle.lowest_moving_avg_since_creation, current_moving_avg].compact.min
       )
@@ -257,6 +259,7 @@ class Bot < ApplicationRecord
       base_token_amount: old_cycle.base_token_amount,
       quote_token_amount: old_cycle.quote_token_amount,
       created_at_price: current_price,
+      highest_price_since_creation: current_price,
       lowest_price_since_creation: current_price,
       lowest_moving_avg_since_creation: moving_avg
     )
