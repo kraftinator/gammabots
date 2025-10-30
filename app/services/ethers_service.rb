@@ -190,7 +190,7 @@ class EthersService
     end
   end
 
-  def self.infinite_approve(wallet, token_address, provider_url)
+  def self.infinite_approve(wallet, token_address, spender_address, provider_url)
     begin
       fees = get_gas_fees(wallet.chain_id, provider_url)
     rescue => e
@@ -200,7 +200,7 @@ class EthersService
     tx_response = with_wallet_nonce_lock(wallet) do
       nonce = current_nonce(wallet.address, provider_url)
       begin
-        result = call_function('infiniteApprove', wallet.private_key, token_address, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
+        result = call_function('infiniteApprove', wallet.private_key, token_address, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'], spender_address)
         if result["success"] && result["txHash"].present?
           increment_nonce(wallet.address)
         end
@@ -428,11 +428,12 @@ class EthersService
     call_function('generateWallet')
   end
 
-  def self.is_infinite_approval(private_key, token_address, provider_url)
+  def self.is_infinite_approval(private_key, token_address, spender_address, provider_url)
     call_function(
       'isInfiniteApproval',
       private_key,
       token_address,
+      spender_address,
       provider_url
     )
   end
