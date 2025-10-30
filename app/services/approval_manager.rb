@@ -1,14 +1,15 @@
 class ApprovalManager
+  UNISWAP_V3_ROUTER = "0x2626664c2603336e57b271c5c0b26f421741e481"
   CONFIRMATION_DELAY = 5.seconds
 
   # Idempotently ensure infinite allowance
-  def self.ensure_infinite!(wallet:, token:, provider_url:)
-    record = TokenApproval.find_or_initialize_by(wallet: wallet, token: token)
+  def self.ensure_infinite!(wallet:, token:, provider_url:, spender_address: UNISWAP_V3_ROUTER)
+    record = TokenApproval.find_or_initialize_by(wallet: wallet, token: token, contract_address: spender_address)
 
     return if record.confirmed?
 
     if record.new_record? || record.status == 'failed'
-      result = EthersService.infinite_approve(wallet, token.contract_address, provider_url)
+      result = EthersService.infinite_approve(wallet, token.contract_address, spender_address, provider_url)
       record.assign_attributes(tx_hash: result["txHash"], status: 'pending')
       record.save!
     end

@@ -8,9 +8,10 @@ class ConfirmApprovalJob < ApplicationJob
 
     wallet       = approval.wallet
     token_addr   = approval.token.contract_address
+    spender_addr = approval.contract_address
     provider_url = ProviderUrlService.get_provider_url(wallet.chain.name)
 
-    if EthersService.is_infinite_approval(wallet.private_key, token_addr, provider_url)
+    if EthersService.is_infinite_approval(wallet.private_key, token_addr, spender_addr, provider_url)
       approval.update!(status: 'completed', confirmed_at: Time.current)
     elsif attempts < MAX_TRIES
       self.class
