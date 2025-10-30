@@ -51,9 +51,9 @@ class EthersService
     )
   end
   
-  def self.swap(private_key, amount, token_in, token_out, provider_url)
-    call_function('swap', private_key, amount, token_in, token_out, provider_url)
-  end
+  #def self.swap(private_key, amount, token_in, token_out, provider_url)
+  #  call_function('swap', private_key, amount, token_in, token_out, provider_url)
+  #end
 
   def self.buy(private_key, quote_token_amount, base_token, quote_token, quote_token_decimals, fee_tier, provider_url)
     call_function('buy', private_key, quote_token_amount, base_token, quote_token, quote_token_decimals, fee_tier, provider_url)
@@ -624,7 +624,64 @@ class EthersService
     )
   end
 
-  def self.execute_0x_swap(private_key, quote, nonce, provider_url)
-    call_function('execute0xSwap', private_key, quote, nonce, provider_url)
+  def self.swap(wallet, sell_token, buy_token, sell_token_amount, sell_token_decimals, zero_ex_api_key, provider_url)
+    tx_response = with_wallet_nonce_lock(wallet) do
+      begin
+        nonce = current_nonce(wallet.address, provider_url)
+        result = call_function(
+          'quoteAndSwap0x', 
+          wallet.private_key, 
+          sell_token, 
+          buy_token,
+          sell_token_amount,
+          sell_token_decimals,
+          wallet.address,
+          zero_ex_api_key,
+          provider_url,
+          nonce
+        )
+        if result["bumpNonce"].to_s == "true"
+          increment_nonce(wallet.address)
+        end
+        result
+      rescue StandardError => e
+        { success: false, error: e.message }
+      end
+    end
+  end
+
+  def self.buy_with_min_amount2(wallet, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
+    sim = quote_meets_minimum(
+      quote_token,
+      base_token,
+      fee_tier,
+      quote_token_amount,
+      quote_token_decimals,
+      base_token_decimals,
+      min_amount_out,
+      provider_url
+    )
+
+    return { success: false, error: sim['error'] } unless sim['success']  
+    return { success: false, quote: sim['quoteRaw'], min_amount_out:  sim['minAmountOutRaw'] } unless sim['valid']
+    
+    begin
+      fees = get_gas_fees(wallet.chain_id, provider_url)
+    rescue => e
+      return { success: false, error: "gas lookup failed: #{e.message}" }
+    end
+    
+    tx_response = with_wallet_nonce_lock(wallet) do
+      begin
+        nonce = current_nonce(wallet.address, provider_url)
+        result = call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
+        if result["bumpNonce"].to_s == "true"
+          increment_nonce(wallet.address)
+        end
+        result
+      rescue StandardError => e
+        { success: false, error: e.message }
+      end
+    end
   end
 end
