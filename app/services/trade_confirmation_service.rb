@@ -15,7 +15,10 @@ class TradeConfirmationService
     begin
       bot = trade.bot
       wallet_address = bot.user.wallet_for_chain(bot.chain).address
-      transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, wallet_address, bot.token_pair, provider_url)
+      token_pair = trade.token_pair
+      sell_token = token_pair.quote_token
+      buy_token = token_pair.base_token
+      transaction_receipt = EthersService.read_swap_receipt_erc20(trade.tx_hash, wallet_address, sell_token.contract_address, sell_token.decimals, buy_token.contract_address, buy_token.decimals, provider_url)
     rescue StandardError => e
       BotEvent.create!(
         bot: trade.bot,
@@ -38,7 +41,7 @@ class TradeConfirmationService
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
     unless valid_transaction?(transaction_receipt, amount_in, amount_out)
-      update_trade(trade, amount_in, amount_out, trade.token_pair.current_price, transaction_receipt, :failed)
+      update_trade(trade, amount_in, amount_out, token_pair.current_price, transaction_receipt, :failed)
       return
     end
 
@@ -54,7 +57,10 @@ class TradeConfirmationService
     begin
       bot = trade.bot
       wallet_address = bot.user.wallet_for_chain(bot.chain).address
-      transaction_receipt = EthersService.get_transaction_receipt(trade.tx_hash, wallet_address, bot.token_pair, provider_url)
+      token_pair = trade.token_pair
+      sell_token = token_pair.base_token
+      buy_token = token_pair.quote_token
+      transaction_receipt = EthersService.read_swap_receipt_erc20(trade.tx_hash, wallet_address, sell_token.contract_address, sell_token.decimals, buy_token.contract_address, buy_token.decimals, provider_url)
     rescue StandardError => e
       BotEvent.create!(
         bot: trade.bot,
@@ -77,7 +83,7 @@ class TradeConfirmationService
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
     unless valid_transaction?(transaction_receipt, amount_in, amount_out)
-      update_trade(trade, amount_in, amount_out, trade.token_pair.current_price, transaction_receipt, :failed)
+      update_trade(trade, amount_in, amount_out, token_pair.current_price, transaction_receipt, :failed)
       return
     end
 
@@ -101,7 +107,8 @@ class TradeConfirmationService
       price: price,
       status: status,
       block_number: transaction_receipt["blockNumber"],
-      gas_used: transaction_receipt["gasUsed"],
+      gas_used: transaction_receipt["gasUsedWei"],
+      transaction_fee_wei: transaction_receipt["transactionFeeWei"],
       confirmed_at: Time.current
     )
   end

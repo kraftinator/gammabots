@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_30_155510) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_31_185132) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -306,6 +306,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_30_155510) do
     t.bigint "nonce"
     t.jsonb "metrics", default: {}
     t.decimal "listed_price", precision: 30, scale: 18
+    t.decimal "transaction_fee_wei", precision: 30
     t.index ["block_number"], name: "index_trades_on_block_number"
     t.index ["bot_cycle_id"], name: "index_trades_on_bot_cycle_id"
     t.index ["bot_id"], name: "index_trades_on_bot_id"

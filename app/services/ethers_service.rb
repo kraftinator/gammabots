@@ -641,6 +641,9 @@ class EthersService
           provider_url,
           nonce
         )
+
+        return result unless result["success"]  
+
         if result["bumpNonce"].to_s == "true"
           increment_nonce(wallet.address)
         end
@@ -651,38 +654,16 @@ class EthersService
     end
   end
 
-  def self.buy_with_min_amount2(wallet, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url)
-    sim = quote_meets_minimum(
-      quote_token,
-      base_token,
-      fee_tier,
-      quote_token_amount,
-      quote_token_decimals,
-      base_token_decimals,
-      min_amount_out,
-      provider_url
+  def self.read_swap_receipt_erc20(tx_hash, taker, sell_token, sell_token_decimals, buy_token, buy_token_decimals, provider_url)
+    result = call_function(
+      'readSwapReceiptERC20',
+      provider_url,
+      tx_hash,
+      taker,
+      sell_token,
+      sell_token_decimals,
+      buy_token,
+      buy_token_decimals
     )
-
-    return { success: false, error: sim['error'] } unless sim['success']  
-    return { success: false, quote: sim['quoteRaw'], min_amount_out:  sim['minAmountOutRaw'] } unless sim['valid']
-    
-    begin
-      fees = get_gas_fees(wallet.chain_id, provider_url)
-    rescue => e
-      return { success: false, error: "gas lookup failed: #{e.message}" }
-    end
-    
-    tx_response = with_wallet_nonce_lock(wallet) do
-      begin
-        nonce = current_nonce(wallet.address, provider_url)
-        result = call_function('buyWithMinAmount', wallet.private_key, quote_token_amount, quote_token, base_token, quote_token_decimals, base_token_decimals, fee_tier, min_amount_out, provider_url, nonce, fees['maxFeePerGas'], fees['maxPriorityFeePerGas'])
-        if result["bumpNonce"].to_s == "true"
-          increment_nonce(wallet.address)
-        end
-        result
-      rescue StandardError => e
-        { success: false, error: e.message }
-      end
-    end
   end
 end

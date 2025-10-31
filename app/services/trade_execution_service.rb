@@ -1,4 +1,6 @@
 class TradeExecutionService
+  ZERO_EX_API_KEY = Rails.application.credentials.dig(:zero_ex, :api_key)
+
   def self.buy(vars)
     bot = vars[:bot]
     provider_url = bot.provider_url
@@ -9,18 +11,20 @@ class TradeExecutionService
     puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, min_amount_out: #{min_amount_out.to_s}"
     puts "========================================================"
     
-    quote_token_amount = bot.first_cycle? ? 
+    sell_token_amount = bot.first_cycle? ? 
       bot.current_cycle.quote_token_amount : bot.current_cycle.quote_token_amount * 0.9999999999
-
-    result = EthersService.buy_with_min_amount(
-      bot.user.wallet_for_chain(bot.chain),
-      quote_token_amount, # Amount to spend
-      bot.token_pair.quote_token.contract_address, # Token used for buying
-      bot.token_pair.base_token.contract_address,  # Token being bought
-      bot.token_pair.quote_token.decimals,
-      bot.token_pair.base_token.decimals,
-      bot.token_pair.fee_tier,
-      min_amount_out,
+    
+    wallet = bot.user.wallet_for_chain(bot.chain)
+    token_pair = bot.token_pair
+    sell_token = token_pair.quote_token
+    buy_token = token_pair.base_token
+    result = EthersService.swap(
+      wallet, 
+      sell_token.contract_address, 
+      buy_token.contract_address, 
+      sell_token_amount, 
+      sell_token.decimals, 
+      ZERO_EX_API_KEY, 
       provider_url
     )
 
@@ -39,28 +43,33 @@ class TradeExecutionService
         status: :pending,
         executed_at: Time.current,
         metrics: build_metrics(vars),
-        listed_price: bot.token_pair.current_price
+        listed_price: token_pair.current_price
       )
       puts "Trade (buy) created: #{trade.id}"
     end
 
     if !success || tx_hash.blank?
-      reason = result.dig("error", "reason")
-      event_type = "trade_failed"
       BotEvent.create!(
         bot:        bot,
-        event_type: event_type,
+        event_type: "trade_failed",
         payload: {
           class:            "TradeExecutionService",
           method:           "buy",
-          nonce:            nonce,
-          tx_hash:          tx_hash,
-          reason:           reason,
+          stage:            result["stage"],
+          code:             result["code"],
+          message:          result["message"],
+          http_status:      result["http_status"],
+          nonce:            result["nonce"],
+          tx_hash:          result["tx_hash"],
+          bump_nonce:       result["bumpNonce"],
+          allowance:        result["allowance"],
           attempted_amount: bot.current_cycle.quote_token_amount,
           min_amount_out:   min_amount_out,
-          error:            result["error"]
+          raw:              result["raw"]
         }
       )
+
+      handle_approval(wallet, result, provider_url)
 
       puts "========================================================"
       puts "TradeExecutionService::buy - Swap failed"
@@ -72,24 +81,32 @@ class TradeExecutionService
     trade
   end
 
-  def self.sell(vars, base_token_amount, min_amount_out)
+  def self.sell(vars, sell_token_amount, min_amount_out)
     bot = vars[:bot]
     provider_url = bot.provider_url
 
     puts "========================================================"
     puts "Calling TradeExecutionService::sell"
-    puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, base_token_amount: #{base_token_amount.to_s} min_amount_out: #{min_amount_out.to_s}"
+    puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, sell_token_amount: #{sell_token_amount.to_s} min_amount_out: #{min_amount_out.to_s}"
     puts "========================================================"
     
-    result = EthersService.sell_with_min_amount(
-      bot.user.wallet_for_chain(bot.chain),
-      base_token_amount * 0.9999999999,  # Amount to sell
-      bot.token_pair.base_token.contract_address,  # Token being sold
-      bot.token_pair.quote_token.contract_address, # Token being received
-      bot.token_pair.base_token.decimals,
-      bot.token_pair.quote_token.decimals,
-      bot.token_pair.fee_tier,
-      min_amount_out,
+    wallet = bot.user.wallet_for_chain(bot.chain)
+    token_pair = bot.token_pair
+    sell_token = token_pair.base_token
+    buy_token = token_pair.quote_token
+
+    # Adjust sell_token_amount
+    raw_amount = sell_token_amount.to_d * BigDecimal('0.9999999999')
+    adj_amount = BigDecimal(raw_amount, 30)  
+    adj_amount_trimmed = adj_amount.round(sell_token.decimals, :down)
+
+    result = EthersService.swap(
+      wallet, 
+      sell_token.contract_address, 
+      buy_token.contract_address, 
+      adj_amount_trimmed,
+      sell_token.decimals, 
+      ZERO_EX_API_KEY, 
       provider_url
     )
 
@@ -120,22 +137,29 @@ class TradeExecutionService
       event_type = "trade_failed"
       BotEvent.create!(
         bot:        bot,
-        event_type: event_type,
+        event_type: "trade_failed",
         payload: {
           class:            "TradeExecutionService",
-          method:           "sell",
-          nonce:            nonce,
-          tx_hash:          tx_hash,
-          reason:           reason,
-          attempted_amount: base_token_amount,
+          method:           "buy",
+          stage:            result["stage"],
+          code:             result["code"],
+          message:          result["message"],
+          http_status:      result["http_status"],
+          nonce:            result["nonce"],
+          tx_hash:          result["tx_hash"],
+          bump_nonce:       result["bumpNonce"],
+          allowance:        result["allowance"],
+          attempted_amount: sell_token_amount,
           min_amount_out:   min_amount_out,
-          error:            result["error"]
+          raw:              result["raw"]
         }
       )
 
+      handle_approval(wallet, result, provider_url)
+
       puts "========================================================"
       puts "TradeExecutionService::sell - Swap failed"
-      puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, base_token_amount: #{base_token_amount.to_s} min_amount_out: #{min_amount_out.to_s}"
+      puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, sell_token_amount: #{sell_token_amount.to_s} min_amount_out: #{min_amount_out.to_s}"
       puts "ERROR: #{result}"
       puts "========================================================"
     end
@@ -185,5 +209,15 @@ class TradeExecutionService
       lmt: vars[:lmt],
       lsp: vars[:lsp],
     }
+  end
+
+  def self.handle_approval(wallet, result, provider_url)
+    if result["stage"] == "allowance" && result["code"] == "ALLOWANCE_REQUIRED" && result["allowance"]["needsApproval"]
+      ApprovalManager.ensure_infinite!(
+        wallet:       wallet,
+        token:        result["allowance"]["token"],
+        provider_url: provider_url
+      )
+    end
   end
 end
