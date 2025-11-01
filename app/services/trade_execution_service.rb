@@ -42,6 +42,7 @@ class TradeExecutionService
         nonce: nonce,
         status: :pending,
         executed_at: Time.current,
+        route: result["route"],
         metrics: build_metrics(vars),
         listed_price: token_pair.current_price
       )
@@ -125,6 +126,7 @@ class TradeExecutionService
         nonce: nonce,
         status: :pending,
         executed_at: Time.current,
+        route: result["route"],
         metrics: build_metrics(vars),
         listed_price: bot.token_pair.current_price
       )
