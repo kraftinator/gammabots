@@ -3,7 +3,8 @@ module ProfitWithdrawals
     RETRY_DELAY        = 30.seconds
     MAX_ATTEMPTS       = 10
     CONFIRMATION_DELAY = 5.seconds
-    ZERO_EX_API_KEY = Rails.application.credentials.dig(:zero_ex, :api_key)
+    MAX_SLIPPAGE       = 100
+    ZERO_EX_API_KEY    = Rails.application.credentials.dig(:zero_ex, :api_key)
 
     def perform(withdrawal_id, attempt = 1)
       withdrawal = ProfitWithdrawal.find_by(id: withdrawal_id)
@@ -34,7 +35,8 @@ module ProfitWithdrawals
             token_pair.quote_token.contract_address,
             token_pair.base_token.contract_address,
             amount,
-            token_pair.quote_token.decimals, 
+            token_pair.quote_token.decimals,
+            MAX_SLIPPAGE,
             ZERO_EX_API_KEY, 
             provider_url
           )

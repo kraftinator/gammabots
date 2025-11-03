@@ -625,7 +625,7 @@ class EthersService
     )
   end
 
-  def self.swap(wallet, sell_token, buy_token, sell_token_amount, sell_token_decimals, zero_ex_api_key, provider_url)
+  def self.swap(wallet, sell_token, buy_token, sell_token_amount, sell_token_decimals, max_slippage, zero_ex_api_key, provider_url)
     tx_response = with_wallet_nonce_lock(wallet) do
       begin
         nonce = current_nonce(wallet.address, provider_url)
@@ -639,7 +639,8 @@ class EthersService
           wallet.address,
           zero_ex_api_key,
           provider_url,
-          nonce
+          nonce,
+          max_slippage
         )
 
         return result unless result["success"]  

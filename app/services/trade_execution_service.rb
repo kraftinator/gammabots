@@ -23,7 +23,8 @@ class TradeExecutionService
       sell_token.contract_address, 
       buy_token.contract_address, 
       sell_token_amount, 
-      sell_token.decimals, 
+      sell_token.decimals,
+      bot.max_slippage_bps, 
       ZERO_EX_API_KEY, 
       provider_url
     )
@@ -44,7 +45,8 @@ class TradeExecutionService
         executed_at: Time.current,
         route: result["route"],
         metrics: build_metrics(vars),
-        listed_price: token_pair.current_price
+        listed_price: token_pair.current_price,
+        max_slippage_bps: bot.max_slippage_bps
       )
       puts "Trade (buy) created: #{trade.id}"
     end
@@ -106,7 +108,8 @@ class TradeExecutionService
       sell_token.contract_address, 
       buy_token.contract_address, 
       adj_amount_trimmed,
-      sell_token.decimals, 
+      sell_token.decimals,
+      bot.max_slippage_bps,
       ZERO_EX_API_KEY, 
       provider_url
     )
@@ -128,7 +131,8 @@ class TradeExecutionService
         executed_at: Time.current,
         route: result["route"],
         metrics: build_metrics(vars),
-        listed_price: bot.token_pair.current_price
+        listed_price: bot.token_pair.current_price,
+        max_slippage_bps: bot.max_slippage_bps
       )
 
       puts "Trade (sell) created: #{trade.id}"

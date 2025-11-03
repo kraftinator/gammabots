@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_03_050205) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_03_192449) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -92,6 +92,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_03_050205) do
     t.decimal "weth_unwrapped_amount", precision: 30, scale: 18
     t.decimal "funds_returned_amount", precision: 30, scale: 18, default: "0.0", null: false
     t.decimal "funding_expected_amount", precision: 30, scale: 18
+    t.integer "max_slippage_bps", default: 200, null: false
     t.index ["bot_type", "copy_wallet_address", "token_pair_id"], name: "index_bots_on_copy_bot_fields"
     t.index ["bot_type"], name: "index_bots_on_bot_type"
     t.index ["chain_id"], name: "index_bots_on_chain_id"
@@ -99,6 +100,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_03_050205) do
     t.index ["funder_address"], name: "index_bots_on_funder_address"
     t.index ["funding_tx_hash"], name: "index_bots_on_funding_tx_hash", unique: true
     t.index ["funds_return_tx_hash"], name: "index_bots_on_funds_return_tx_hash"
+    t.index ["max_slippage_bps"], name: "index_bots_on_max_slippage_bps"
     t.index ["status"], name: "index_bots_on_status"
     t.index ["strategy_id"], name: "index_bots_on_strategy_id"
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
@@ -312,6 +314,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_03_050205) do
     t.decimal "listed_price", precision: 30, scale: 18
     t.decimal "transaction_fee_wei", precision: 30
     t.jsonb "route"
+    t.integer "max_slippage_bps"
     t.index ["block_number"], name: "index_trades_on_block_number"
     t.index ["bot_cycle_id"], name: "index_trades_on_bot_cycle_id"
     t.index ["bot_id"], name: "index_trades_on_bot_id"
