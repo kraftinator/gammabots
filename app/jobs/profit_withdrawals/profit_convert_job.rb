@@ -29,18 +29,6 @@ module ProfitWithdrawals
           payout_token = withdrawal.payout_token
           token_pair   = TokenPair.find_by!(chain: bot.chain, base_token: payout_token, quote_token: weth)
 
-          #EthersService.buy_with_min_amount(
-          #  bot_wallet,
-          #  amount,
-          #  token_pair.quote_token.contract_address,
-          #  token_pair.base_token.contract_address,
-          #  token_pair.quote_token.decimals,
-          #  token_pair.base_token.decimals,
-          #  token_pair.fee_tier,
-          #  0, # slippage
-          #  provider_url
-          #)
-
           EthersService.swap(
             bot_wallet, 
             token_pair.quote_token.contract_address,
@@ -63,15 +51,12 @@ module ProfitWithdrawals
         return
       end
 
-      puts "********** result = #{result}"
-
       tx_hash = result["txHash"]
       withdrawal.update!(convert_tx_hash: tx_hash, route: result["route"])
 
       Rails.logger.info "[ProfitWithdrawals::ProfitConvertJob] submitted convert tx for Withdrawal##{withdrawal.id} (tx: #{tx_hash})"
 
       # Kick off confirmation job
-      #ProfitWithdrawals::ProfitConvertConfirmJob.set(wait: CONFIRMATION_DELAY).perform_later(withdrawal.id, tx_hash)
       ProfitWithdrawals::ProfitConvertConfirmJob.set(wait: CONFIRMATION_DELAY).perform_later(withdrawal.id)
     rescue => e
       if attempt < MAX_ATTEMPTS
