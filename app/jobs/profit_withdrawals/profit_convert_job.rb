@@ -3,6 +3,7 @@ module ProfitWithdrawals
     RETRY_DELAY        = 30.seconds
     MAX_ATTEMPTS       = 10
     CONFIRMATION_DELAY = 5.seconds
+    ZERO_EX_API_KEY = Rails.application.credentials.dig(:zero_ex, :api_key)
 
     def perform(withdrawal_id, attempt = 1)
       withdrawal = ProfitWithdrawal.find_by(id: withdrawal_id)
@@ -28,15 +29,25 @@ module ProfitWithdrawals
           payout_token = withdrawal.payout_token
           token_pair   = TokenPair.find_by!(chain: bot.chain, base_token: payout_token, quote_token: weth)
 
-          EthersService.buy_with_min_amount(
-            bot_wallet,
-            amount,
+          #EthersService.buy_with_min_amount(
+          #  bot_wallet,
+          #  amount,
+          #  token_pair.quote_token.contract_address,
+          #  token_pair.base_token.contract_address,
+          #  token_pair.quote_token.decimals,
+          #  token_pair.base_token.decimals,
+          #  token_pair.fee_tier,
+          #  0, # slippage
+          #  provider_url
+          #)
+
+          EthersService.swap(
+            bot_wallet, 
             token_pair.quote_token.contract_address,
             token_pair.base_token.contract_address,
-            token_pair.quote_token.decimals,
-            token_pair.base_token.decimals,
-            token_pair.fee_tier,
-            0, # slippage
+            amount,
+            token_pair.quote_token.decimals, 
+            ZERO_EX_API_KEY, 
             provider_url
           )
         end
@@ -52,13 +63,16 @@ module ProfitWithdrawals
         return
       end
 
+      puts "********** result = #{result}"
+
       tx_hash = result["txHash"]
-      withdrawal.update!(convert_tx_hash: tx_hash)
+      withdrawal.update!(convert_tx_hash: tx_hash, route: result["route"])
 
       Rails.logger.info "[ProfitWithdrawals::ProfitConvertJob] submitted convert tx for Withdrawal##{withdrawal.id} (tx: #{tx_hash})"
 
       # Kick off confirmation job
-      ProfitWithdrawals::ProfitConvertConfirmJob.set(wait: CONFIRMATION_DELAY).perform_later(withdrawal.id, tx_hash)
+      #ProfitWithdrawals::ProfitConvertConfirmJob.set(wait: CONFIRMATION_DELAY).perform_later(withdrawal.id, tx_hash)
+      ProfitWithdrawals::ProfitConvertConfirmJob.set(wait: CONFIRMATION_DELAY).perform_later(withdrawal.id)
     rescue => e
       if attempt < MAX_ATTEMPTS
         Rails.logger.warn "[ProfitWithdrawals::ProfitConvertJob] #{e.class}: #{e.message}; retrying (#{attempt}/#{MAX_ATTEMPTS})"

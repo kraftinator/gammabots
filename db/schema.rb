@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_01_163433) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_03_050205) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -206,6 +206,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_01_163433) do
     t.string "transfer_tx_hash"
     t.datetime "transferred_at"
     t.text "error_message"
+    t.decimal "gas_used", precision: 30
+    t.bigint "block_number"
+    t.decimal "transaction_fee_wei", precision: 30
+    t.jsonb "route"
     t.index ["bot_cycle_id"], name: "index_profit_withdrawals_on_bot_cycle_id"
     t.index ["bot_id"], name: "index_profit_withdrawals_on_bot_id"
     t.index ["convert_status"], name: "index_profit_withdrawals_on_convert_status"

@@ -23,7 +23,10 @@ module ProfitWithdrawals
           payout_token = withdrawal.payout_token
           token_pair   = TokenPair.find_by!(chain: bot.chain, base_token: payout_token, quote_token: weth)
 
-          EthersService.get_transaction_receipt(tx_hash, bot_wallet.address, token_pair, provider_url)
+          #EthersService.get_transaction_receipt(tx_hash, bot_wallet.address, token_pair, provider_url)
+          sell_token = token_pair.quote_token
+          buy_token = token_pair.base_token
+          EthersService.read_swap_receipt_erc20(tx_hash, bot_wallet.address, sell_token.contract_address, sell_token.decimals, buy_token.contract_address, buy_token.decimals, provider_url)
         end
 
       if receipt.nil?
@@ -50,7 +53,10 @@ module ProfitWithdrawals
         withdrawal.update!(
           convert_status: "converted",
           payout_amount:  payout_amount,
-          converted_at:   Time.current
+          converted_at:   Time.current,
+          block_number: receipt["blockNumber"],
+          gas_used: receipt["gasUsedWei"],
+          transaction_fee_wei: receipt["transactionFeeWei"]
         )
 
         Rails.logger.info "[ProfitWithdrawals::ProfitConvertConfirmJob] convert confirmed for Withdrawal##{withdrawal.id} (tx: #{tx_hash})"
