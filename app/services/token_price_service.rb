@@ -1,14 +1,31 @@
 class TokenPriceService
-  def self.get_price(base_token, quote_token, chain)
-    provider_url = ProviderUrlService.get_provider_url(chain.name)
-    result = EthersService.get_token_price_with_params(
-      base_token.contract_address,
-      base_token.decimals,
-      quote_token.contract_address,
-      quote_token.decimals,
-      provider_url
+  DEFAULT_SELL_AMOUNT = "0.1"
+  ZERO_EX_API_KEY = Rails.application.credentials.dig(:zero_ex, :api_key)
+
+  def self.get_price(token_pair)
+    base_token = token_pair.base_token
+    quote_token = token_pair.quote_token
+
+    result = EthersService.get_price(
+      base_token.contract_address, 
+      quote_token.contract_address, 
+      base_token.decimals, 
+      quote_token.decimals, 
+      DEFAULT_SELL_AMOUNT, 
+      ZERO_EX_API_KEY
     )
-    result["price"]
+
+    unless result["success"]
+      puts "Failed to get price for #{token_pair.name}."
+      puts "ERROR: #{result}"
+      return false
+    end
+
+    new_price = result["price"].to_d
+
+    token_pair.update!(current_price: new_price, price_updated_at: Time.current)
+
+    token_pair.token_pair_prices.create!(price: new_price)
   end
 
   def self.update_price_for_pair(token_pair)
@@ -59,6 +76,11 @@ class TokenPriceService
   end
 
   private
+
+  def self.provider_url_for(chain)
+    @provider_urls ||= {}
+    @provider_urls[chain.name] ||= ProviderUrlService.get_provider_url(chain.name)
+  end
 
   def self.pool_stale?(token_pair)
     token_pair.pool_address_updated_at.nil? || token_pair.pool_address_updated_at < 1.day.ago

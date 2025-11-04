@@ -1,5 +1,5 @@
 class Wallet < ApplicationRecord
-  VALID_KINDS = %w[user router treasury].freeze
+  VALID_KINDS = %w[user router treasury validator].freeze
 
   belongs_to :user, optional: true
   belongs_to :chain

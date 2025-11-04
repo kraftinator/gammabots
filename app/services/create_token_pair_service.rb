@@ -13,8 +13,9 @@ class CreateTokenPairService
 
     token = Token.find_by(chain: chain, contract_address: token_address)
     if token.nil?
-      token = Token.create_from_contract_address(token_address, chain)
-      return unless token
+      #token = Token.create_from_contract_address(token_address, chain)
+      token = Token.create_with_validation(contract_address: token_address, chain: chain)
+      return unless token && token.active?
     end
 
     quote_token = Token.find_by(chain: chain, symbol: 'WETH')
@@ -22,11 +23,11 @@ class CreateTokenPairService
 
     token_pair = TokenPair.find_by(chain: chain, base_token: token, quote_token: quote_token)
     unless token_pair
-      begin
-        return unless valid_token_pair?(token, quote_token, provider_url)
-      rescue RuntimeError => e
-        return nil
-      end
+      #begin
+      #  return unless valid_token_pair?(token, quote_token, provider_url)
+      #rescue RuntimeError => e
+      #  return nil
+      #end
 
       token_pair = TokenPair.create!(
         chain: chain, 

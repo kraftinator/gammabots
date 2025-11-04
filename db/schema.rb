@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_03_192449) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_04_031721) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -289,9 +289,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_03_192449) do
     t.integer "decimals", default: 18, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "rejected", null: false
+    t.jsonb "validation_payload"
+    t.datetime "last_validated_at"
     t.index ["chain_id", "contract_address"], name: "index_tokens_on_chain_id_and_contract_address", unique: true
     t.index ["chain_id", "symbol"], name: "index_tokens_on_chain_id_and_symbol"
     t.index ["chain_id"], name: "index_tokens_on_chain_id"
+    t.index ["status"], name: "index_tokens_on_status"
   end
 
   create_table "trades", force: :cascade do |t|

@@ -141,7 +141,7 @@ class EthersService
     REDLOCK_CLIENT.lock!(
       lock_key,
       5_000,
-      retry_count: 10,
+      retry_count: 50,
       retry_delay: 100
     ) { yield }
   rescue Redlock::LockError
@@ -666,5 +666,13 @@ class EthersService
       buy_token,
       buy_token_decimals
     )
+  end
+
+  def self.validate_token(taker, token, zero_ex_api_key, provider_url)
+    call_function('validateTokenPairWith0x', taker, token, provider_url, zero_ex_api_key)
+  end
+
+  def self.get_price(sell_token, buy_token, sell_token_decimals, buy_token_decimals, sell_token_amount, zero_ex_api_key)
+    call_function('get0xPrice', sell_token, buy_token, sell_token_amount, sell_token_decimals, buy_token_decimals, zero_ex_api_key)
   end
 end
