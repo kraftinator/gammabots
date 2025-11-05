@@ -6,29 +6,22 @@ class CreateTokenPairService
   #     chain: Chain.find_by(name: 'base_mainnet')
   #   )
   def self.call(token_address:, chain:)
-    provider_url = ProviderUrlService.get_provider_url(chain.name)
-
     # Normalize token address
     token_address = token_address.downcase
 
     token = Token.find_by(chain: chain, contract_address: token_address)
     if token.nil?
-      #token = Token.create_from_contract_address(token_address, chain)
       token = Token.create_with_validation(contract_address: token_address, chain: chain)
-      return unless token && token.active?
+      return unless token
     end
+
+    return unless token.active?
 
     quote_token = Token.find_by(chain: chain, symbol: 'WETH')
     raise ArgumentError, "Invalid quote token" unless quote_token
 
     token_pair = TokenPair.find_by(chain: chain, base_token: token, quote_token: quote_token)
     unless token_pair
-      #begin
-      #  return unless valid_token_pair?(token, quote_token, provider_url)
-      #rescue RuntimeError => e
-      #  return nil
-      #end
-
       token_pair = TokenPair.create!(
         chain: chain, 
         base_token: token, 
