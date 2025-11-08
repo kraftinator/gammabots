@@ -228,7 +228,7 @@ class Trade < ApplicationRecord
     end
 
     # vst / mom ratio
-    if vst_str && mom_str.present?
+    if vst_str.present? && mom_str.present?
       vst = BigDecimal(vst_str.to_s)
       mom = BigDecimal(mom_str.to_s)
       if vst && mom && mom != 0
