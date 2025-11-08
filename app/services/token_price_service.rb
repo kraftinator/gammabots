@@ -7,10 +7,10 @@ class TokenPriceService
     quote_token = token_pair.quote_token
 
     result = EthersService.get_price(
-      base_token.contract_address, 
       quote_token.contract_address, 
-      base_token.decimals, 
+      base_token.contract_address, 
       quote_token.decimals, 
+      base_token.decimals, 
       DEFAULT_SELL_AMOUNT, 
       ZERO_EX_API_KEY
     )
