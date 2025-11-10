@@ -2,18 +2,8 @@ class TokenPriceService
   DEFAULT_SELL_AMOUNT = "0.1"
   ZERO_EX_API_KEY = Rails.application.credentials.dig(:zero_ex, :api_key)
 
-  def self.get_price(token_pair)
-    base_token = token_pair.base_token
-    quote_token = token_pair.quote_token
-
-    result = EthersService.get_price(
-      quote_token.contract_address, 
-      base_token.contract_address, 
-      quote_token.decimals, 
-      base_token.decimals, 
-      DEFAULT_SELL_AMOUNT, 
-      ZERO_EX_API_KEY
-    )
+  def self.update_price(token_pair)
+    result = get_price(token_pair)
 
     unless result["success"]
       puts "Failed to get price for #{token_pair.name}."
@@ -26,6 +16,25 @@ class TokenPriceService
     token_pair.update!(current_price: new_price, price_updated_at: Time.current)
 
     token_pair.token_pair_prices.create!(price: new_price)
+  end
+
+  def self.get_price(token_pair, sell_amount=DEFAULT_SELL_AMOUNT)
+    base_token = token_pair.base_token
+    quote_token = token_pair.quote_token
+
+    EthersService.get_price(
+      quote_token.contract_address, 
+      base_token.contract_address, 
+      quote_token.decimals, 
+      base_token.decimals, 
+      sell_amount, 
+      ZERO_EX_API_KEY
+    )
+  end
+
+  def self.get_uniswap_price(token_pair)
+    provider_url = ProviderUrlService.get_provider_url(token_pair.chain.name)
+    EthersService.get_token_price_from_pool(token_pair, provider_url)
   end
 
   def self.update_price_for_pair(token_pair)

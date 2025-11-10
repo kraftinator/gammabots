@@ -202,6 +202,6 @@ class TokenPair < ApplicationRecord
 
   def update_price
     #TokenPriceService.update_price_for_pair(self)
-    TokenPriceService.get_price(self)
+    TokenPriceService.update_price(self)
   end
 end
