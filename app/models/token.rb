@@ -42,7 +42,7 @@ class Token < ApplicationRecord
 
     zero_ex_api_key = Rails.application.credentials.dig(:zero_ex, :api_key)
     taker_wallet = Wallet.find_by!(kind: 'validator', chain: chain)
-    result = EthersService.validate_token(taker_wallet.address, contract_address, zero_ex_api_key, provider_url)
+    result = EthersService.validate_token(taker_wallet.address, contract_address, token_details["decimals"], zero_ex_api_key, provider_url)
 
     if result["success"]
       status  = result["verdict"] == "accept" ? "active" : "rejected"
@@ -67,7 +67,7 @@ class Token < ApplicationRecord
     zero_ex_api_key = Rails.application.credentials.dig(:zero_ex, :api_key)
     taker_wallet = Wallet.find_by!(kind: 'validator', chain: chain)
 
-    result = EthersService.validate_token(taker_wallet.address, contract_address, zero_ex_api_key, provider_url)
+    result = EthersService.validate_token(taker_wallet.address, contract_address, decimals, zero_ex_api_key, provider_url)
 
     if result["success"]
       update!(

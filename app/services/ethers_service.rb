@@ -668,8 +668,8 @@ class EthersService
     )
   end
 
-  def self.validate_token(taker, token, zero_ex_api_key, provider_url)
-    call_function('validateTokenPairWith0x', taker, token, provider_url, zero_ex_api_key)
+  def self.validate_token(taker, token_address, token_decimals, zero_ex_api_key, provider_url)
+    call_function('validateTokenPairWith0x', taker, token_address, token_decimals, provider_url, zero_ex_api_key)
   end
 
   def self.get_price(sell_token, buy_token, sell_token_decimals, buy_token_decimals, sell_token_amount, zero_ex_api_key)
