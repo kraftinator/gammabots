@@ -22,7 +22,8 @@ class StrategiesValidate
     "sell all",
     "deact",
     "reset",
-    "skip"
+    "skip",
+    "liquidate"
   ].freeze
 
   def self.call(strategy_json)

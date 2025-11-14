@@ -97,6 +97,11 @@ class TradingStrategyInterpreter
           puts "min_amount_out = #{min_amount_out.to_s}"
         end
         swap_executed = true if result.present?
+      when /\Aliquidate\z/i
+        if !@sim
+          result = TradeExecutionService.sell(@variables.merge({ step: step }), @variables[:bot].current_cycle.base_token_amount, 0)
+        end
+        swap_executed = true if result.present?
       when /\Adeact\s+force\z/i
         # 'deact force' is a legacy action
         @variables[:bot].forced_deactivate
