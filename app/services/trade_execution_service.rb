@@ -1,10 +1,13 @@
 class TradeExecutionService
+  MAX_BUY_SLIPPAGE_BPS = 600
+  MAX_SELL_SLIPPAGE_BPS = 50
   ZERO_EX_API_KEY = Rails.application.credentials.dig(:zero_ex, :api_key)
 
   def self.buy(vars)
     bot = vars[:bot]
     provider_url = bot.provider_url
-    min_amount_out = bot.min_amount_out_for_initial_buy
+    #min_amount_out = bot.min_amount_out_for_initial_buy
+    min_amount_out = 0
 
     puts "========================================================"
     puts "TradeExecutionService::buy"
@@ -24,9 +27,11 @@ class TradeExecutionService
       buy_token.contract_address, 
       sell_token_amount, 
       sell_token.decimals,
-      bot.max_slippage_bps, 
+      buy_token.decimals,
+      MAX_BUY_SLIPPAGE_BPS, 
       ZERO_EX_API_KEY, 
-      provider_url
+      provider_url,
+      min_amount_out
     )
 
     nonce   = result["nonce"]
@@ -103,15 +108,19 @@ class TradeExecutionService
     adj_amount = BigDecimal(raw_amount, 30)  
     adj_amount_trimmed = adj_amount.round(sell_token.decimals, :down)
 
+    min_amount_out = BigDecimal(min_amount_out.to_s).round(buy_token.decimals, :down)
+
     result = EthersService.swap(
       wallet, 
       sell_token.contract_address, 
       buy_token.contract_address, 
       adj_amount_trimmed,
       sell_token.decimals,
-      bot.max_slippage_bps,
+      buy_token.decimals,
+      MAX_SELL_SLIPPAGE_BPS,
       ZERO_EX_API_KEY, 
-      provider_url
+      provider_url,
+      min_amount_out
     )
 
     nonce   = result["nonce"]

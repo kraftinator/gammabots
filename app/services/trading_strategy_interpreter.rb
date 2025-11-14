@@ -1,5 +1,8 @@
 class TradingStrategyInterpreter
-  def initialize(strategy_json, variables)
+  BOUNDARY_STEPS_MAX = 10
+
+  def initialize(strategy_json, variables, sim=false)
+    @sim = sim
     # Parse the JSON strategy into an array of rule hashes.
     @rules = JSON.parse(strategy_json)
     # @variables is a hash mapping fixed three-letter keys to their current values.
@@ -58,7 +61,7 @@ class TradingStrategyInterpreter
       #when /\Abuy init\z/i
       when /\Abuy(\s+init)?\z/i
         # For "buy", execute initial buy
-        result = TradeExecutionService.buy(@variables.merge({ step: step }))
+        result = TradeExecutionService.buy(@variables.merge({ step: step })) if !@sim
         swap_executed = true if result.present?
       when /\Asell\s+(.*)\z/i
         arg = Regexp.last_match(1).strip.downcase
@@ -77,9 +80,22 @@ class TradingStrategyInterpreter
         end
 
         sell_amount = @variables[:bot].current_cycle.base_token_amount * fraction
-        min_amount_out = fraction == 1 ? 0 : sell_amount * @variables[:cpr] * 0.95
+        current_cpr = @variables[:cpr].to_f
 
-        result = TradeExecutionService.sell(@variables.merge({ step: step }), sell_amount, min_amount_out)
+        if condition_includes_cpr?(rule['c'])
+          boundary = boundary_cpr_down(rule['c'], current_cpr, step: 0.01, cap_steps: BOUNDARY_STEPS_MAX)
+          min_amount_out = sell_amount * boundary
+        else
+          min_amount_out = 0
+        end
+        
+        if !@sim
+          result = TradeExecutionService.sell(@variables.merge({ step: step }), sell_amount, min_amount_out)
+        else
+          puts "current_cpr    = #{current_cpr.to_d.to_s}"
+          puts "boundary       = #{boundary.to_d.to_s}"
+          puts "min_amount_out = #{min_amount_out.to_s}"
+        end
         swap_executed = true if result.present?
       when /\Adeact\s+force\z/i
         # 'deact force' is a legacy action
@@ -111,18 +127,46 @@ class TradingStrategyInterpreter
     end
   end
 
-  # Parses the sell amount from an expression like "bta*0.25" or "all"
-  # DEPRECATED
-  def parse_amount(expression)
-    if expression.downcase == "all"
-      #@variables[:bot].base_token_amount
-      @variables[:bot].current_cycle.base_token_amount
-    else
-      eval(expression, binding_from_variables)
+  # Re-evaluate the SAME condition with a temporarily adjusted cpr.
+  def condition_holds_with_cpr?(condition_str, cpr_val)
+    original = @variables[:cpr]
+    @variables[:cpr] = cpr_val
+    begin
+      eval(condition_str, binding_from_variables)
+    rescue => e
+      Rails.logger.error "Bot #{@variables[:bot].id}: Error in condition_holds_with_cpr?: #{e.message}"
+      false
+    ensure
+      @variables[:cpr] = original
     end
-  rescue Exception => e
-    Rails.logger.error "Error parsing amount expression '#{expression}': #{e.message}"
-    0
+  end
+
+  # Step cpr DOWN (only) by 1% per step, up to 5% total, keeping the rule true.
+  # Returns the lowest cpr that still satisfies the condition (or start_cpr if no lower cpr works).
+  def boundary_cpr_down(condition_str, start_cpr, step: 0.01, cap_steps: BOUNDARY_STEPS_MAX)
+    # Skip entirely if condition doesn’t involve cpr
+    #return start_cpr unless condition_str.to_s.match?(/\bcpr\b/)
+    return start_cpr unless condition_includes_cpr?(condition_str)
+    return start_cpr unless start_cpr.is_a?(Numeric) && start_cpr.positive?
+
+    best = start_cpr
+    1.upto(cap_steps) do |i|
+      candidate = start_cpr * (1.0 - step * i)
+      break if candidate <= 0.0
+
+      if condition_holds_with_cpr?(condition_str, candidate)
+        best = candidate
+      else
+        break # as soon as rule fails, stop stepping lower
+      end
+    end
+
+    best
+  end
+
+  # Does the condition string mention cpr?
+  def condition_includes_cpr?(condition_str)
+    !!(/\bcpr\b/.match(condition_str.to_s))
   end
 
   # Constructs a binding with only the strategy variables.

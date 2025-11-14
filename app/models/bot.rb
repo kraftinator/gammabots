@@ -28,6 +28,11 @@ class Bot < ApplicationRecord
   scope :funding_pending, -> { where(status: 'pending_funding') }
   scope :unfunded, -> { where(status: ['pending_funding', 'converting_to_weth']) }
 
+  def slip_factor
+    factor = 1.0 - (max_slippage_bps.to_f / 10_000.0)
+    factor < 0.0 ? 0.0 : factor
+  end
+
   def latest_trade
     trades.order(created_at: :desc).first
   end
@@ -142,6 +147,7 @@ class Bot < ApplicationRecord
 
   def min_amount_out_for_initial_buy
     (current_cycle.quote_token_amount / token_pair.current_price) * 0.95
+    #(current_cycle.quote_token_amount / token_pair.current_price) * slip_factor
   end
 
   def current_cycle

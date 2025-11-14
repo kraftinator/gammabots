@@ -36,6 +36,16 @@ class TradingStrategy
     catch_metrics(strategy_variables) if @bot.catch_metrics?
   end
 
+  def sim
+    @bot.update_prices(@current_price, @moving_average)      
+    @bot.reload
+
+    strategy_variables = @bot.strategy_variables
+    strategy_interpreter = TradingStrategyInterpreter.new(@bot.strategy_json, strategy_variables, true)
+    strategy_interpreter.execute
+    catch_metrics(strategy_variables) if @bot.catch_metrics?
+  end
+
   private
 
   def catch_metrics(strategy_variables)
