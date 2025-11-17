@@ -85,6 +85,23 @@ class Token < ApplicationRecord
     status == "active"
   end
 
+  def fetch_validation_payload
+    provider_url = ProviderUrlService.get_provider_url(chain.name)
+    zero_ex_api_key = Rails.application.credentials.dig(:zero_ex, :api_key)
+    taker_wallet = Wallet.find_by!(kind: 'validator', chain: chain)
+
+    EthersService.validate_token(taker_wallet.address, contract_address, decimals, zero_ex_api_key, provider_url)
+  end
+
+  def self.validation_payload_by_params(contract_address, decimals)
+    chain = Chain.find_by(name: 'base_mainnet')
+    provider_url = ProviderUrlService.get_provider_url(chain.name)
+    zero_ex_api_key = Rails.application.credentials.dig(:zero_ex, :api_key)
+    taker_wallet = Wallet.find_by!(kind: 'validator', chain: chain)
+ 
+    EthersService.validate_token(taker_wallet.address, contract_address, decimals, zero_ex_api_key, provider_url)
+  end
+
   private
 
   def normalize_contract_address

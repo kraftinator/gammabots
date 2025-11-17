@@ -32,11 +32,27 @@ class TradeConfirmationService
           message:     e.message
         }
       )
-      trade.update!(status: :failed, price: trade.token_pair.current_price)
+      # Important: leave the trade as `pending` so the job can retry.
+      Rails.logger.warn "[TradeConfirmationService] temporary receipt failure for Trade##{trade.id}: #{e.class} - #{e.message}"
+      #trade.update!(status: :failed, price: trade.token_pair.current_price)
       return
     end
 
-    return unless transaction_receipt
+    #return unless transaction_receipt
+    # If still no receipt (e.g. tx not mined yet), leave it pending; job will retry.
+    unless transaction_receipt
+      BotEvent.create!(
+        bot: trade.bot,
+        event_type: 'receipt_missing',
+        payload: {
+          class:  "TradeConfirmationService",
+          method: "confirm_buy_trade",
+          trade_id: trade.id,
+          tx_hash:  trade.tx_hash
+        }
+      )
+      return
+    end
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
@@ -74,11 +90,27 @@ class TradeConfirmationService
           message:     e.message
         }
       )
-      trade.update!(status: :failed, price: trade.token_pair.current_price)
+      #trade.update!(status: :failed, price: trade.token_pair.current_price)
+      Rails.logger.warn "[TradeConfirmationService] temporary receipt failure for Trade##{trade.id}: #{e.class} - #{e.message}"
       return
     end
 
-    return unless transaction_receipt
+    #return unless transaction_receipt
+    # If still no receipt (e.g. tx not mined yet), leave it pending; job will retry.
+    unless transaction_receipt
+      BotEvent.create!(
+        bot: trade.bot,
+        event_type: 'receipt_missing',
+        payload: {
+          class:  "TradeConfirmationService",
+          method: "confirm_sell_trade",
+          trade_id: trade.id,
+          tx_hash: trade.tx_hash,
+          message: "Receipt unavailable (transaction not mined yet)"
+        }
+      )
+      return
+    end
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
