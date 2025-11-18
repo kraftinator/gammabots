@@ -14,7 +14,7 @@ class ConfirmFundingJob < ApplicationJob
     end
 
     provider_url  = bot.provider_url
-    deposit_addr  = bot.user.wallet_for_chain(bot.chain).address # or bot.deposit_address if you have it
+    deposit_addr  = bot.user.wallet_for_chain(bot.chain).address
 
     details = nil
     begin
@@ -49,7 +49,10 @@ class ConfirmFundingJob < ApplicationJob
       if bot.funding_expected_amount.present?
         expected_wei = (bot.funding_expected_amount * (10**18)).to_i
         sent_wei     = (sent_amount * (10**18)).to_i
-        matches_expected = (expected_wei - sent_wei).abs <= 1
+
+        tolerance_wei = 100
+        matches_expected = (expected_wei - sent_wei).abs <= tolerance_wei
+        #matches_expected = (expected_wei - sent_wei).abs <= 1
       else
         matches_expected = true
       end
@@ -65,7 +68,14 @@ class ConfirmFundingJob < ApplicationJob
                         "(to: #{details['toAddress']} expected: #{deposit_addr}; " \
                         "amountEth: #{details['amountEth']} expected: #{bot.initial_buy_amount}; " \
                         "txHash: #{details['txHash']} expected: #{bot.funding_tx_hash})"
-      bot.update!(status: 'funding_failed')
+
+      bot.update!(
+        status: 'funding_failed', 
+        funder_address: normalize_addr(details['fromAddress'])
+      )
+
+      refund_eth_str = details['amountEth'].to_s
+      RefundFundingJob.perform_later(bot.id, refund_eth_str)
       return
     end
 
