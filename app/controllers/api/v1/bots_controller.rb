@@ -3,6 +3,7 @@ include ActionView::Helpers::DateHelper
 module Api
   module V1
     class BotsController < Api::BaseController
+      after_action :log_response_for_debugging
       before_action :require_quick_auth!
       STRATEGY_NFT_CONTRACT_ADDRESS = "abcdef123456"
       
@@ -83,12 +84,32 @@ module Api
           return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
         end
 
-        puts "params = #{params}"
-        puts "current_user.id = #{current_user.id}"
+        moving_avg_minutes_result = validate_moving_average_param!
+        unless moving_avg_minutes_result[:success]
+          render json: {
+            error: moving_avg_minutes_result[:message][:error],
+            code:  moving_avg_minutes_result[:message][:code]
+          }, status: moving_avg_minutes_result[:message][:status] and return
+        end
+        moving_avg_minutes = moving_avg_minutes_result[:moving_avg_minutes]
 
-        moving_avg_minutes = validate_moving_average_param!
-        amount = validate_eth_amount_param!
-        strategy = validate_strategy_param!
+        amount_result = validate_eth_amount_param!
+        unless amount_result[:success]
+          render json: {
+            error: amount_result[:message][:error],
+            code:  amount_result[:message][:code]
+          }, status: amount_result[:message][:status] and return
+        end
+        amount = amount_result[:amount]
+      
+        strategy_result = validate_strategy_param!
+        unless strategy_result[:success]
+          render json: {
+            error: strategy_result[:message][:error],
+            code:  strategy_result[:message][:code]
+          }, status: strategy_result[:message][:status] and return
+        end
+        strategy = strategy_result[:strategy]
 
         token_param = params[:token_address].to_s.strip
         if token_param.match?(/\A0x[a-fA-F0-9]{40}\z/)
@@ -184,71 +205,126 @@ module Api
         raw = params[:strategy_id].to_s.strip
 
         if raw.blank?
-          render json: {
-            error: "Missing required parameter: strategy_id",
-            code:  "MISSING_STRATEGY_ID"
-          }, status: :bad_request and return
+          return { 
+            success: false, 
+            message: {
+              error: "Missing strategy",
+              code:  "MISSING_STRATEGY",
+              status: :bad_request
+            }
+          }
         end
 
         # Only allow integers
         unless raw.match?(/\A\d+\z/)
-          render json: {
-            error: "Invalid strategy_id. Must be an integer.",
-            code:  "INVALID_STRATEGY_ID"
-          }, status: :bad_request and return
+          return { 
+            success: false, 
+            message: {
+              error: "Invalid Strategy. Must be an integer.",
+              code:  "MISSING_STRATEGY",
+              status: :bad_request
+            }
+          }
         end
 
         strategy = Strategy.find_by(contract_address: STRATEGY_NFT_CONTRACT_ADDRESS, nft_token_id: raw.to_i)
 
         unless strategy
-          render json: {
-            error: "Strategy not found",
-            code:  "STRATEGY_NOT_FOUND"
-          }, status: :not_found and return
+          return { 
+            success: false, 
+            message: {
+              error: "Strategy not found",
+              code:  "STRATEGY_NOT_FOUND",
+              status: :not_found
+            }
+          }
         end
 
-        strategy
+        { success: true, strategy: strategy }
       end
 
       def validate_eth_amount_param!
         raw = params[:eth_amount].to_s.strip
 
         if raw.blank?
-          render json: {
-            error: "Missing required parameter: eth_amount",
-            code:  "MISSING_ETH_AMOUNT"
-          }, status: :bad_request and return
+          return { 
+            success: false, 
+            message: {
+              error: "Missing ETH amount",
+              code:  "MISSING_ETH_AMOUNT",
+              status: :bad_request
+            }
+          }
         end
 
         # Allow integers or decimals, no letters, no weird symbols
         unless raw.match?(/\A\d+(\.\d+)?\z/)
-          render json: {
-            error: "Invalid eth_amount. Must be a numeric value.",
-            code:  "INVALID_ETH_AMOUNT"
-          }, status: :bad_request and return
+          return { 
+            success: false, 
+            message: {
+              error: "ETH amount must be numeric",
+              code:  "INVALID_ETH_AMOUNT",
+              status: :bad_request
+            }
+          }          
         end
 
-        BigDecimal(raw)
+         { success: true, amount: BigDecimal(raw) }
+      end
+
+      def log_response_for_debugging
+        Rails.logger.info "[BOTS] RESPONSE status=#{response.status} body=#{response.body.inspect}"
       end
 
       def validate_moving_average_param!
         raw = params[:moving_average].to_s.strip
 
         if raw.blank?
-          render json: {
-            error: "Missing required parameter: moving_average",
-            code:  "MISSING_MOVING_AVERAGE"
-          }, status: :bad_request and return
+          return { 
+            success: false, 
+            message: {
+              error: "Missing Moving Average",
+              code:  "INVALID_MOVING_AVERAGE",
+              status: :bad_request
+            }
+          }
         end
 
         unless raw.match?(/\A\d+\z/)
-          render json: {
-            error: "Invalid moving_average. Must be an integer.",
-            code:  "INVALID_MOVING_AVERAGE"
-          }, status: :bad_request and return
+          return { 
+            success: false, 
+            message: {
+              error: "Moving Average must be numeric",
+              code:  "INVALID_MOVING_AVERAGE",
+              status: :bad_request
+            }
+          }
         end
 
-        raw.to_i
+        moving_average = raw.to_i
+        if moving_average < 1
+          return { 
+            success: false, 
+            message: {
+              error: "Moving Average must be greater than 0",
+              code:  "INVALID_MOVING_AVERAGE",
+              status: :bad_request
+            }
+          }
+        end
+
+        if moving_average > 60
+          return { 
+            success: false, 
+            message: {
+              error: "Moving Average must be less than 61",
+              code:  "INVALID_MOVING_AVERAGE",
+              status: :bad_request
+            }
+          }
+        end
+
+        { success: true, moving_avg_minutes: moving_average }
       end
     end
   end
