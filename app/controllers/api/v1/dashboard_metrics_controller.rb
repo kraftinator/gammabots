@@ -20,9 +20,15 @@ module Api
         @active_bots = Bot.active.default_bots
         @eth_price_usd = TokenPriceService.get_eth_price_in_usd(@active_bots.first&.chain)
 
+        # current_user may be nil for new users
+        user_bot_count = current_user&.bots&.active&.default_bots&.count || 0
+        user_exists    = current_user.present?
+
         render json: {
           active_bots: metrics.active_bots,
-          user_bot_count: current_user.bots.active.default_bots.count,
+          #user_bot_count: current_user.bots.active.default_bots.count,
+          user_bot_count: user_bot_count,
+          user_exists: user_exists, 
           active_bots_change_24h: calculate_percentage_change(metrics.active_bots, metrics_24h_ago&.active_bots),
           tvl: metrics.tvl_usd,
           tvl_change_24h: calculate_percentage_change(metrics.tvl_cents, metrics_24h_ago&.tvl_cents),
