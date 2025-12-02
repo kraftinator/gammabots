@@ -14,13 +14,21 @@ class TradeExecutionService
     puts "bot: #{bot.id}, token: #{bot.token_pair.base_token.symbol}, min_amount_out: #{min_amount_out.to_s}"
     puts "========================================================"
     
-    sell_token_amount = bot.first_cycle? ? 
-      bot.current_cycle.quote_token_amount : bot.current_cycle.quote_token_amount * 0.9999999999
-    
+    #sell_token_amount = bot.first_cycle? ? 
+    #  bot.current_cycle.quote_token_amount : bot.current_cycle.quote_token_amount * 0.9999999999
+
     wallet = bot.user.wallet_for_chain(bot.chain)
     token_pair = bot.token_pair
     sell_token = token_pair.quote_token
     buy_token = token_pair.base_token
+
+    if bot.first_cycle?
+      amt = bot.current_cycle.quote_token_amount
+    else
+      amt = bot.current_cycle.quote_token_amount * BigDecimal('0.9999999999')
+    end
+    sell_token_amount = amt.round(sell_token.decimals)
+
     result = EthersService.swap(
       wallet, 
       sell_token.contract_address, 
@@ -104,9 +112,13 @@ class TradeExecutionService
     buy_token = token_pair.quote_token
 
     # Adjust sell_token_amount
-    raw_amount = sell_token_amount.to_d * BigDecimal('0.9999999999')
-    adj_amount = BigDecimal(raw_amount, 30)  
-    adj_amount_trimmed = adj_amount.round(sell_token.decimals, :down)
+    #raw_amount = sell_token_amount.to_d * BigDecimal('0.9999999999')
+    #adj_amount = BigDecimal(raw_amount, 30)  
+    #adj_amount_trimmed = adj_amount.round(sell_token.decimals, :down)
+
+    #min_amount_out = BigDecimal(min_amount_out.to_s).round(buy_token.decimals, :down)
+
+    sell_token_amount = (sell_token_amount.to_d * BigDecimal('0.9999999999')).round(sell_token.decimals, :down)
 
     min_amount_out = BigDecimal(min_amount_out.to_s).round(buy_token.decimals, :down)
 
@@ -114,7 +126,8 @@ class TradeExecutionService
       wallet, 
       sell_token.contract_address, 
       buy_token.contract_address, 
-      adj_amount_trimmed,
+      #adj_amount_trimmed,
+      sell_token_amount,
       sell_token.decimals,
       buy_token.decimals,
       MAX_SELL_SLIPPAGE_BPS,
