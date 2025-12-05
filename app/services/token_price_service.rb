@@ -1,5 +1,5 @@
 class TokenPriceService
-  DEFAULT_SELL_AMOUNT = "0.1"
+  DEFAULT_SELL_AMOUNT = BigDecimal("0.1")
   ZERO_EX_API_KEY = Rails.application.credentials.dig(:zero_ex, :api_key)
 
   def self.update_price(token_pair)
@@ -7,29 +7,78 @@ class TokenPriceService
 
     unless result["success"]
       puts "Failed to get price for #{token_pair.name}."
-      puts "ERROR: #{result}"
+      puts "ERROR: #{result.inspect}"
       return false
     end
 
-    new_price = result["price"].to_d
+    #new_price = result["price"].to_d
+    base_decimals  = token_pair.base_token.decimals
+    quote_decimals = token_pair.quote_token.decimals
+
+    # new_price is always ETH per base_token (e.g. WETH per RUNNER)
+    new_price = eth_per_base_token(
+      result,
+      base_decimals:  base_decimals,
+      quote_decimals: quote_decimals
+    )
 
     token_pair.update!(current_price: new_price, price_updated_at: Time.current)
 
     token_pair.token_pair_prices.create!(price: new_price)
   end
 
-  def self.get_price(token_pair, sell_amount=DEFAULT_SELL_AMOUNT)
-    base_token = token_pair.base_token
-    quote_token = token_pair.quote_token
+  #def self.get_price(token_pair, sell_amount=DEFAULT_SELL_AMOUNT)
+  #  base_token = token_pair.base_token
+  #  quote_token = token_pair.quote_token
 
+  #  EthersService.get_price(
+  #    quote_token.contract_address, 
+  #    base_token.contract_address, 
+  #    quote_token.decimals, 
+  #    base_token.decimals, 
+  #    sell_amount, 
+  #    ZERO_EX_API_KEY
+  #  )
+  #end
+
+  # Phase 1: canonical price = TOKEN -> ETH for ~0.1 ETH notional
+  def self.get_price(token_pair)
+    base_token  = token_pair.base_token  # e.g. RUNNER
+    quote_token = token_pair.quote_token # e.g. WETH
+
+    # Decide how many base tokens to sell (approx 0.1 ETH worth)
+    sell_amount_base_str =
+      if token_pair.current_price.present?
+        # current_price is ETH per base token
+        # tokens ≈ 0.1 ETH / (ETH per token)
+        est_tokens = DEFAULT_SELL_AMOUNT / token_pair.current_price
+
+        est_tokens.round(base_token.decimals).to_s
+        #est_tokens.to_s
+      else
+        # First tick: rough bootstrap using a fixed token amount.
+        # On the next tick, we'll have a real current_price and switch to 0.1 ETH notional.
+        "1000"
+      end
+ 
     EthersService.get_price(
-      quote_token.contract_address, 
-      base_token.contract_address, 
-      quote_token.decimals, 
-      base_token.decimals, 
-      sell_amount, 
+      base_token.contract_address,   # sellToken: TOKEN
+      quote_token.contract_address,  # buyToken:  WETH
+      base_token.decimals,
+      quote_token.decimals,
+      sell_amount_base_str,          # decimal string, e.g. "1500"
       ZERO_EX_API_KEY
     )
+  end
+
+  def self.eth_per_base_token(result, base_decimals:, quote_decimals:)
+    sell_amount_wei = result["sellAmountWei"].to_d
+    buy_amount_wei  = result["buyAmountWei"].to_d
+
+    sell_human = sell_amount_wei / (10.to_d ** base_decimals)   # base token (e.g. RUNNER)
+    buy_human  = buy_amount_wei  / (10.to_d ** quote_decimals)  # quote token (WETH/ETH)
+
+    buy_human / sell_human
   end
 
   def self.get_uniswap_price(token_pair)
