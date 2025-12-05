@@ -81,7 +81,11 @@ class TradeExecutionService
           allowance:        result["allowance"],
           attempted_amount: bot.current_cycle.quote_token_amount,
           min_amount_out:   min_amount_out,
-          raw:              result["raw"]
+          required_min_amount_out:     result["requiredMinAmountOut"],
+          required_min_amount_out_wei: result["requiredMinAmountOutWei"],
+          quote_min_buy_amount_wei:    result["quoteMinBuyAmountWei"],
+          quote_min_buy_amount:        result["quoteMinBuyAmount"],
+          #raw:              result["raw"]
         }
       )
 
@@ -179,7 +183,11 @@ class TradeExecutionService
           allowance:        result["allowance"],
           attempted_amount: sell_token_amount,
           min_amount_out:   min_amount_out,
-          raw:              result["raw"]
+          required_min_amount_out:     result["requiredMinAmountOut"],
+          required_min_amount_out_wei: result["requiredMinAmountOutWei"],
+          quote_min_buy_amount_wei:    result["quoteMinBuyAmountWei"],
+          quote_min_buy_amount:        result["quoteMinBuyAmount"],
+          #raw:              result["raw"]
         }
       )
 
