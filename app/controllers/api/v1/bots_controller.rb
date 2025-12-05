@@ -189,7 +189,53 @@ module Api
         end
       end
 
+      def metrics
+        bot = current_user.bots.find(params[:id])
+
+        metrics = bot.strategy_variables(use_cached_price: true)
+
+        # Remove internal fields
+        metrics.except!("bot", :bot, "provider_url", :provider_url, "ndp", :ndp, "nd2", :nd2, "bep", :bep)
+
+        # normalize time-based fields for UI
+        %w[lta lba crt].each do |short_key|
+          val = metrics[short_key] || metrics[short_key.to_sym]
+          next unless val.is_a?(Time) || val.is_a?(ActiveSupport::TimeWithZone)
+
+          #minutes = ((Time.current - val) / 60.0).round(1)
+          minutes = ((Time.current - val) / 60.0).floor
+          metrics[short_key] = minutes
+        end
+
+        # Transform keys from 3-char codes → full field names
+        mapped_metrics = map_metric_keys(metrics)
+
+        render json: { success: true, metrics: mapped_metrics }
+      rescue StandardError => e
+        Rails.logger.error("[BotMetrics] #{e.class}: #{e.message}")
+        render json: { success: false, error: "Unable to load metrics" }, status: :unprocessable_entity
+      end
+
+      def metrics2
+        bot = current_user.bots.find(params[:id])
+
+        metrics = bot.strategy_variables(use_cached_price: true)
+        metrics.except!("bot", :bot, "provider_url", :provider_url)
+
+        render json: { success: true, metrics: metrics }
+      rescue StandardError => e
+        Rails.logger.error("[BotMetrics] #{e.class}: #{e.message}")
+        render json: { success: false, error: "Unable to load metrics" }, status: :unprocessable_entity
+      end
+
       private
+
+      def map_metric_keys(hash)
+        hash.each_with_object({}) do |(key, value), out|
+          readable = Gammascript::Constants::VALID_FIELDS[key.to_s] || key
+          out[readable] = value
+        end
+      end
 
       def eth_to_wei(eth_decimal)
         # eth_decimal is a BigDecimal representing ETH (e.g., 0.25)

@@ -8,6 +8,8 @@ Rails.application.routes.draw do
       resources :bots, only: [:index, :create] do
         # POST /api/v1/bots/:id/fund
         post :fund, on: :member
+        # GET /api/v1/bots/:id/metrics
+        get  :metrics, on: :member         
       end
       resources :users, only: [:show, :create]
       resources :strategies, only: [:index, :show, :create] do
