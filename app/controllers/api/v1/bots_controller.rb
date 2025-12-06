@@ -216,16 +216,30 @@ module Api
         render json: { success: false, error: "Unable to load metrics" }, status: :unprocessable_entity
       end
 
-      def metrics2
+      def trades
         bot = current_user.bots.find(params[:id])
 
-        metrics = bot.strategy_variables(use_cached_price: true)
-        metrics.except!("bot", :bot, "provider_url", :provider_url)
+        trades = bot.trades
+                    .includes(:bot_cycle)   # eager load so N+1 queries don’t happen
+                    .order(executed_at: :asc)
+                    .limit(params[:limit] || 100)
 
-        render json: { success: true, metrics: metrics }
-      rescue StandardError => e
-        Rails.logger.error("[BotMetrics] #{e.class}: #{e.message}")
-        render json: { success: false, error: "Unable to load metrics" }, status: :unprocessable_entity
+        render json: {
+          success: true,
+          trades: trades.map { |t|
+            {
+              id: t.id,
+              side: t.trade_type,
+              amount_in: t.amount_in,
+              amount_out: t.amount_out,
+              price: t.price,
+              tx_hash: t.tx_hash,
+              status: t.status,
+              executed_at: t.executed_at,
+              cycle: t.bot_cycle&.ordinal
+            }
+          }
+        }
       end
 
       private
