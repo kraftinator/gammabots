@@ -236,7 +236,9 @@ module Api
               tx_hash: t.tx_hash,
               status: t.status,
               executed_at: t.executed_at,
-              cycle: t.bot_cycle&.ordinal
+              cycle: t.bot_cycle&.ordinal,
+              strategy: t.metrics["strategy"],
+              step: t.metrics["step"]
             }
           }
         }
