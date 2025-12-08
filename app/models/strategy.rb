@@ -26,6 +26,10 @@ class Strategy < ApplicationRecord
     status == 'active'
   end
 
+  def longform
+    Gammascript::Expander.expand_rules(JSON.parse(strategy_json))
+  end
+
   private
 
   def strategy_json_must_be_valid_json

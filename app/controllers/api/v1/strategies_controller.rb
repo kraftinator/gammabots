@@ -25,7 +25,7 @@ module Api
       
       # GET /api/v1/strategies/:id
       def show
-        strategy = Strategy.find_by(id: params[:id])
+        strategy = Strategy.find_by(nft_token_id: params[:id])
         
         unless strategy
           render json: {
@@ -36,11 +36,13 @@ module Api
         
         render json: {
           id: strategy.id.to_s,
-          nft_token_id: strategy.nft_token_id.to_s,
-          #compressed_strategy: strategy.compressed_strategy,
+          strategy_id: strategy.nft_token_id.to_s,
+          owner_address: strategy.owner_address,
+          compressed_strategy: strategy.strategy_json,
+          user_friendly_strategy: strategy.longform.to_json,
+          created_at: strategy.created_at.iso8601
           #user_friendly_strategy: strategy.user_friendly_strategy,
-          #creator_address: strategy.creator_address,
-          #created_at: strategy.created_at.iso8601
+          #creator_address: strategy.creator_address
         }
       end
       
