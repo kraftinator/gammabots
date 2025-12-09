@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :dashboard_metrics, only: [:index]
-      resources :bots, only: [:index, :create] do
+      resources :bots, only: [:index, :create, :update] do
         # POST /api/v1/bots/:id/fund
         post :fund, on: :member
         # GET /api/v1/bots/:id/metrics

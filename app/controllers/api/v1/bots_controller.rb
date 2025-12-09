@@ -244,6 +244,76 @@ module Api
         }
       end
 
+      def update
+        bot = current_user.bots.find(params[:id])
+
+        moving_avg_minutes_result = validate_moving_average_param!
+        unless moving_avg_minutes_result[:success]
+          render json: {
+            error: moving_avg_minutes_result[:message][:error],
+            code:  moving_avg_minutes_result[:message][:code]
+          }, status: moving_avg_minutes_result[:message][:status] and return
+        end
+        moving_avg_minutes = moving_avg_minutes_result[:moving_avg_minutes]
+
+        strategy_result = validate_strategy_param!
+        unless strategy_result[:success]
+          render json: {
+            error: strategy_result[:message][:error],
+            code:  strategy_result[:message][:code]
+          }, status: strategy_result[:message][:status] and return
+        end
+        strategy = strategy_result[:strategy]
+
+        bot_attrs = {
+          strategy: strategy,
+          moving_avg_minutes: moving_avg_minutes
+        }
+
+        if bot.update(bot_attrs)
+          payload = 
+            if bot.unfunded?
+              {
+                bot_id: bot.id.to_s,
+                token_symbol: bot.token_pair.base_token.symbol,
+                strategy_id: bot.strategy.nft_token_id.to_s,
+                moving_average: bot.moving_avg_minutes,
+                tokens: 0,
+                eth: 0,
+                init: bot.initial_buy_amount,
+                value: 0,
+                profit_percent: 0,
+                cycles: 0,
+                trades: 0,
+                is_active: false,
+                status: 'unfunded',
+                last_action: "#{time_ago_in_words(bot.updated_at)} ago"
+              }
+            else
+              {
+                bot_id: bot.id.to_s,
+                token_symbol: bot.token_pair.base_token.symbol,
+                strategy_id: bot.strategy.nft_token_id.to_s,
+                moving_average: bot.moving_avg_minutes,
+                tokens: bot.current_cycle.trades.any? ? bot.current_cycle.base_token_amount.round(6) : 0,
+                eth: bot.current_cycle.quote_token_amount.round(6),
+                init: bot.initial_buy_amount,
+                value: bot.current_value,
+                profit_percent: bot.profit_percentage(include_profit_withdrawals: true),
+                cycles: bot.bot_cycles.count,
+                trades: bot.buy_count + bot.sell_count,
+                is_active: bot.active,
+                status: bot.status,
+                last_action: "#{time_ago_in_words(bot.last_action_at)} ago"
+              }
+            end
+
+          render json: { success: true, bot: payload }
+        else
+          render json: { success: false, errors: bot.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def map_metric_keys(hash)
