@@ -30,6 +30,7 @@ module Api
             {
               bot_id: bot.id.to_s,
               token_symbol: bot.token_pair.base_token.symbol,
+              token_address: bot.token_pair.base_token.contract_address,
               strategy_id: bot.strategy.nft_token_id.to_s,
               moving_average: bot.moving_avg_minutes,
               tokens: 0,
@@ -47,6 +48,7 @@ module Api
             {
               bot_id: bot.id.to_s,
               token_symbol: bot.token_pair.base_token.symbol,
+              token_address: bot.token_pair.base_token.contract_address,
               strategy_id: bot.strategy.nft_token_id.to_s,
               moving_average: bot.moving_avg_minutes,
               tokens: bot.current_cycle.trades.any? ? bot.current_cycle.base_token_amount.round(6) : 0,
