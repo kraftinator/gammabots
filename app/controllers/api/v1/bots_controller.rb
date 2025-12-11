@@ -449,7 +449,8 @@ module Api
           is_active:     bot.active,
           status:        bot_status_label(bot),
           trade_mode:    bot.current_cycle ? bot.trade_mode : "buy",
-          last_action:   "#{time_ago_in_words(bot.last_action_at)} ago"
+          #last_action:   "#{time_ago_in_words(bot.last_action_at)} ago"
+          last_action:   bot.last_action_at
         }
 
         # Unfunded bots

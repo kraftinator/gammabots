@@ -276,7 +276,7 @@ class Bot < ApplicationRecord
   end
 
   def display_value
-    active ? current_value : funds_returned_amount
+    active ? current_value : funds_returned_amount + current_value
   end
 
   private
