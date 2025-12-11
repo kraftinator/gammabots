@@ -41,6 +41,40 @@ class TokenPriceService
   #  )
   #end
 
+  def self.get_price(token_pair)
+    base_token  = token_pair.base_token
+    quote_token = token_pair.quote_token
+
+    est_tokens = nil
+
+    if token_pair.current_price.present? &&
+      token_pair.current_price.respond_to?(:finite?) &&
+      token_pair.current_price.finite? &&            # not Infinity / NaN
+      token_pair.current_price > 0
+      # current_price is ETH per base token
+      # tokens ≈ 0.1 ETH / (ETH per token)
+      est_tokens = DEFAULT_SELL_AMOUNT / token_pair.current_price
+    end
+
+    sell_amount_base_str =
+      if est_tokens.nil? || est_tokens <= 0
+        # First tick OR bad current_price: use bootstrap amount
+        "1000"
+      else
+        est_tokens.round(base_token.decimals).to_s
+      end
+
+    EthersService.get_price(
+      base_token.contract_address,   # sellToken: TOKEN
+      quote_token.contract_address,  # buyToken:  WETH
+      base_token.decimals,
+      quote_token.decimals,
+      sell_amount_base_str,          # decimal string, e.g. "1500"
+      ZERO_EX_API_KEY
+    )
+  end
+
+=begin
   # Phase 1: canonical price = TOKEN -> ETH for ~0.1 ETH notional
   def self.get_price(token_pair)
     base_token  = token_pair.base_token  # e.g. RUNNER
@@ -70,7 +104,7 @@ class TokenPriceService
       ZERO_EX_API_KEY
     )
   end
-
+=end
   def self.eth_per_base_token(result, base_decimals:, quote_decimals:)
     sell_amount_wei = result["sellAmountWei"].to_d
     buy_amount_wei  = result["buyAmountWei"].to_d
