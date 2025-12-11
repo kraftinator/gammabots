@@ -57,6 +57,10 @@ class Bot < ApplicationRecord
     trades.where(trade_type: "sell", status: "completed").count
   end
 
+  def trade_mode
+    initial_buy_made? ? "sell" : "buy"
+  end
+
   def completed_trade_count
     trades.where(status: "completed").count
   end
@@ -73,8 +77,8 @@ class Bot < ApplicationRecord
   end
 
   def liquidate
+    update!(status: "liquidating")
     trade = TradeExecutionService.sell(current_cycle.strategy_variables.merge({ step: 0 }), current_cycle.base_token_amount, 0)
-    deactivate if trade
     trade
   end
 
@@ -269,6 +273,10 @@ class Bot < ApplicationRecord
       lowest_price_since_creation: current_price,
       lowest_moving_avg_since_creation: moving_avg
     )
+  end
+
+  def display_value
+    active ? current_value : funds_returned_amount
   end
 
   private

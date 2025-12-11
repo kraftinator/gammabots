@@ -5,9 +5,14 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :dashboard_metrics, only: [:index]
-      resources :bots, only: [:index, :create] do
+      resources :bots, only: [:index, :create, :update] do
         # POST /api/v1/bots/:id/fund
         post :fund, on: :member
+        # GET /api/v1/bots/:id/metrics
+        get  :metrics, on: :member
+        get  :trades,  on: :member
+        post :liquidate, on: :member 
+        post :deactivate, on: :member 
       end
       resources :users, only: [:show, :create]
       resources :strategies, only: [:index, :show, :create] do

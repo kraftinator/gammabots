@@ -6,10 +6,10 @@ RSpec.describe StrategiesValidate, type: :service do
   let(:valid_strategy_json) do
     [
       { "c" => "buyCount==0", "a" => ["buy"] },
-      { "c" => "buyCount>0&&minutesSinceLastTrade>=1", "a" => ["sell all", "reset"] },
-      { "c" => "buyCount>0&&currentPrice<=initialBuyPrice*0.75", "a" => ["sell 0.5", "deact"] },
+      { "c" => "buyCount>0&&minSinceTrade>=1", "a" => ["sell all", "reset"] },
+      { "c" => "buyCount>0&&currentPrice<=initBuyPrice*0.75", "a" => ["sell 0.5", "deact"] },
       {
-        "c" => "buyCount>0&&sellCount==0&&highestPriceSinceInitialBuy>=initialBuyPrice*2.0&&currentPrice<=highestPriceSinceInitialBuy*0.90",
+        "c" => "buyCount>0&&sellCount==0&&highInitBuy>=initBuyPrice*2.0&&currentPrice<=highInitBuy*0.90",
         "a" => ["sell 0.25"]
       }
     ].to_json

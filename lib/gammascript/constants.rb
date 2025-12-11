@@ -9,136 +9,171 @@
 #    - human-readable field names used in the validator, UI, etc.
 #
 #  Example:
-#    VALID_FIELDS["bcn"]           # => "buyCount"
-#    VALID_FIELDS["buyCount"]      # => "bcn"
+#    VALID_FIELDS["bcn"]        # => "buyCount"
+#    VALID_FIELDS["buyCount"]   # => "bcn"
 # ==============================================================
 
 module Gammascript
   module Constants
     VALID_FIELDS = {
-      # --- Core ---
+      # --- Core Prices ---
       "cpr" => "currentPrice",
       "currentPrice" => "cpr",
 
-      "ppr" => "previousPrice",
-      "previousPrice" => "ppr",
+      "ppr" => "prevPrice",
+      "prevPrice" => "ppr",
 
       "rhi" => "rollingHigh",
       "rollingHigh" => "rhi",
 
-      "ibp" => "initialBuyPrice",
-      "initialBuyPrice" => "ibp",
+      "ibp" => "initBuyPrice",
+      "initBuyPrice" => "ibp",
 
       "lbp" => "listedBuyPrice",
       "listedBuyPrice" => "lbp",
 
+      # --- Counts / Amounts / Config ---
       "bcn" => "buyCount",
       "buyCount" => "bcn",
 
       "scn" => "sellCount",
       "sellCount" => "scn",
 
-      "bta" => "tokenAmount",
-      "tokenAmount" => "bta",
+      "bta" => "tokenAmt",
+      "tokenAmt" => "bta",
 
-      "mam" => "movingAverageMinutes",
-      "movingAverageMinutes" => "mam",
+      "mam" => "movingAvg",
+      "movingAvg" => "mam",
 
       # --- Indicators ---
-      "pdi" => "priceDiversityIndicator",
-      "priceDiversityIndicator" => "pdi",
+      "pdi" => "priceDiv",
+      "priceDiv" => "pdi",
 
-      "mom" => "momentumRatio",
-      "momentumRatio" => "mom",
+      # Momentum (same short & long) ---
+      "mom" => "mom",
 
-      # --- Volatility ---
-      "vst" => "shortVolatility",
-      "shortVolatility" => "vst",
-
-      "vlt" => "longVolatility",
-      "longVolatility" => "vlt",
-
-      "ssd" => "shortVolatilityStdDev",
-      "shortVolatilityStdDev" => "ssd",
-
-      "lsd" => "longVolatilityStdDev",
-      "longVolatilityStdDev" => "lsd",
+      # --- Volatility (same short & long) ---
+      "vst" => "vst",
+      "vlt" => "vlt",
+      "ssd" => "ssd",
+      "lsd" => "lsd",
 
       # --- Prices & Extremes ---
       "cap" => "creationPrice",
       "creationPrice" => "cap",
 
-      "hps" => "highestPriceSinceCreation",
-      "highestPriceSinceCreation" => "hps",
+      "hps" => "highSinceCreate",
+      "highSinceCreate" => "hps",
 
-      "lps" => "lowestPriceSinceCreation",
-      "lowestPriceSinceCreation" => "lps",
+      "lps" => "lowSinceCreate",
+      "lowSinceCreate" => "lps",
 
-      "hip" => "highestPriceSinceInitialBuy",
-      "highestPriceSinceInitialBuy" => "hip",
+      "hip" => "highInitBuy",
+      "highInitBuy" => "hip",
 
-      "hlt" => "highestPriceSinceLastTrade",
-      "highestPriceSinceLastTrade" => "hlt",
+      "hlt" => "highLastTrade",
+      "highLastTrade" => "hlt",
 
-      "lip" => "lowestPriceSinceInitialBuy",
-      "lowestPriceSinceInitialBuy" => "lip",
+      "lip" => "lowInitBuy",
+      "lowInitBuy" => "lip",
 
-      "llt" => "lowestPriceSinceLastTrade",
-      "lowestPriceSinceLastTrade" => "llt",
+      "llt" => "lowLastTrade",
+      "lowLastTrade" => "llt",
 
       "lsp" => "lastSellPrice",
       "lastSellPrice" => "lsp",
 
       # --- Moving Averages ---
-      "cma" => "currentMovingAverage",
-      "currentMovingAverage" => "cma",
+      # MA codes themselves are the long form too
+      "cma" => "cma",
+      "lma" => "lma",
+      "tma" => "tma",
 
-      "lma" => "longMovingAverage",
-      "longMovingAverage" => "lma",
+      "pcm" => "prevCMA",
+      "prevCMA" => "pcm",
 
-      "tma" => "tripleMovingAverage",
-      "tripleMovingAverage" => "tma",
+      "plm" => "prevLMA",
+      "prevLMA" => "plm",
 
-      "pcm" => "previousCurrentMovingAverage",
-      "previousCurrentMovingAverage" => "pcm",
+      # CMA extremes
+      "lmc" => "lowCMASinceCreate",
+      "lowCMASinceCreate" => "lmc",
 
-      "plm" => "previousLongMovingAverage",
-      "previousLongMovingAverage" => "plm",
+      "hma" => "highCMASinceInit",
+      "highCMASinceInit" => "hma",
 
-      "lmc" => "lowestMovingAverageSinceCreation",
-      "lowestMovingAverageSinceCreation" => "lmc",
+      "lmi" => "lowCMASinceInit",
+      "lowCMASinceInit" => "lmi",
 
-      "hma" => "highestMovingAverageSinceInitialBuy",
-      "highestMovingAverageSinceInitialBuy" => "hma",
+      "hmt" => "highCMASinceTrade",
+      "highCMASinceTrade" => "hmt",
 
-      "lmi" => "lowestMovingAverageSinceInitialBuy",
-      "lowestMovingAverageSinceInitialBuy" => "lmi",
-
-      "hmt" => "highestMovingAverageSinceLastTrade",
-      "highestMovingAverageSinceLastTrade" => "hmt",
-
-      "lmt" => "lowestMovingAverageSinceLastTrade",
-      "lowestMovingAverageSinceLastTrade" => "lmt",
+      "lmt" => "lowCMASinceTrade",
+      "lowCMASinceTrade" => "lmt",
 
       # --- Profitability ---
-      "lcp" => "lastCycleProfitFraction",
-      "lastCycleProfitFraction" => "lcp",
+      "lcp" => "profitLastCycle",
+      "profitLastCycle" => "lcp",
 
-      "scp" => "secondCycleProfitFraction",
-      "secondCycleProfitFraction" => "scp",
+      "scp" => "profitSecondCycle",
+      "profitSecondCycle" => "scp",
 
-      "bpp" => "botProfitFraction",
-      "botProfitFraction" => "bpp",
+      "bpp" => "botProfit",
+      "botProfit" => "bpp",
 
       # --- Time-based ---
-      "lta" => "minutesSinceLastTrade",
-      "minutesSinceLastTrade" => "lta",
+      "lta" => "minSinceTrade",
+      "minSinceTrade" => "lta",
 
-      "lba" => "minutesSinceLastBuy",
-      "minutesSinceLastBuy" => "lba",
+      "lba" => "minSinceBuy",
+      "minSinceBuy" => "lba",
 
-      "crt" => "minutesSinceCreation",
-      "minutesSinceCreation" => "crt"
+      "crt" => "minSinceCreate",
+      "minSinceCreate" => "crt"
     }.freeze
+
+    FIELD_LABELS = {
+      "currentPrice"         => "Current Price",
+      "prevPrice"            => "Previous Price",
+      "rollingHigh"          => "Rolling High",
+      "initBuyPrice"         => "Initial Buy Price",
+      "listedBuyPrice"       => "Listed Buy Price",
+
+      "buyCount"             => "Buy Count",
+      "sellCount"            => "Sell Count",
+      "tokenAmt"             => "Token Amount",
+      "movingAvg"            => "Moving Average (Minutes)",
+
+      "priceDiv"             => "Price Diversity",
+      "mom"                  => "Momentum",
+      "vst"                  => "Volatility (Short)",
+      "vlt"                  => "Volatility (Long)",
+      "ssd"                  => "Std Dev (Short)",
+      "lsd"                  => "Std Dev (Long)",
+
+      "highInitBuy"          => "High Since Initial Buy",
+      "lowInitBuy"           => "Low Since Initial Buy",
+      "highSinceCreate"      => "High Since Creation",
+      "lowSinceCreate"       => "Low Since Creation",
+      "highLastTrade"        => "High Since Last Trade",
+      "lowLastTrade"         => "Low Since Last Trade",
+      "lastSellPrice"        => "Last Sell Price",
+
+      "prevCMA"              => "Previous CMA",
+      "prevLMA"              => "Previous LMA",
+      "lowCMASinceCreate"    => "Low CMA (Since Creation)",
+      "highCMASinceInit"     => "High CMA (Since Initial Buy)",
+      "lowCMASinceInit"      => "Low CMA (Since Initial Buy)",
+      "highCMASinceTrade"    => "High CMA (Since Last Trade)",
+      "lowCMASinceTrade"     => "Low CMA (Since Last Trade)",
+
+      "profitLastCycle"      => "Profit (Last Cycle)",
+      "profitSecondCycle"    => "Profit (2nd Cycle)",
+      "botProfit"            => "Total Bot Profit",
+
+      "minSinceTrade"        => "Minutes Since Last Trade",
+      "minSinceBuy"          => "Minutes Since Last Buy",
+      "minSinceCreate"       => "Minutes Since Creation"
+    }
   end
 end
