@@ -10,7 +10,9 @@ Rails.application.routes.draw do
         post :fund, on: :member
         # GET /api/v1/bots/:id/metrics
         get  :metrics, on: :member
-        get  :trades,  on: :member    
+        get  :trades,  on: :member
+        post :liquidate, on: :member 
+        post :deactivate, on: :member 
       end
       resources :users, only: [:show, :create]
       resources :strategies, only: [:index, :show, :create] do

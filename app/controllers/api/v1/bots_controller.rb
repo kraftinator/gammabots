@@ -13,58 +13,19 @@ module Api
         end
 
         status = params[:status]          
-        if status == 'retired'
-          @bots = Bot.inactive
-              .joins(:trades)
-              .where(trades: { status: 'completed' })
+
+        if status == 'inactive'
+          @bots = current_user.bots.inactive.default_bots
+              .where(status: ["active", "inactive", "funding_failed"])
               .order(updated_at: :desc)
               .distinct                      
               .limit(100)
-              .to_a
         else
           @bots = current_user.bots.active.default_bots + current_user.bots.inactive.unfunded
         end
 
-        formatted_bots = @bots.map do |bot|
-          if bot.unfunded?
-            {
-              bot_id: bot.id.to_s,
-              token_symbol: bot.token_pair.base_token.symbol,
-              token_address: bot.token_pair.base_token.contract_address,
-              strategy_id: bot.strategy.nft_token_id.to_s,
-              moving_average: bot.moving_avg_minutes,
-              tokens: 0,
-              eth: 0,
-              init: bot.initial_buy_amount,
-              value: 0,
-              profit_percent: 0,
-              cycles: 0,
-              trades: 0,
-              is_active: false,
-              status: 'unfunded',
-              last_action: "#{time_ago_in_words(bot.updated_at)} ago"
-            }
-          else
-            {
-              bot_id: bot.id.to_s,
-              token_symbol: bot.token_pair.base_token.symbol,
-              token_address: bot.token_pair.base_token.contract_address,
-              strategy_id: bot.strategy.nft_token_id.to_s,
-              moving_average: bot.moving_avg_minutes,
-              tokens: bot.current_cycle.trades.any? ? bot.current_cycle.base_token_amount.round(6) : 0,
-              eth: bot.current_cycle.quote_token_amount.round(6),
-              init: bot.initial_buy_amount,
-              value: bot.current_value,
-              profit_percent: bot.profit_percentage(include_profit_withdrawals: true),
-              cycles: bot.bot_cycles.count,
-              trades: bot.buy_count + bot.sell_count,
-              is_active: bot.active,
-              status: bot.status,
-              last_action: "#{time_ago_in_words(bot.last_action_at)} ago"
-            }
-          end
-        end
-        
+        formatted_bots = @bots.map { |bot| bot_payload(bot) }
+
         render json: formatted_bots
       end
 
@@ -79,6 +40,42 @@ module Api
         FundingManager.confirm_funding!(bot)
 
         render json: { ok: true, bot_id: bot.id, tx_hash: tx_hash }
+      end
+
+      def deactivate
+        unless current_user
+          return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
+        end
+
+        bot = current_user.bots.find(params[:id])
+
+        if bot.initial_buy_made?
+          return render json: {
+            error: "Bot cannot be force-deactivated after a buy has been made",
+            code: "INVALID_DEACTIVATION_STATE"
+          }, status: :unprocessable_entity
+        end
+
+        bot.forced_deactivate
+        
+        bot.reload
+        render json: { bot_id: bot.id, is_active: bot.active, status: bot.status }, status: :ok
+      end
+
+      def liquidate
+        unless current_user
+          return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
+        end
+
+        bot = current_user.bots.find(params[:id])
+        trade = bot.liquidate
+        
+        if trade
+          bot.reload
+          render json: { bot_id: bot.id, status: bot.status, liquidation_tx_hash: trade.tx_hash }, status: :ok
+        else
+          render json: { error: "Failed to liquidate", code: "LIQUIDATION_ERROR" }, status: :bad_request
+        end
       end
 
       def create
@@ -273,44 +270,7 @@ module Api
         }
 
         if bot.update(bot_attrs)
-          payload = 
-            if bot.unfunded?
-              {
-                bot_id: bot.id.to_s,
-                token_symbol: bot.token_pair.base_token.symbol,
-                strategy_id: bot.strategy.nft_token_id.to_s,
-                moving_average: bot.moving_avg_minutes,
-                tokens: 0,
-                eth: 0,
-                init: bot.initial_buy_amount,
-                value: 0,
-                profit_percent: 0,
-                cycles: 0,
-                trades: 0,
-                is_active: false,
-                status: 'unfunded',
-                last_action: "#{time_ago_in_words(bot.updated_at)} ago"
-              }
-            else
-              {
-                bot_id: bot.id.to_s,
-                token_symbol: bot.token_pair.base_token.symbol,
-                strategy_id: bot.strategy.nft_token_id.to_s,
-                moving_average: bot.moving_avg_minutes,
-                tokens: bot.current_cycle.trades.any? ? bot.current_cycle.base_token_amount.round(6) : 0,
-                eth: bot.current_cycle.quote_token_amount.round(6),
-                init: bot.initial_buy_amount,
-                value: bot.current_value,
-                profit_percent: bot.profit_percentage(include_profit_withdrawals: true),
-                cycles: bot.bot_cycles.count,
-                trades: bot.buy_count + bot.sell_count,
-                is_active: bot.active,
-                status: bot.status,
-                last_action: "#{time_ago_in_words(bot.last_action_at)} ago"
-              }
-            end
-
-          render json: { success: true, bot: payload }
+          render json: { success: true, bot: bot_payload(bot) }
         else
           render json: { success: false, errors: bot.errors.full_messages }, status: :unprocessable_entity
         end
@@ -460,6 +420,64 @@ module Api
 
         { success: true, moving_avg_minutes: moving_average }
       end
+
+      def bot_status_label(bot)
+        # Unfunded is its own special thing
+        return "unfunded" if bot.unfunded?
+
+        if bot.active
+          bot.status
+        elsif %w[active inactive].include?(bot.status)
+          # Manually stopped vs completed
+          bot.completed_trade_count > 0 ? "completed" : "stopped"
+        else
+          # Preserve special states like "funding_failed"
+          bot.status
+        end
+      end
+
+      def bot_payload(bot)
+        base = {
+          bot_id:        bot.id.to_s,
+          token_symbol:  bot.token_pair.base_token.symbol,
+          token_address: bot.token_pair.base_token.contract_address,
+          strategy_id:   bot.strategy.nft_token_id.to_s,
+          moving_average: bot.moving_avg_minutes,
+          init:          bot.initial_buy_amount,
+          cycles:        bot.bot_cycles.count,
+          trades:        bot.buy_count + bot.sell_count,
+          is_active:     bot.active,
+          status:        bot_status_label(bot),
+          trade_mode:    bot.current_cycle ? bot.trade_mode : "buy",
+          last_action:   "#{time_ago_in_words(bot.last_action_at)} ago"
+        }
+
+        # Unfunded bots
+        return base.merge(
+          tokens:         0,
+          eth:            0,
+          value:          0,
+          profit_percent: 0
+        ) if bot.unfunded?
+
+        cycle = bot.current_cycle
+
+        # Safety: cycle can be nil (e.g. funding_failed)
+        return base.merge(
+          tokens:         0,
+          eth:            0,
+          value:          0,
+          profit_percent: 0
+        ) unless cycle
+
+        base.merge(
+          tokens:         cycle.trades.any? ? cycle.base_token_amount.round(6) : 0,
+          eth:            cycle.quote_token_amount.round(6),
+          value:          bot.display_value, # your “final vs current” logic lives in the model
+          profit_percent: bot.profit_percentage(include_profit_withdrawals: true)
+        )
+      end
+
     end
   end
 end

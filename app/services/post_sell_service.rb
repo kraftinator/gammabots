@@ -6,11 +6,26 @@ class PostSellService
     return unless trade.sell? && trade.completed?
     collect_fee(trade)
     handle_reset(bot)
-    handle_fund_return(bot)
+    handle_liquidation(bot, trade)
+    handle_fund_return(bot.reload)
   end
 
   class << self
     private
+
+    def handle_liquidation(bot, trade)
+      return unless bot.status == "liquidating"
+
+      bot.transaction do
+        bot.update!(
+          active:        false,
+          status:        "inactive",
+          liquidated_at: Time.current
+        )
+
+        bot.current_cycle.update!(ended_at: Time.current)
+      end
+    end
 
     def collect_fee(trade)
       fee = (trade.amount_out.to_d * FEE_PCT).round(18, BigDecimal::ROUND_DOWN)
