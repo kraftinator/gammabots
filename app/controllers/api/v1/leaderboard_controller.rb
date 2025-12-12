@@ -6,6 +6,15 @@ module Api
 
       # GET /api/v1/leaderboard/bots
       def bots
+        timeframe = params[:timeframe] || "all_time"
+
+        cutoff_time =
+          case timeframe
+          when "7d"  then 7.days.ago
+          when "30d" then 30.days.ago
+          else nil
+          end
+
         bots = Bot
           .inactive
           .default_bots
@@ -14,6 +23,13 @@ module Api
           .to_a
 
         bots.reject! { |bot| bot.completed_trade_count == 0 }
+
+        if cutoff_time
+          bots.select! do |bot|
+            end_time = bot.last_action_at || bot.updated_at
+            end_time && end_time >= cutoff_time
+          end
+        end
 
         # Compute realized performance
         bots_with_perf = bots.map do |bot|
@@ -42,12 +58,13 @@ module Api
             owner_farcaster_avatar_url: user&.farcaster_avatar_url,
             active_seconds: active_seconds,
             performance_pct: performance_pct,
+            trades: bot.buy_count + bot.sell_count,
             cloneable: current_user.present?
           }
         end
 
         render json: {
-          timeframe: "all_time",
+          timeframe: timeframe,
           bots: response_bots
         }, status: :ok
       end
