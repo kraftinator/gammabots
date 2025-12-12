@@ -94,6 +94,7 @@ class ConfirmFundingJob < ApplicationJob
       funding_confirmed_at:  Time.current
     )
     Rails.logger.info "[ConfirmFundingJob] Bot##{bot_id} funding confirmed; now active"
+    bot.enqueue_weth_approval!
     ConvertToWethJob.perform_later(bot.id)
   end
 

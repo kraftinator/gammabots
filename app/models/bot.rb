@@ -13,7 +13,7 @@ class Bot < ApplicationRecord
   has_many :profit_withdrawals
   has_many :trades
 
-  after_commit :enqueue_infinite_approval, on: :create
+  #after_commit :enqueue_infinite_approval, on: :create
 
   # Validations
   validates :initial_buy_amount, numericality: { greater_than_or_equal_to: 0 }
@@ -279,6 +279,15 @@ class Bot < ApplicationRecord
     active ? current_value : funds_returned_amount + current_value
   end
 
+  def enqueue_weth_approval!
+    return unless token_pair
+    ApprovalManager.ensure_infinite!(
+      wallet:       user.wallet_for_chain(chain),
+      token:        token_pair.quote_token,
+      provider_url: provider_url
+    )
+  end
+
   private
 
   def process_initial_buy(trade)
@@ -359,14 +368,5 @@ class Bot < ApplicationRecord
 
     # subtract the sent amount so it's not reinvested
     cycle.update!(quote_token_amount: cycle.quote_token_amount - amount)
-  end
-
-  def enqueue_infinite_approval
-    return unless token_pair
-    ApprovalManager.ensure_infinite!(
-      wallet:       user.wallet_for_chain(chain),
-      token:        token_pair.quote_token,
-      provider_url: provider_url
-    )
   end
 end

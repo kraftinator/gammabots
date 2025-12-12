@@ -249,9 +249,12 @@ class TradeExecutionService
 
   def self.handle_approval(wallet, result, provider_url)
     if result["stage"] == "allowance" && result["code"] == "ALLOWANCE_REQUIRED" && result["allowance"]["needsApproval"]
+      token_addr = result.dig("allowance", "token")
+      token = Token.find_by!(contract_address: token_addr)
+
       ApprovalManager.ensure_infinite!(
         wallet:       wallet,
-        token:        result["allowance"]["token"],
+        token:        token,
         provider_url: provider_url
       )
     end
