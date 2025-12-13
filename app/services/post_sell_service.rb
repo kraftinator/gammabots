@@ -17,8 +17,9 @@ class PostSellService
       return unless bot.status == "liquidating"
 
       bot.transaction do
+        bot.mark_deactivated!
+
         bot.update!(
-          active:        false,
           status:        "inactive",
           liquidated_at: Time.current
         )

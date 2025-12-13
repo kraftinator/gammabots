@@ -18,18 +18,13 @@ module Api
         bots = Bot
           .inactive
           .default_bots
-          .includes(:user, :strategy, token_pair: :base_token)
-          .where('created_at >= ?', Date.new(2025, 7, 1))
-          .to_a
+          .joins(:trades)
+          .where(trades: { status: "completed" })
+          .where('bots.created_at >= ?', Date.new(2025, 7, 1))
+          .distinct
 
-        bots.reject! { |bot| bot.completed_trade_count == 0 }
-
-        if cutoff_time
-          bots.select! do |bot|
-            end_time = bot.last_action_at || bot.updated_at
-            end_time && end_time >= cutoff_time
-          end
-        end
+        bots = bots.where('bots.deactivated_at >= ?', cutoff_time) if cutoff_time
+        bots = bots.includes(:user, :strategy, token_pair: :base_token)
 
         # Compute realized performance
         bots_with_perf = bots.map do |bot|
@@ -58,7 +53,7 @@ module Api
             owner_farcaster_avatar_url: user&.farcaster_avatar_url,
             active_seconds: active_seconds,
             performance_pct: performance_pct,
-            trades: bot.buy_count + bot.sell_count,
+            trades: bot.completed_trade_count,
             cloneable: current_user.present?
           }
         end

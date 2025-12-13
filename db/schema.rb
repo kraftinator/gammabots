@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_09_205719) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_13_031058) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -94,10 +94,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_09_205719) do
     t.decimal "funding_expected_amount", precision: 30, scale: 18
     t.integer "max_slippage_bps", default: 200, null: false
     t.datetime "liquidated_at"
+    t.datetime "deactivated_at"
     t.index ["bot_type", "copy_wallet_address", "token_pair_id"], name: "index_bots_on_copy_bot_fields"
     t.index ["bot_type"], name: "index_bots_on_bot_type"
     t.index ["chain_id"], name: "index_bots_on_chain_id"
     t.index ["copy_wallet_address"], name: "index_bots_on_copy_wallet_address"
+    t.index ["deactivated_at"], name: "index_bots_on_deactivated_at"
     t.index ["funder_address"], name: "index_bots_on_funder_address"
     t.index ["funding_tx_hash"], name: "index_bots_on_funding_tx_hash", unique: true
     t.index ["funds_return_tx_hash"], name: "index_bots_on_funds_return_tx_hash"

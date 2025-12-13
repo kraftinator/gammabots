@@ -83,15 +83,26 @@ class Bot < ApplicationRecord
   end
 
   def deactivate
-    update!(active: false)
+    #update!(active: false)
+    mark_deactivated!
     reset
   end
 
   def forced_deactivate
-    update!(active: false)
+    #update!(active: false)
+    mark_deactivated!
     take_profit(full_share: true)
     current_cycle.update!(ended_at: Time.current)
     return_funds_to_user
+  end
+
+  def mark_deactivated!
+    return if deactivated_at.present?
+
+    update!(
+      active: false,
+      deactivated_at: Time.current
+    )
   end
 
   def return_funds_to_user
