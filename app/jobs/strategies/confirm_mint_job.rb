@@ -33,6 +33,7 @@ module Strategies
           nft_token_id: receipt["tokenId"].to_s,
           strategy_json: strategy_json,
           owner_address: receipt["owner"],
+          creator_address: receipt["owner"],
           contract_address: receipt["contractAddress"],
           mint_status: "confirmed",
           owner_refreshed_at: Time.current,
