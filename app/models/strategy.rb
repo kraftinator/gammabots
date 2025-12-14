@@ -25,7 +25,7 @@ class Strategy < ApplicationRecord
 
   def creator
     # 1. Prefer user identity (canonical)
-    user = User.find_by(created_by_wallet: creator_address)
+    user = User.active.find_by(created_by_wallet: creator_address)
     return user if user
 
     # 2. Fallback: find a bot funded by this wallet, then its user
