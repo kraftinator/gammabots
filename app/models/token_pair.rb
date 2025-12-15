@@ -44,7 +44,14 @@ class TokenPair < ApplicationRecord
       .pluck(Arel.sql("AVG(price)"))
 
     # 4) If we don’t have a full set of `minutes` buckets, bail out
-    return nil if per_minute_avgs.size < minutes
+    #return nil if per_minute_avgs.size < minutes
+
+    if per_minute_avgs.size < minutes
+      if shift == 0
+        return moving_average(minutes, shift: 1)
+      end
+      return nil
+    end
 
     # 5) Compute the SMA as the mean of those per-minute averages
     per_minute_avgs.sum(0.0) / per_minute_avgs.size
