@@ -17,6 +17,7 @@ Rails.application.routes.draw do
       resources :users, only: [:show, :create]
       resources :strategies, only: [:index, :show, :create] do
         post :validate, on: :collection
+        get :stats, on: :member
       end
       get "leaderboard/bots", to: "leaderboard#bots"
     end

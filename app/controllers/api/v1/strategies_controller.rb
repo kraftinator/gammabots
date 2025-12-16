@@ -7,42 +7,129 @@ module Api
       
       # GET /api/v1/strategies
       def index
-        @strategies = Strategy.order(created_at: :desc).limit(100)
-        
-        formatted_strategies = @strategies.map do |strategy|
-          {
-            id: strategy.id.to_s,
-            nft_token_id: strategy.nft_token_id.to_s,
-            #compressed_strategy: strategy.compressed_strategy,
-            #user_friendly_strategy: strategy.user_friendly_strategy,
-            #creator_address: strategy.creator_address,
-            #created_at: strategy.created_at.iso8601
-          }
+        strategies = Strategy.order(created_at: :desc).where.not(nft_token_id: [nil, ""]).limit(200)
+        strategy_ids = strategies.pluck(:id)
+
+        bots = Bot
+          .joins(:bot_cycles, :trades)
+          .where(strategy_id: strategy_ids)
+          .includes(:trades, :profit_withdrawals)
+          .distinct
+
+        bots_counts = bots.group_by(&:strategy_id).transform_values(&:size)
+
+        sums   = Hash.new(0.0)
+        counts = Hash.new(0)
+
+        bots.each do |bot|
+          pct = bot.profit_percentage(include_profit_withdrawals: true).to_f
+          sums[bot.strategy_id] += pct
+          counts[bot.strategy_id] += 1
         end
-        
-        render json: formatted_strategies
+
+        render json: strategies.map { |s|
+          creator_user = s.creator
+          c = counts[s.id]
+          avg = c > 0 ? (sums[s.id] / c) : nil
+
+          {
+            strategy_id: s.nft_token_id.to_s,
+            creator_address: s.creator_address,
+            creator_handle: creator_user&.farcaster_username,
+            created_at: s.created_at.iso8601,
+            bots_count: bots_counts[s.id] || 0,
+            performance_pct: avg
+          }
+        }
       end
-      
+
       # GET /api/v1/strategies/:id
       def show
         strategy = Strategy.find_by(nft_token_id: params[:id])
         
         unless strategy
-          render json: {
-            error: "Strategy not found",
-            code: "STRATEGY_NOT_FOUND"
-          }, status: :not_found and return
+          render json: { error: "Strategy not found", code: "STRATEGY_NOT_FOUND" }, status: :not_found
+          return
         end
+
+        creator_user = strategy.creator
         
         render json: {
           id: strategy.id.to_s,
           strategy_id: strategy.nft_token_id.to_s,
+          creator_address: strategy.creator_address,
+          creator_handle: creator_user&.farcaster_username,
           owner_address: strategy.owner_address,
           compressed_strategy: strategy.strategy_json,
           user_friendly_strategy: strategy.longform.to_json,
+          mint_status: strategy.mint_status,
+          status: strategy.status,
           created_at: strategy.created_at.iso8601
-          #user_friendly_strategy: strategy.user_friendly_strategy,
-          #creator_address: strategy.creator_address
+        }
+      end
+
+      def stats
+        strategy = Strategy.find_by(nft_token_id: params[:id].to_s)
+
+        unless strategy
+          render json: { error: "Strategy not found", code: "STRATEGY_NOT_FOUND" }, status: :not_found and return
+        end
+
+        creator_user = strategy.creator
+
+        bots = Bot
+          .joins(:bot_cycles, :trades)
+          .where(strategy_id: strategy.id)
+          .includes(:trades, :profit_withdrawals, :user)
+          .distinct
+
+        bots_count = bots.size
+
+        sum = 0.0
+        n   = 0
+
+        top_bot_id  = nil
+        top_bot_pct = nil
+
+        bots.each do |bot|
+          v = bot.profit_percentage(include_profit_withdrawals: true)
+          next if v.nil?
+
+          f = v.to_f
+          next unless f.finite?
+
+          sum += f
+          n += 1
+
+          if top_bot_pct.nil? || f > top_bot_pct
+            top_bot_pct = f
+            top_bot_id  = bot.id
+          end
+        end
+
+        performance_pct = n.zero? ? nil : (sum / n)
+
+        top_bot = top_bot_id ? bots.find { |b| b.id == top_bot_id } : nil
+
+        render json: {
+          id: strategy.id.to_s,
+          strategy_id: strategy.nft_token_id.to_s,
+          creator_address: strategy.creator_address,
+          creator_handle: creator_user&.farcaster_username,
+          owner_address: strategy.owner_address,
+          compressed_strategy: strategy.strategy_json,
+          user_friendly_strategy: strategy.longform.to_json,
+          mint_status: strategy.mint_status,
+          status: strategy.status,
+          created_at: strategy.created_at.iso8601,
+          bots_count: bots_count,
+          performance_pct: performance_pct,
+          top_bot: top_bot && {
+            bot_id: top_bot.id.to_s,
+            token_symbol:  top_bot.token_pair.base_token.symbol,
+            owner_handle: top_bot.user&.farcaster_username,
+            profit_pct: top_bot_pct
+          },
         }
       end
       
