@@ -5,7 +5,8 @@ module Api
     class BotsController < Api::BaseController
       after_action :log_response_for_debugging
       before_action :require_quick_auth!
-      STRATEGY_NFT_CONTRACT_ADDRESS = "abcdef123456"
+      #STRATEGY_NFT_CONTRACT_ADDRESS = "abcdef123456"
+      STRATEGY_NFT_CONTRACT_ADDRESS = ENV['STRATEGY_NFT_CONTRACT_ADDRESS']
       
       def index
         unless current_user
@@ -321,7 +322,8 @@ module Api
           }
         end
 
-        strategy = Strategy.find_by(contract_address: STRATEGY_NFT_CONTRACT_ADDRESS, nft_token_id: raw.to_i)
+        #strategy = Strategy.find_by(contract_address: STRATEGY_NFT_CONTRACT_ADDRESS, nft_token_id: raw.to_i)
+        strategy = Strategy.find_canonical(raw.to_i)
 
         unless strategy
           return { 

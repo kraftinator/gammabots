@@ -125,6 +125,9 @@ class StrategiesValidate
         end
       end
 
+      if errors.any?
+        puts errors
+      end
       return { valid: false, errors: errors } if errors.any?
 
       # --- Produce compressed form ---
@@ -133,9 +136,19 @@ class StrategiesValidate
         escape_html: false
       )
 
-      if Strategy.exists?(strategy_json: compressed)
-        return { valid: false, errors: ["Duplicate strategy JSON already exists"] }
+      existing = Strategy.canonical.find_by(strategy_json: compressed)
+
+      if existing
+        return {
+          valid: false,
+          errors: ["Duplicate strategy already exists TEST"],
+          duplicate_nft_token_id: existing.nft_token_id
+        }
       end
+
+      #if Strategy.exists?(strategy_json: compressed)
+      #  return { valid: false, errors: ["Duplicate strategy JSON already exists"] }
+      #end
 
       { valid: true, compressed: compressed }
 

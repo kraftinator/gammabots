@@ -3,11 +3,13 @@ module Api
     class StrategiesController < Api::BaseController
       wrap_parameters false
       before_action :require_quick_auth!, only: [:create]
+
       CONFIRMATION_DELAY = 5.seconds
       
       # GET /api/v1/strategies
       def index
-        strategies = Strategy.order(created_at: :desc).where.not(nft_token_id: [nil, ""]).limit(200)
+        #strategies = Strategy.order(created_at: :desc).where.not(nft_token_id: [nil, ""]).limit(200)
+        strategies = Strategy.canonical.order(created_at: :desc).limit(200)
         strategy_ids = strategies.pluck(:id)
 
         bots = Bot
@@ -45,7 +47,8 @@ module Api
 
       # GET /api/v1/strategies/:id
       def show
-        strategy = Strategy.find_by(nft_token_id: params[:id])
+        #strategy = Strategy.find_by(nft_token_id: params[:id])
+        strategy = Strategy.find_canonical(params[:id].to_s)
         
         unless strategy
           render json: { error: "Strategy not found", code: "STRATEGY_NOT_FOUND" }, status: :not_found
@@ -69,7 +72,7 @@ module Api
       end
 
       def stats
-        strategy = Strategy.find_by(nft_token_id: params[:id].to_s)
+        strategy = Strategy.find_canonical(params[:id].to_s)
 
         unless strategy
           render json: { error: "Strategy not found", code: "STRATEGY_NOT_FOUND" }, status: :not_found and return
@@ -198,6 +201,17 @@ module Api
           mint_tx_hash: strategy.mint_tx_hash,
           mint_status: strategy.mint_status
         }, status: :accepted
+      end
+
+      # GET /api/v1/strategies/:id/mint_status
+      def mint_status
+        strategy = Strategy.find(params[:id])
+        render json: {
+          id: strategy.id.to_s,
+          mint_status: strategy.mint_status,
+          nft_token_id: strategy.nft_token_id&.to_s,
+          status: strategy.status
+        }
       end
       
       private

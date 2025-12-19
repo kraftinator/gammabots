@@ -18,6 +18,13 @@ class Strategy < ApplicationRecord
   # Scopes
   scope :active, -> { where(status: "active") }
   scope :inactive, -> { where(status: "inactive") }
+  scope :canonical, -> {
+    where(contract_address: ENV["STRATEGY_NFT_CONTRACT_ADDRESS"])
+  }
+
+  def self.find_canonical(token_id)
+    canonical.find_by(nft_token_id: token_id.to_s)
+  end
 
   def current_owner_address
     owner_address
