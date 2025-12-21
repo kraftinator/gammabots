@@ -61,6 +61,7 @@ class StrategiesValidate
         end
 
         condition_str = rule["c"] || rule["conditions"]
+        condition_str = normalize_leading_dot_floats(condition_str)
         action_arr    = rule["a"] || rule["actions"]
 
         # --- Normalize logical operators for Dentaku ---
@@ -97,6 +98,7 @@ class StrategiesValidate
         end
 
         action_arr.each do |action|
+          action = action.to_s.strip.gsub(/\s+/, " ")
           if action.start_with?("sell ")
             arg = action.split("sell ", 2).last.strip.downcase
 
@@ -125,9 +127,6 @@ class StrategiesValidate
         end
       end
 
-      if errors.any?
-        puts errors
-      end
       return { valid: false, errors: errors } if errors.any?
 
       # --- Produce compressed form ---
@@ -141,14 +140,10 @@ class StrategiesValidate
       if existing
         return {
           valid: false,
-          errors: ["Duplicate strategy already exists TEST"],
+          errors: ["Duplicate strategy already exists"],
           duplicate_nft_token_id: existing.nft_token_id
         }
       end
-
-      #if Strategy.exists?(strategy_json: compressed)
-      #  return { valid: false, errors: ["Duplicate strategy JSON already exists"] }
-      #end
 
       { valid: true, compressed: compressed }
 
@@ -159,23 +154,55 @@ class StrategiesValidate
 
   private
 
+  def normalize_action_for_storage(action)
+    s = action.to_s.strip.downcase.gsub(/\s+/, " ")
+
+    return s unless s.start_with?("sell ")
+
+    arg = s.split("sell ", 2).last.strip
+
+    # Canonicalize sell-100% to "sell all"
+    return "sell all" if arg == "all" || arg == "1" || arg == "1.0"
+
+    s
+  end
+
+  def normalize_number_literals(str)
+    s = str.to_s
+
+    # ".2" -> "0.2"
+    s = normalize_leading_dot_floats(s)
+
+    # "01.16" -> "1.16", "0005" -> "5" (but don't break "0.16" or "10.016")
+    s = s.gsub(/(^|[^0-9.])0+(?=\d)/, '\1')
+
+    # "1.160" -> "1.16", "2.000" -> "2"
+    s = s.gsub(/(\d+\.\d*?)0+(?!\d)/, '\1') # trim trailing zeros in a decimal literal
+    s = s.gsub(/(\d+)\.(?!\d)/, '\1')       # "2." -> "2" (just in case)
+
+    s
+  end
+
   def compress_rule(rule)
     {
       "c" => convert_conditions(rule["c"] || rule["conditions"]),
-      "a" => (rule["a"] || rule["actions"]).map(&:strip)
+      "a" => (rule["a"] || rule["actions"]).map { |a| normalize_action_for_storage(a) }
     }
   end
 
   def convert_conditions(condition_str)
-    out = condition_str.dup
+    out = normalize_number_literals(condition_str).dup
 
-    # Replace human-readable field names with compact Gammascript codes
     VALID_FIELDS.each do |key, short|
       out.gsub!(/\b#{key}\b/, short)
     end
 
-    # Remove all unnecessary whitespace
     out.gsub!(/\s+/, "")
     out
+  end
+
+  def normalize_leading_dot_floats(str)
+    # Convert ".2" -> "0.2" when it's a number literal (not part of an identifier)
+    str.gsub(/(^|[^\d])\.(\d+)/, '\10.\2')
   end
 end

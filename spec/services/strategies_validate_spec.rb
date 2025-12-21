@@ -141,7 +141,7 @@ RSpec.describe StrategiesValidate, type: :service do
 
         result = described_class.call(valid_strategy_json)
         expect(result[:valid]).to be(false)
-        expect(result[:errors].first).to match(/Duplicate strategy JSON/)
+        expect(result[:errors].first).to match(/Duplicate strategy already exists/)
       end
     end
   end
