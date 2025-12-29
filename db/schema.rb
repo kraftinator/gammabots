@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_14_223604) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_29_221805) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -235,13 +235,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_14_223604) do
     t.string "mint_status", default: "pending", null: false
     t.string "status", default: "inactive", null: false
     t.string "creator_address"
+    t.index ["chain_id", "contract_address", "strategy_json"], name: "index_strategies_on_chain_contract_and_strategy_json", unique: true, where: "((contract_address IS NOT NULL) AND (strategy_json IS NOT NULL))"
     t.index ["chain_id"], name: "index_strategies_on_chain_id"
     t.index ["contract_address", "nft_token_id"], name: "index_strategies_on_contract_address_and_nft_token_id", unique: true
     t.index ["creator_address"], name: "index_strategies_on_creator_address"
     t.index ["mint_tx_hash"], name: "index_strategies_on_mint_tx_hash", unique: true
     t.index ["owner_address"], name: "index_strategies_on_owner_address"
     t.index ["status"], name: "index_strategies_on_status"
-    t.index ["strategy_json"], name: "index_strategies_on_strategy_json", unique: true
   end
 
   create_table "token_approvals", force: :cascade do |t|
