@@ -19,6 +19,7 @@ Rails.application.routes.draw do
         post :validate, on: :collection
         get :stats, on: :member
         get :mint_status, on: :member
+        get :mint_details, on: :collection
       end
       get "leaderboard/bots", to: "leaderboard#bots"
     end

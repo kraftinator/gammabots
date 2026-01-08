@@ -24,6 +24,24 @@ module Strategies
         return
       end
 
+      # --- NEW GUARD: enforce canonical Strategy NFT contract ---
+      canonical_contract = ENV.fetch("STRATEGY_NFT_CONTRACT_ADDRESS").to_s.downcase
+      receipt_contract   = receipt["contractAddress"].to_s.downcase
+
+      if receipt_contract.blank?
+        Rails.logger.error "[Strategies::ConfirmMintJob] Missing contractAddress in receipt for tx #{tx_hash}"
+        strategy.update!(mint_status: "failed")
+        return
+      end
+
+      unless receipt_contract == canonical_contract
+        Rails.logger.error(
+          "[Strategies::ConfirmMintJob] Rejecting tx #{tx_hash}: contract #{receipt_contract} != canonical #{canonical_contract}"
+        )
+        strategy.update!(mint_status: "failed")
+        return
+      end
+
       if receipt["status"].to_i == 1
         strategy_json = receipt["strategyJson"]
         validation_result = StrategiesValidate.call(strategy_json)
@@ -34,7 +52,7 @@ module Strategies
           strategy_json: strategy_json,
           owner_address: receipt["owner"],
           creator_address: receipt["owner"],
-          contract_address: receipt["contractAddress"],
+          contract_address: canonical_contract,
           mint_status: "confirmed",
           owner_refreshed_at: Time.current,
           status: status

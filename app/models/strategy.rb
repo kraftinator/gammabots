@@ -2,9 +2,8 @@ class Strategy < ApplicationRecord
   belongs_to :chain
   has_many :bots
 
-  #validates :contract_address, :nft_token_id, :strategy_json, presence: true
-  #validates :contract_address, uniqueness: { scope: :nft_token_id, message: "should be unique for a given NFT" }
-  #validates :strategy_json, presence: true, uniqueness: true
+  before_validation :normalize_contract_address
+ 
   validates :contract_address,
     uniqueness: {
       scope: :nft_token_id,
@@ -28,6 +27,10 @@ class Strategy < ApplicationRecord
 
   def current_owner_address
     owner_address
+  end
+
+  def normalize_contract_address
+    self.contract_address = contract_address.to_s.downcase if contract_address.present?
   end
 
   def creator

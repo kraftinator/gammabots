@@ -2,9 +2,11 @@ module Api
   module V1
     class StrategiesController < Api::BaseController
       wrap_parameters false
-      before_action :require_quick_auth!, only: [:create]
+      before_action :require_quick_auth!, only: [:create, :mint_details]
+      
 
       CONFIRMATION_DELAY = 5.seconds
+      STRATEGY_NFT_CONTRACT_ADDRESS = ENV["STRATEGY_NFT_CONTRACT_ADDRESS"]
       
       # GET /api/v1/strategies
       def index
@@ -135,51 +137,32 @@ module Api
           },
         }
       end
+
+      #  GET /api/v1/strategies/mint_details
+      def mint_details
+        unless current_user
+          return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
+        end
+
+        chain = Chain.find_by(name: 'base_mainnet')
+        wallet_address = params[:wallet_address].to_s
+        provider_url = ProviderUrlService.get_provider_url(chain.name)
+
+        result = EthersService.get_mint_fee_details(
+          wallet_address,
+          STRATEGY_NFT_CONTRACT_ADDRESS,
+          provider_url
+        )
+
+        render json: result
+      end
       
       # POST /api/v1/strategies/validate
       def validate
-        puts "********** #{params[:strategy].to_s} **********"
         result = StrategiesValidate.call(params[:strategy])
         render json: result, status: :ok
-
-        #result =       {
-        #  valid: true,
-        #  compressed: params[:strategy]
-        #}
-        #render json: result, status: :ok
       end
-
-      def validate2
-        user_strategy = params[:strategy].to_s.strip
-        
-        if user_strategy.blank?
-          render json: {
-            error: "Missing required parameter: strategy",
-            code: "MISSING_STRATEGY"
-          }, status: :bad_request and return
-        end
-        
-        #result = StrategyValidationService.new(user_strategy).validate
-        
-        #if result[:valid]
-        #  render json: {
-        #    valid: true,
-        #    compressed: result[:compressed]
-        #  }, status: :ok
-        #else
-        #  render json: {
-        #    valid: false,
-        #    error: result[:error],
-        #    code: "INVALID_STRATEGY"
-        #  }, status: :unprocessable_entity
-        #end
-
-        render json: {
-          valid: true,
-          #compressed: result[:compressed]
-        }, status: :ok
-      end
-      
+     
       # POST /api/v1/strategies
       def create
         unless current_user

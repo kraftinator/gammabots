@@ -336,6 +336,10 @@ class EthersService
     call_function('getStrategyNftDetails', tx_hash, provider_url)
   end
 
+  def self.get_mint_fee_details(wallet_address, nft_contract_address, provider_url)
+    call_function('getMintFeeDetails', wallet_address, nft_contract_address, provider_url)
+  end
+
   def self.get_transaction_receipt(tx_hash, wallet_address, token_pair, provider_url)
     # txHash,
     # poolAddress,
