@@ -181,9 +181,19 @@ class Bot < ApplicationRecord
     bot_cycles.order(created_at: :asc).first.initial_buy_amount
   end
 
+  #def last_action_at
+  #  trade = trades.where(status: "completed").order(created_at: :desc).first
+  #  trade ? trade.executed_at : updated_at
+  #end
+
   def last_action_at
-    trade = trades.where(status: "completed").order(created_at: :desc).first
-    trade ? trade.executed_at : updated_at
+    last_trade_time = trades
+      .where(status: "completed")
+      .order(Arel.sql("COALESCE(executed_at, created_at) DESC"))
+      .limit(1)
+      .pick(Arel.sql("COALESCE(executed_at, created_at)"))
+
+    last_trade_time || deactivated_at || created_at
   end
 
   def current_value
