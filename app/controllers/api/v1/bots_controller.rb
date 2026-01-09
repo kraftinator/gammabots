@@ -16,11 +16,17 @@ module Api
         status = params[:status]          
 
         if status == 'inactive'
-          @bots = current_user.bots.inactive.default_bots
-              .where(status: ["active", "inactive", "funding_failed"])
-              .order(updated_at: :desc)
-              .distinct                      
-              .limit(100)
+          @bots = current_user.bots
+            .inactive
+            .default_bots
+            .where(status: ["active", "inactive", "funding_failed"])
+            .order(Arel.sql("COALESCE(deactivated_at, updated_at) DESC"))
+            .limit(100)
+          #@bots = current_user.bots.inactive.default_bots
+          #    .where(status: ["active", "inactive", "funding_failed"])
+          #    .order(updated_at: :desc)
+          #    .distinct                      
+          #    .limit(100)
         else
           @bots = current_user.bots.active.default_bots + current_user.bots.inactive.unfunded
         end
