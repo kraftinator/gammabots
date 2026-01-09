@@ -14,7 +14,11 @@ Rails.application.routes.draw do
         post :liquidate, on: :member 
         post :deactivate, on: :member 
       end
-      resources :users, only: [:show, :create]
+      resources :users, only: [:show, :create] do
+        collection do
+          get :account
+        end
+      end
       resources :strategies, only: [:index, :show, :create] do
         post :validate, on: :collection
         get :stats, on: :member

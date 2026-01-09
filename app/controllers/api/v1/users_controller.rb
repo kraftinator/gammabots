@@ -8,6 +8,19 @@ module Api
         render json: { exists: user_exists }, status: :ok
       end
 
+      def account
+        unless current_user
+          return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
+        end
+
+        chain = Chain.find_by(name: 'base_mainnet')
+        wallet = current_user.wallet_for_chain(chain)
+
+        render json: {
+          wallet_address: wallet.address
+        }
+      end
+
       def create
         chain = Chain.find_by(name: "base_mainnet")
 
@@ -48,4 +61,5 @@ module Api
 
     end
   end
+  
 end
