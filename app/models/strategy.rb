@@ -2,7 +2,7 @@ class Strategy < ApplicationRecord
   belongs_to :chain
   has_many :bots
 
-  before_validation :normalize_contract_address
+  before_validation :normalize_contract_address, :normalize_creator_address, :normalize_owner_address
  
   validates :contract_address,
     uniqueness: {
@@ -31,6 +31,14 @@ class Strategy < ApplicationRecord
 
   def normalize_contract_address
     self.contract_address = contract_address.to_s.downcase if contract_address.present?
+  end
+
+  def normalize_creator_address
+    self.creator_address = creator_address.to_s.downcase if creator_address.present?
+  end
+
+  def normalize_owner_address
+    self.owner_address = owner_address.to_s.downcase if owner_address.present?
   end
 
   def creator
