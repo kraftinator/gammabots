@@ -91,11 +91,11 @@ module Api
       end
 
       def calculate_top_performers
-        # Get sell trades from last 7 days
+        # Get sell trades from last 30 days
         recent_sell_trades = Trade.joins(:bot)
                                   .where(bot: Bot.default_bots.visible)
                                   .where(status: 'completed', trade_type: 'sell')
-                                  .where('executed_at >= ?', 7.days.ago)
+                                  .where('executed_at >= ?', 30.days.ago)
 
         # Get their associated bot_cycles
         cycle_ids = recent_sell_trades.pluck(:bot_cycle_id).uniq
