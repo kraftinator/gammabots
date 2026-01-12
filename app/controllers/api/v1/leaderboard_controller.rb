@@ -17,6 +17,7 @@ module Api
 
         bots = Bot
           .inactive
+          .visible
           .default_bots
           .joins(:trades)
           .where(trades: { status: "completed" })

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_29_221805) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_12_153153) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -95,6 +95,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_29_221805) do
     t.integer "max_slippage_bps", default: 200, null: false
     t.datetime "liquidated_at"
     t.datetime "deactivated_at"
+    t.boolean "visible", default: true, null: false
     t.index ["bot_type", "copy_wallet_address", "token_pair_id"], name: "index_bots_on_copy_bot_fields"
     t.index ["bot_type"], name: "index_bots_on_bot_type"
     t.index ["chain_id"], name: "index_bots_on_chain_id"
@@ -108,6 +109,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_29_221805) do
     t.index ["strategy_id"], name: "index_bots_on_strategy_id"
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
     t.index ["user_id"], name: "index_bots_on_user_id"
+    t.index ["visible"], name: "index_bots_on_visible"
     t.index ["weth_unwrap_tx_hash"], name: "index_bots_on_weth_unwrap_tx_hash"
     t.index ["weth_wrap_tx_hash"], name: "index_bots_on_weth_wrap_tx_hash", unique: true
   end

@@ -5,7 +5,7 @@ class DashboardMetricsCalculator
   end
 
   def call
-    @active_bots = Bot.active.default_bots
+    @active_bots = Bot.active.default_bots.visible
     @eth_price_usd = TokenPriceService.get_eth_price_in_usd(@active_bots.first&.chain)
     {
       active_bots: @active_bots.count,
@@ -26,7 +26,7 @@ class DashboardMetricsCalculator
 
   def calculate_24h_volume
     recent_trades = Trade.joins(:bot)
-                         .where(bot: Bot.default_bots)
+                         .where(bot: Bot.default_bots.visible)
                          .where(executed_at: 24.hours.ago..Time.current)
                          .where(status: 'completed')
 
@@ -36,7 +36,7 @@ class DashboardMetricsCalculator
 
   def calculate_total_profits
     cycle_profits = Trade.joins(:bot)
-                         .where(bot: Bot.default_bots)
+                         .where(bot: Bot.default_bots.visible)
                          .where(status: 'completed')
                          .where('executed_at >= ?', Date.new(2025, 7, 1))  # Added date filter
                          .group(:bot_cycle_id)
@@ -54,7 +54,7 @@ class DashboardMetricsCalculator
 
   def calculate_trades_executed
     Trade.joins(:bot)
-         .where(bot: Bot.default_bots)
+         .where(bot: Bot.default_bots.visible)
          .where(status: 'completed')
          .where('executed_at >= ?', Date.new(2025, 7, 1))
          .count

@@ -7,7 +7,7 @@ module Api
 
       CONFIRMATION_DELAY = 5.seconds
       STRATEGY_NFT_CONTRACT_ADDRESS = ENV["STRATEGY_NFT_CONTRACT_ADDRESS"]
-      
+=begin
       # GET /api/v1/strategies
       def index
         #strategies = Strategy.order(created_at: :desc).where.not(nft_token_id: [nil, ""]).limit(200)
@@ -46,6 +46,46 @@ module Api
           }
         }
       end
+=end
+
+# GET /api/v1/strategies
+def index
+  strategies = Strategy.canonical.order(created_at: :desc).limit(200)
+  strategy_ids = strategies.pluck(:id)
+
+  # Popularity: all bots using the strategy
+  bots_counts = Bot.where(strategy_id: strategy_ids).group(:strategy_id).count
+
+  # Performance: only bots that have trades (so profit_percentage won't error)
+  perf_bots = Bot.joins(:trades)
+                 .where(strategy_id: strategy_ids)
+                 .includes(:trades, :profit_withdrawals)
+                 .distinct
+
+  sums   = Hash.new(0.0)
+  counts = Hash.new(0)
+
+  perf_bots.each do |bot|
+    pct = bot.profit_percentage(include_profit_withdrawals: true).to_f
+    sums[bot.strategy_id] += pct
+    counts[bot.strategy_id] += 1
+  end
+
+  render json: strategies.map { |s|
+    creator_user = s.creator
+    c = counts[s.id]
+    avg = c > 0 ? (sums[s.id] / c) : nil
+
+    {
+      strategy_id: s.nft_token_id.to_s,
+      creator_address: s.creator_address,
+      creator_handle: creator_user&.farcaster_username,
+      created_at: s.created_at.iso8601,
+      bots_count: bots_counts[s.id] || 0,
+      performance_pct: avg
+    }
+  }
+end
 
       # GET /api/v1/strategies/:id
       def show

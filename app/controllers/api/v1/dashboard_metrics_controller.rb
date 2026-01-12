@@ -17,7 +17,7 @@ module Api
           return
         end
 
-        @active_bots = Bot.active.default_bots
+        @active_bots = Bot.active.default_bots.visible
         @eth_price_usd = TokenPriceService.get_eth_price_in_usd(@active_bots.first&.chain)
 
         # current_user may be nil for new users
@@ -59,7 +59,7 @@ module Api
 
       def calculate_recent_activity
         trades = Trade.joins(:bot)
-                      .where(bot: Bot.default_bots)
+                      .where(bot: Bot.default_bots.visible)
                       .where(status: 'completed')
                       .order(executed_at: :desc)
                       .limit(4)
@@ -93,7 +93,7 @@ module Api
       def calculate_top_performers
         # Get sell trades from last 7 days
         recent_sell_trades = Trade.joins(:bot)
-                                  .where(bot: Bot.default_bots)
+                                  .where(bot: Bot.default_bots.visible)
                                   .where(status: 'completed', trade_type: 'sell')
                                   .where('executed_at >= ?', 7.days.ago)
 
