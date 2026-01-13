@@ -11,7 +11,7 @@ class DashboardMetricsCalculator
       active_bots: @active_bots.count,
       tvl_cents: calculate_tvl * @eth_price_usd * 100,
       volume_24h_cents: calculate_24h_volume * @eth_price_usd * 100,
-      strategies_count: Strategy.count,
+      strategies_count: Strategy.canonical.count,
       total_profits_cents: calculate_total_profits * @eth_price_usd * 100,
       trades_executed: calculate_trades_executed
     }

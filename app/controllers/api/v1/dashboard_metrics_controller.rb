@@ -21,7 +21,7 @@ module Api
         @eth_price_usd = TokenPriceService.get_eth_price_in_usd(@active_bots.first&.chain)
 
         # current_user may be nil for new users
-        user_bot_count = current_user&.bots&.active&.default_bots&.count || 0
+        user_bot_count = current_user&.bots&.active&.visible&.default_bots&.count || 0
         user_exists    = current_user.present?
 
         render json: {
@@ -115,6 +115,7 @@ module Api
           {
             bot_id: cycle.bot.id,
             username: cycle.bot.user.farcaster_username,
+            farcaster_avatar_url: cycle.bot.user.farcaster_avatar_url,
             strategy_id: cycle.bot.strategy.nft_token_id,
             token_symbol: cycle.bot.token_pair.base_token.symbol,
             performance: (cycle.profit_fraction(include_profit_withdrawals: true) * 100).round(1)
