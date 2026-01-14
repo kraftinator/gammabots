@@ -62,7 +62,7 @@ module Api
                       .where(bot: Bot.default_bots.visible)
                       .where(status: 'completed')
                       .order(executed_at: :desc)
-                      .limit(4)
+                      .limit(5)
 
         trades.map do |trade|
           token_amount = trade.buy? ? trade.amount_out : trade.amount_in
@@ -85,7 +85,7 @@ module Api
             strategy_id: trade.bot.strategy.nft_token_id,
             bot_id: trade.bot.id,
             performance_pct: performance_pct, # nil for buys, percentage for sells
-            time_ago: time_ago_in_words(trade.executed_at)
+            time_ago: time_ago_in_words(trade.executed_at).sub(/^about\s+/, '')
           }
         end
       end
