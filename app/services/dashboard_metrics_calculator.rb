@@ -6,57 +6,171 @@ class DashboardMetricsCalculator
 
   def call
     @active_bots = Bot.active.default_bots.visible
-    @eth_price_usd = TokenPriceService.get_eth_price_in_usd(@active_bots.first&.chain)
+    chain = @active_bots.first&.chain
+    @eth_price_usd = TokenPriceService.get_eth_price_in_usd(chain)
+
     {
       active_bots: @active_bots.count,
-      tvl_cents: calculate_tvl * @eth_price_usd * 100,
-      volume_24h_cents: calculate_24h_volume * @eth_price_usd * 100,
+      tvl_cents: (calculate_tvl_eth * @eth_price_usd * 100).to_i,
+      volume_24h_cents: (calculate_24h_volume_eth * @eth_price_usd * 100).to_i,
       strategies_count: Strategy.canonical.count,
-      total_profits_cents: calculate_total_profits * @eth_price_usd * 100,
-      trades_executed: calculate_trades_executed
+      total_profits_cents: (calculate_total_profits_eth * @eth_price_usd * 100).to_i,
+      trades_executed: calculate_trades_executed,
+
+      # NEW cached blobs
+      popular_tokens_json: calculate_popular_tokens,
+      recent_activity_json: calculate_recent_activity,
+      top_performers_json: calculate_top_performers
     }
   end
 
   private
 
-  def calculate_tvl
-    total_eth = @active_bots.sum(&:current_value)
-    total_eth
+  # --- existing numeric metrics ---
+
+  def calculate_tvl_eth
+    # If current_value is computed in Ruby, you’re stuck iterating.
+    # If you can derive TVL from DB later, great — but leaving it as-is for now:
+    @active_bots.sum(&:current_value)
   end
 
-  def calculate_24h_volume
+  def calculate_24h_volume_eth
     recent_trades = Trade.joins(:bot)
                          .where(bot: Bot.default_bots.visible)
                          .where(executed_at: 24.hours.ago..Time.current)
-                         .where(status: 'completed')
+                         .where(status: "completed")
+                         .includes(bot: [:token_pair, :user], bot_cycle: [])
 
-    total_eth_volume = recent_trades.sum(&:total_value)
-    total_eth_volume
+    recent_trades.sum(&:total_value)
   end
 
-  def calculate_total_profits
+  def calculate_total_profits_eth
     cycle_profits = Trade.joins(:bot)
                          .where(bot: Bot.default_bots.visible)
-                         .where(status: 'completed')
-                         .where('executed_at >= ?', Date.new(2025, 7, 1))  # Added date filter
+                         .where(status: "completed")
+                         .where("executed_at >= ?", Date.new(2025, 7, 1))
                          .group(:bot_cycle_id)
                          .having("COUNT(CASE WHEN trade_type = 'buy' THEN 1 END) >= 1")
                          .having("COUNT(CASE WHEN trade_type = 'sell' THEN 1 END) >= 1")
                          .select("
                            bot_cycle_id,
-                           SUM(CASE WHEN trade_type = 'sell' THEN amount_out ELSE 0 END) - 
-                           SUM(CASE WHEN trade_type = 'buy' THEN amount_in ELSE 0 END) as cycle_profit
+                           SUM(CASE WHEN trade_type = 'sell' THEN amount_out ELSE 0 END) -
+                           SUM(CASE WHEN trade_type = 'buy' THEN amount_in ELSE 0 END) AS cycle_profit
                          ")
 
-    total_profit_eth = cycle_profits.map(&:cycle_profit).select { |profit| profit > 0 }.sum
-    total_profit_eth
+    cycle_profits.map(&:cycle_profit).select { |p| p > 0 }.sum
   end
 
   def calculate_trades_executed
     Trade.joins(:bot)
          .where(bot: Bot.default_bots.visible)
-         .where(status: 'completed')
-         .where('executed_at >= ?', Date.new(2025, 7, 1))
+         .where(status: "completed")
+         .where("executed_at >= ?", Date.new(2025, 7, 1))
          .count
+  end
+
+  # --- NEW: cached feeds ---
+
+  def calculate_popular_tokens
+    # Top 4 by TVL among active bots.
+    # If current_value is Ruby-computed, still OK because N is active bots only.
+    token_tvls_eth =
+      @active_bots
+        .group_by { |bot| bot.token_pair.base_token.symbol }
+        .transform_values { |bots| bots.sum(&:current_value) }
+        .sort_by { |_sym, eth| -eth }
+        .first(4)
+
+    token_tvls_eth.map do |symbol, eth|
+      {
+        token_symbol: symbol,
+        tvl_usd: (eth * @eth_price_usd).round(2)
+      }
+    end
+  end
+
+  def calculate_recent_activity
+    trades = Trade.joins(:bot)
+                  .where(bot: Bot.default_bots.visible)
+                  .where(status: "completed")
+                  .order(executed_at: :desc)
+                  .limit(5)
+                  .includes(bot: [:user, :strategy, { token_pair: :base_token }], bot_cycle: [])
+
+    trades.map do |trade|
+      token_amount = trade.buy? ? trade.amount_out : trade.amount_in
+      bot = trade.bot
+      user = bot.user
+      
+
+      performance_pct =
+        if trade.sell? && trade.bot_cycle
+          (trade.bot_cycle.profit_fraction(include_profit_withdrawals: true) * 100).round(1)
+        end
+
+      {
+        owner_username: user.farcaster_username,
+        owner_avatar_url: user.farcaster_avatar_url,
+        action: trade.trade_type.capitalize,
+        amount: token_amount.round(0),
+        token_symbol: trade.bot.token_pair.base_token.symbol,
+        strategy_id: trade.bot.strategy.nft_token_id,
+        bot_id: bot.id,
+        bot_owner_id: user.id,
+        performance_pct: performance_pct,
+        executed_at: trade.executed_at.iso8601,
+        trades: bot.completed_trade_count,
+        active_seconds: calculate_active_seconds(bot)
+      }
+    end
+  end
+
+  def calculate_top_performers
+    # Keep your existing “profitable cycles from sell trades in last 30d” logic,
+    # but pre-load to avoid N+1.
+    recent_sell_trades = Trade.joins(:bot)
+                              .where(bot: Bot.default_bots.visible)
+                              .where(status: "completed", trade_type: "sell")
+                              .where("executed_at >= ?", 30.days.ago)
+
+    cycle_ids = recent_sell_trades.distinct.pluck(:bot_cycle_id)
+    cycles = BotCycle.where(id: cycle_ids)
+                     .includes(bot: [:user, :strategy, { token_pair: :base_token }])
+
+    profitable = cycles.select { |c| c.profit_fraction(include_profit_withdrawals: true) > 0 }
+    top = profitable.sort_by { |c| -c.profit_fraction(include_profit_withdrawals: true) }.first(3)
+
+    top.map.with_index(1) do |cycle, idx|
+      bot = cycle.bot
+      user = bot.user
+
+      {
+        rank: idx,
+        bot_id: bot.id,
+        bot_owner_id: user.id,
+        token_symbol: bot.token_pair.base_token.symbol,
+        token_address: bot.token_pair.base_token.contract_address,
+        strategy_id: bot.strategy.nft_token_id,
+        moving_average: bot.moving_avg_minutes,
+        owner_username: user.farcaster_username,
+        owner_avatar_url: user.farcaster_avatar_url,
+        performance_pct: (cycle.profit_fraction(include_profit_withdrawals: true) * 100).round(1),
+        trades: bot.completed_trade_count,
+        active_seconds: calculate_active_seconds(bot)
+      }
+    end
+  end
+
+  private
+
+  def calculate_active_seconds(bot)
+    end_time =
+      if bot.active?
+        Time.current
+      else
+        bot.last_action_at || bot.updated_at
+      end
+
+    (end_time - bot.created_at).to_i
   end
 end

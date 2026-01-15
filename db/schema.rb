@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_12_153153) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_15_162551) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -149,6 +149,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_12_153153) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "trades_executed", default: 0, null: false
+    t.jsonb "popular_tokens_json", default: [], null: false
+    t.jsonb "recent_activity_json", default: [], null: false
+    t.jsonb "top_performers_json", default: [], null: false
     t.index ["created_at"], name: "index_dashboard_metrics_on_created_at"
   end
 
