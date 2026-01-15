@@ -84,6 +84,7 @@ module Api
             token_symbol: trade.bot.token_pair.base_token.symbol,
             strategy_id: trade.bot.strategy.nft_token_id,
             bot_id: trade.bot.id,
+            bot_owner_id: trade.bot.user.id,
             performance_pct: performance_pct, # nil for buys, percentage for sells
             time_ago: time_ago_in_words(trade.executed_at).sub(/^about\s+/, '')
           }
@@ -114,10 +115,13 @@ module Api
         top_performers.map do |cycle|
           {
             bot_id: cycle.bot.id,
+            bot_owner_id: cycle.bot.user.id,
+            moving_average: cycle.bot.moving_avg_minutes,
             username: cycle.bot.user.farcaster_username,
             farcaster_avatar_url: cycle.bot.user.farcaster_avatar_url,
             strategy_id: cycle.bot.strategy.nft_token_id,
             token_symbol: cycle.bot.token_pair.base_token.symbol,
+            token_address:  cycle.bot.token_pair.base_token.contract_address,
             performance: (cycle.profit_fraction(include_profit_withdrawals: true) * 100).round(1)
           }
         end

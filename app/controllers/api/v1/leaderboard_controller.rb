@@ -49,6 +49,7 @@ module Api
             rank: idx + 1,
             bot_id: bot.id.to_s,
             token_symbol: token&.symbol,
+            token_address:  bot.token_pair.base_token.contract_address,
             strategy_id: strategy&.nft_token_id,
             owner_farcaster_username: user&.farcaster_username,
             owner_farcaster_avatar_url: user&.farcaster_avatar_url,

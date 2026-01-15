@@ -17,6 +17,7 @@ Rails.application.routes.draw do
       resources :users, only: [:show, :create] do
         collection do
           get :account
+          get :me
         end
       end
       resources :strategies, only: [:index, :show, :create] do

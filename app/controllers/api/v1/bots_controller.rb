@@ -442,18 +442,19 @@ module Api
 
       def bot_payload(bot)
         base = {
-          bot_id:        bot.id.to_s,
-          token_symbol:  bot.token_pair.base_token.symbol,
-          token_address: bot.token_pair.base_token.contract_address,
-          strategy_id:   bot.strategy.nft_token_id.to_s,
+          bot_id:         bot.id.to_s,
+          bot_owner_id:   bot.user.id.to_s,
+          token_symbol:   bot.token_pair.base_token.symbol,
+          token_address:  bot.token_pair.base_token.contract_address,
+          strategy_id:    bot.strategy.nft_token_id.to_s,
           moving_average: bot.moving_avg_minutes,
-          init:          bot.initial_buy_amount,
-          cycles:        bot.bot_cycles.count,
-          trades:        bot.buy_count + bot.sell_count,
-          is_active:     bot.active,
-          status:        bot_status_label(bot),
-          trade_mode:    bot.current_cycle ? bot.trade_mode : "buy",
-          last_action:   bot.last_action_at
+          init:           bot.initial_buy_amount,
+          cycles:         bot.bot_cycles.count,
+          trades:         bot.buy_count + bot.sell_count,
+          is_active:      bot.active,
+          status:         bot_status_label(bot),
+          trade_mode:     bot.current_cycle ? bot.trade_mode : "buy",
+          last_action:    bot.last_action_at
         }
 
         # Unfunded bots
