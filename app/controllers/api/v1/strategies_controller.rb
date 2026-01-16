@@ -171,6 +171,7 @@ end
           performance_pct: performance_pct,
           top_bot: top_bot && {
             bot_id: top_bot.id.to_s,
+            bot_display_name: top_bot.display_name,
             token_symbol:  top_bot.token_pair.base_token.symbol,
             owner_handle: top_bot.user&.farcaster_username,
             profit_pct: top_bot_pct

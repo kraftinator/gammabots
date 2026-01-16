@@ -50,6 +50,12 @@ class Bot < ApplicationRecord
     "#{truncated_symbol} ##{token_ordinal}"
   end
 
+  def handle
+    symbol = token_pair.base_token.symbol.downcase
+    truncated = symbol[0, MAX_TOKEN_SYMBOL_LENGTH]
+    "#{truncated}-#{token_ordinal}"
+  end
+
   def latest_trade
     trades.order(created_at: :desc).first
   end
