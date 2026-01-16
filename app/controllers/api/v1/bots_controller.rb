@@ -462,6 +462,7 @@ module Api
           display_name:   bot.display_name,
           bot_owner_id:   bot.user.id.to_s,
           token_symbol:   bot.token_pair.base_token.symbol,
+          token_name:     bot.token_pair.base_token.name,
           token_address:  bot.token_pair.base_token.contract_address,
           strategy_id:    bot.strategy.nft_token_id.to_s,
           moving_average: bot.moving_avg_minutes,

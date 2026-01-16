@@ -53,6 +53,14 @@ class Strategy < ApplicationRecord
     nil
   end
 
+  def creator_handle
+    creator&.farcaster_username
+  end
+
+  def creator_avatar_url
+    creator&.farcaster_avatar_url
+  end
+
   def active?
     status == 'active'
   end

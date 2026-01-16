@@ -2,7 +2,7 @@ module Api
   module V1
     class StrategiesController < Api::BaseController
       wrap_parameters false
-      before_action :require_quick_auth!, only: [:create, :mint_details]
+      before_action :require_quick_auth!, only: [:create, :mint_details, :options]
       
 
       CONFIRMATION_DELAY = 5.seconds
@@ -48,44 +48,44 @@ module Api
       end
 =end
 
-# GET /api/v1/strategies
-def index
-  strategies = Strategy.canonical.order(created_at: :desc).limit(200)
-  strategy_ids = strategies.pluck(:id)
+      # GET /api/v1/strategies
+      def index
+        strategies = Strategy.canonical.order(created_at: :desc).limit(200)
+        strategy_ids = strategies.pluck(:id)
 
-  # Popularity: all bots using the strategy
-  bots_counts = Bot.where(strategy_id: strategy_ids).group(:strategy_id).count
+        # Popularity: all bots using the strategy
+        bots_counts = Bot.where(strategy_id: strategy_ids).group(:strategy_id).count
 
-  # Performance: only bots that have trades (so profit_percentage won't error)
-  perf_bots = Bot.joins(:trades)
-                 .where(strategy_id: strategy_ids)
-                 .includes(:trades, :profit_withdrawals)
-                 .distinct
+        # Performance: only bots that have trades (so profit_percentage won't error)
+        perf_bots = Bot.joins(:trades)
+                      .where(strategy_id: strategy_ids)
+                      .includes(:trades, :profit_withdrawals)
+                      .distinct
 
-  sums   = Hash.new(0.0)
-  counts = Hash.new(0)
+        sums   = Hash.new(0.0)
+        counts = Hash.new(0)
 
-  perf_bots.each do |bot|
-    pct = bot.profit_percentage(include_profit_withdrawals: true).to_f
-    sums[bot.strategy_id] += pct
-    counts[bot.strategy_id] += 1
-  end
+        perf_bots.each do |bot|
+          pct = bot.profit_percentage(include_profit_withdrawals: true).to_f
+          sums[bot.strategy_id] += pct
+          counts[bot.strategy_id] += 1
+        end
 
-  render json: strategies.map { |s|
-    creator_user = s.creator
-    c = counts[s.id]
-    avg = c > 0 ? (sums[s.id] / c) : nil
+        render json: strategies.map { |s|
+          creator_user = s.creator
+          c = counts[s.id]
+          avg = c > 0 ? (sums[s.id] / c) : nil
 
-    {
-      strategy_id: s.nft_token_id.to_s,
-      creator_address: s.creator_address,
-      creator_handle: creator_user&.farcaster_username,
-      created_at: s.created_at.iso8601,
-      bots_count: bots_counts[s.id] || 0,
-      performance_pct: avg
-    }
-  }
-end
+          {
+            strategy_id: s.nft_token_id.to_s,
+            creator_address: s.creator_address,
+            creator_handle: creator_user&.farcaster_username,
+            created_at: s.created_at.iso8601,
+            bots_count: bots_counts[s.id] || 0,
+            performance_pct: avg
+          }
+        }
+      end
 
       # GET /api/v1/strategies/:id
       def show
@@ -236,6 +236,29 @@ end
           nft_token_id: strategy.nft_token_id&.to_s,
           status: strategy.status
         }
+      end
+
+      def options
+        strategies = Strategy.canonical
+                            .where.not(nft_token_id: [nil, ""])
+                            .order(nft_token_id: :desc)
+                            .limit(500)
+
+        bot_counts = Bot.where(strategy_id: strategies.select(:id)).group(:strategy_id).count
+        sorted = strategies.sort_by { |s| [-(bot_counts[s.id] || 0), -s.nft_token_id.to_i] }
+
+        render json: {
+          strategies: sorted.map { |s|
+            sid = s.nft_token_id.to_s
+            {
+              strategy_id: sid,
+              label: "Strategy ##{sid}",
+              bot_count: bot_counts[s.id] || 0,
+              creator_handle: s.creator_handle,
+              creator_avatar_url: s.creator_avatar_url
+            }
+          }
+        }, status: :ok
       end
       
       private

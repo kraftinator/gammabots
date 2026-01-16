@@ -25,6 +25,12 @@ Rails.application.routes.draw do
         get :stats, on: :member
         get :mint_status, on: :member
         get :mint_details, on: :collection
+        get :options, on: :collection
+      end
+      resources :tokens, only: [] do
+        collection do
+          get :lookup
+        end
       end
       get "leaderboard/bots", to: "leaderboard#bots"
     end
