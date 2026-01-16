@@ -114,6 +114,7 @@ class DashboardMetricsCalculator
         action: trade.trade_type.capitalize,
         amount: token_amount.round(0),
         token_symbol: trade.bot.token_pair.base_token.symbol,
+        token_address: trade.bot.token_pair.base_token.contract_address,
         strategy_id: trade.bot.strategy.nft_token_id,
         bot_id: bot.id,
         display_name: bot.display_name,
