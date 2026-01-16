@@ -36,6 +36,7 @@ module Api
 
         # Sort descending by realized PnL
         bots_with_perf.sort_by! { |(_bot, pct)| -pct }
+        bots_with_perf = bots_with_perf.first(100)
 
         response_bots = bots_with_perf.each_with_index.map do |(bot, performance_pct), idx|
           user     = bot.user
