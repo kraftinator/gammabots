@@ -56,6 +56,35 @@ class Bot < ApplicationRecord
     "#{truncated}-#{token_ordinal}"
   end
 
+  def self.find_by_display_name!(label, chain: nil)
+    raw = label.to_s.strip
+    reutn nil if raw.blank?
+
+    # Accept "TOKEN #123" or "TOKEN#123"
+    if (m = raw.match(/\A(?<sym>.+?)\s*#\s*(?<ord>\d+)\z/))
+      symbol  = m[:sym].strip
+      ordinal = m[:ord].to_i
+
+    # Accept "token-123" (kebab style)
+    elsif (m = raw.match(/\A(?<sym>[a-z0-9][a-z0-9_-]*?)\s*-\s*(?<ord>\d+)\z/i))
+      symbol  = m[:sym].strip
+      ordinal = m[:ord].to_i
+
+    else
+      return nil
+    end
+
+    scope = Bot.joins(token_pair: :base_token)
+              .where(token_ordinal: ordinal)
+              .where("tokens.symbol ILIKE ?", symbol)
+
+    scope = scope.where(token_pairs: { chain_id: chain.id }) if chain
+
+    bot = scope.first
+    return nil unless bot
+    bot
+  end
+
   def latest_trade
     trades.order(created_at: :desc).first
   end
