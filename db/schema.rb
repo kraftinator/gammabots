@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_15_162551) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_15_224631) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -96,6 +96,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_15_162551) do
     t.datetime "liquidated_at"
     t.datetime "deactivated_at"
     t.boolean "visible", default: true, null: false
+    t.integer "token_ordinal"
     t.index ["bot_type", "copy_wallet_address", "token_pair_id"], name: "index_bots_on_copy_bot_fields"
     t.index ["bot_type"], name: "index_bots_on_bot_type"
     t.index ["chain_id"], name: "index_bots_on_chain_id"
@@ -107,6 +108,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_15_162551) do
     t.index ["max_slippage_bps"], name: "index_bots_on_max_slippage_bps"
     t.index ["status"], name: "index_bots_on_status"
     t.index ["strategy_id"], name: "index_bots_on_strategy_id"
+    t.index ["token_pair_id", "token_ordinal"], name: "index_bots_on_token_pair_id_and_token_ordinal", unique: true
     t.index ["token_pair_id"], name: "index_bots_on_token_pair_id"
     t.index ["user_id"], name: "index_bots_on_user_id"
     t.index ["visible"], name: "index_bots_on_visible"

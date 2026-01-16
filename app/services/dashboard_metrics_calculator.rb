@@ -116,6 +116,7 @@ class DashboardMetricsCalculator
         token_symbol: trade.bot.token_pair.base_token.symbol,
         strategy_id: trade.bot.strategy.nft_token_id,
         bot_id: bot.id,
+        display_name: bot.display_name,
         bot_owner_id: user.id,
         performance_pct: performance_pct,
         executed_at: trade.executed_at.iso8601,
@@ -147,6 +148,7 @@ class DashboardMetricsCalculator
       {
         rank: idx,
         bot_id: bot.id,
+        display_name: bot.display_name,
         bot_owner_id: user.id,
         token_symbol: bot.token_pair.base_token.symbol,
         token_address: bot.token_pair.base_token.contract_address,

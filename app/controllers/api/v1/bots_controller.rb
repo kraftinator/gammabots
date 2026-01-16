@@ -136,17 +136,33 @@ module Api
           }, status: :bad_request and return
         end
 
-        bot_attrs = {
-          chain: chain,
-          strategy: strategy,
-          moving_avg_minutes: moving_avg_minutes,
-          user: current_user,
-          token_pair: token_pair,
-          initial_buy_amount: amount,
-          active: false
-        }
+        bot = nil
 
-        bot = Bot.create!(bot_attrs)
+        begin
+          Bot.transaction do
+            last = Bot.where(token_pair_id: token_pair.id)
+                      .where.not(token_ordinal: nil)
+                      .order(token_ordinal: :desc)
+                      .first
+
+            next_ordinal = (last&.token_ordinal || 0) + 1
+
+            bot_attrs = {
+              chain: chain,
+              strategy: strategy,
+              moving_avg_minutes: moving_avg_minutes,
+              user: current_user,
+              token_pair: token_pair,
+              initial_buy_amount: amount,
+              active: false,
+              token_ordinal: next_ordinal
+            }
+
+            bot = Bot.create!(bot_attrs)
+          end
+        rescue ActiveRecord::RecordNotUnique
+          retry
+        end
 
         if bot
           # build payment hash
@@ -443,6 +459,7 @@ module Api
       def bot_payload(bot)
         base = {
           bot_id:         bot.id.to_s,
+          display_name:   bot.display_name,
           bot_owner_id:   bot.user.id.to_s,
           token_symbol:   bot.token_pair.base_token.symbol,
           token_address:  bot.token_pair.base_token.contract_address,

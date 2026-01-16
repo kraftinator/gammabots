@@ -1,6 +1,7 @@
 class Bot < ApplicationRecord
   DEFAULT_PROFIT_THRESHOLD = 0.01
   CONFIRMATION_DELAY = 5.seconds
+  MAX_TOKEN_SYMBOL_LENGTH = 10
 
   # Associations
   belongs_to :chain
@@ -32,6 +33,21 @@ class Bot < ApplicationRecord
   def slip_factor
     factor = 1.0 - (max_slippage_bps.to_f / 10_000.0)
     factor < 0.0 ? 0.0 : factor
+  end
+
+  def display_name
+    symbol = token_pair&.base_token&.symbol.to_s
+
+    truncated_symbol =
+      if symbol.length > MAX_TOKEN_SYMBOL_LENGTH
+        symbol[0, MAX_TOKEN_SYMBOL_LENGTH]
+      else
+        symbol
+      end
+
+    return truncated_symbol unless token_ordinal
+
+    "#{truncated_symbol} ##{token_ordinal}"
   end
 
   def latest_trade
