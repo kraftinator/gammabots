@@ -2,6 +2,7 @@ class Bot < ApplicationRecord
   DEFAULT_PROFIT_THRESHOLD = 0.01
   CONFIRMATION_DELAY = 5.seconds
   MAX_TOKEN_SYMBOL_LENGTH = 10
+  PROFIT_TAKING_ENABLED = false
 
   # Associations
   belongs_to :chain
@@ -413,6 +414,8 @@ class Bot < ApplicationRecord
   end
 
   def take_profit(full_share: false)
+    return unless PROFIT_TAKING_ENABLED
+    
     cycle = current_cycle
     return unless cycle
 
