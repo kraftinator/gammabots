@@ -149,13 +149,19 @@ class Bot < ApplicationRecord
     return_funds_to_user
   end
 
-  def mark_deactivated!
-    return if deactivated_at.present?
+  #def mark_deactivated!
+  #  return if deactivated_at.present?
+  #
+  #  update!(
+  #    active: false,
+  #    deactivated_at: Time.current
+  #  )
+  #end
 
-    update!(
-      active: false,
-      deactivated_at: Time.current
-    )
+  def mark_deactivated!
+    attrs = { active: false }
+    attrs[:deactivated_at] = Time.current if deactivated_at.blank?
+    update!(attrs)
   end
 
   def return_funds_to_user
@@ -415,7 +421,7 @@ class Bot < ApplicationRecord
 
   def take_profit(full_share: false)
     return unless PROFIT_TAKING_ENABLED
-    
+
     cycle = current_cycle
     return unless cycle
 
