@@ -130,37 +130,41 @@ class DashboardMetricsCalculator
   end
 
   def calculate_top_performers
-    # Keep your existing “profitable cycles from sell trades in last 30d” logic,
-    # but pre-load to avoid N+1.
-    recent_sell_trades = Trade.joins(:bot)
-                              .where(bot: Bot.default_bots.visible)
-                              .where(status: "completed", trade_type: "sell")
-                              .where("executed_at >= ?", 30.days.ago)
+    # Eligible bots = default+visible bots that had at least one COMPLETED sell in last 30d.
+    # Then rank by the SAME bot-level profit % you show in "My Bots".
+    bots = Bot.default_bots.visible
+              .joins(:trades)
+              .where(trades: { status: "completed", trade_type: "sell" })
+              .where("trades.executed_at >= ?", 30.days.ago)
+              .distinct
+              .includes(:strategy, :user, token_pair: :base_token)
 
-    cycle_ids = recent_sell_trades.distinct.pluck(:bot_cycle_id)
-    cycles = BotCycle.where(id: cycle_ids)
-                     .includes(bot: [:user, :strategy, { token_pair: :base_token }])
+    ranked = bots.map do |bot|
+      pct = bot.profit_percentage(include_profit_withdrawals: true).to_f
+      [bot, pct]
+    end
+    .select { |_bot, pct| pct.positive? }
+    .sort_by { |_bot, pct| -pct }
+    .first(3)
 
-    profitable = cycles.select { |c| c.profit_fraction(include_profit_withdrawals: true) > 0 }
-    top = profitable.sort_by { |c| -c.profit_fraction(include_profit_withdrawals: true) }.first(3)
-
-    top.map.with_index(1) do |cycle, idx|
-      bot = cycle.bot
+    ranked.map.with_index(1) do |(bot, pct), idx|
       user = bot.user
+      token = bot.token_pair&.base_token
 
       {
         rank: idx,
-        bot_id: bot.id,
+        bot_id: bot.id.to_s,
         display_name: bot.display_name,
-        bot_owner_id: user.id,
-        token_symbol: bot.token_pair.base_token.symbol,
-        token_name: bot.token_pair.base_token.name,
-        token_address: bot.token_pair.base_token.contract_address,
-        strategy_id: bot.strategy.nft_token_id,
+        bot_owner_id: user.id.to_s,
+        token_symbol: token&.symbol,
+        token_name: token&.name,
+        token_address: token&.contract_address,
+        strategy_id: bot.strategy&.nft_token_id&.to_s,
         moving_average: bot.moving_avg_minutes,
         owner_username: user.farcaster_username,
         owner_avatar_url: user.farcaster_avatar_url,
-        performance_pct: (cycle.profit_fraction(include_profit_withdrawals: true) * 100).round(1),
+        # IMPORTANT: same metric as "My Bots"
+        performance_pct: pct.round(2),
         trades: bot.completed_trade_count,
         active_seconds: calculate_active_seconds(bot)
       }
