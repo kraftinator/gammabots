@@ -3,6 +3,8 @@ include ActionView::Helpers::DateHelper
 module Api
   module V1
     class BotsController < Api::BaseController
+    include BotLock
+
       after_action :log_response_for_debugging
       before_action :require_quick_auth!
       #STRATEGY_NFT_CONTRACT_ADDRESS = "abcdef123456"
@@ -116,6 +118,51 @@ module Api
 
         bot = current_user.bots.find(params[:id])
 
+        locked = with_bot_lock(bot.id) do
+          Bot.transaction do
+            bot.lock!
+            bot.reload
+
+            # 1) Never deactivate while a trade is pending
+            if bot.latest_trade&.pending?
+              render json: {
+                error: "Bot has a pending trade. Try again in a moment.",
+                code:  "BOT_TRADE_PENDING"
+              }, status: :unprocessable_entity
+              next
+            end
+
+            # 2) Never force-deactivate after a buy has happened
+            if bot.initial_buy_made?
+              render json: {
+                error: "Bot cannot be force-deactivated after a buy has been made",
+                code:  "INVALID_DEACTIVATION_STATE"
+              }, status: :unprocessable_entity
+              next
+            end
+
+            bot.forced_deactivate
+          end
+
+          bot.reload
+          render json: { bot_id: bot.id, is_active: bot.active, status: bot.status }, status: :ok
+        end
+
+        # If lock is held by another job, don't error—just return current bot state.
+        unless locked
+          bot.reload
+          render json: { bot_id: bot.id, is_active: bot.active, status: bot.status }, status: :ok
+        end
+      end
+=begin
+      def deactivate
+        unless current_user
+          return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
+        end
+
+        bot = current_user.bots.find(params[:id])
+
+        
         if bot.initial_buy_made?
           return render json: {
             error: "Bot cannot be force-deactivated after a buy has been made",
@@ -128,6 +175,7 @@ module Api
         bot.reload
         render json: { bot_id: bot.id, is_active: bot.active, status: bot.status }, status: :ok
       end
+=end
 
       def liquidate
         unless current_user
