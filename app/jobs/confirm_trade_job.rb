@@ -6,23 +6,39 @@ class ConfirmTradeJob < ApplicationJob
     return unless trade&.pending?
 
     provider_url = ProviderUrlService.get_provider_url(trade.bot.chain.name)
-    TradeConfirmationService.confirm_trade(trade, provider_url)
-    trade.reload
 
-    case trade.status
-    when "pending"
+    result = TradeConfirmationService.confirm_trade(trade, provider_url)
+    trade.reload
+    return if trade.completed?
+
+    case result
+    when :completed, :not_pending
+      return
+
+    when :failed
+      handle_failed_sell(trade) if trade.sell?
+      return
+
+    when :not_found
+      # retry slower
+      wait = [5.minutes * attempt, 30.minutes].min
+      self.class.set(wait: wait).perform_later(trade.id, attempt + 1)
+      return
+
+    when :pending, :temporary_error
+      # normal retry
       if attempt < MAX_ATTEMPTS
-        # if still pending, re‑enqueue in 30 seconds
         self.class.set(wait: 30.seconds).perform_later(trade.id, attempt + 1)
       else
-        Rails.logger.info "[ConfirmTradeJob] Trade##{trade.id} confirmation failed after #{MAX_ATTEMPTS} attempts"
-        # if still pending after max attempts, update to failed
-        trade.update!(status: :failed)
-        handle_failed_sell(trade.reload) if trade.sell?
+        # IMPORTANT: do NOT mark failed just because it's still pending
+        self.class.set(wait: 10.minutes).perform_later(trade.id, attempt + 1)
       end
-    when "failed"
-      # if failed liquidation, update bot to active
-      handle_failed_sell(trade) if trade.sell?
+      return
+
+    else
+      Rails.logger.warn "[ConfirmTradeJob] Unexpected result=#{result.inspect} for Trade##{trade.id}; retrying"
+      self.class.set(wait: 2.minutes).perform_later(trade.id, attempt + 1)
+      return
     end
   end
 
@@ -33,6 +49,12 @@ class ConfirmTradeJob < ApplicationJob
     return if bot.active?
 
     Rails.logger.info "[ConfirmTradeJob] reactivating Bot##{bot.id} after failed sell Trade##{trade.id}"
-    bot.update!(active: true)
+    #bot.update!(active: true)
+
+    bot.update!(
+      status: "active",
+      active: true,
+      deactivation_requested_at: nil
+    )
   end
 end

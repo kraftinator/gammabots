@@ -1,6 +1,7 @@
 class TradeConfirmationService
   def self.confirm_trade(trade, provider_url)
-    return unless trade.pending?
+    #return unless trade.pending?
+    return :not_pending unless trade.pending?
 
     if trade.buy?
       confirm_buy_trade(trade, provider_url)
@@ -34,31 +35,60 @@ class TradeConfirmationService
       )
       # Important: leave the trade as `pending` so the job can retry.
       Rails.logger.warn "[TradeConfirmationService] temporary receipt failure for Trade##{trade.id}: #{e.class} - #{e.message}"
-      #trade.update!(status: :failed, price: trade.token_pair.current_price)
-      return
+      #return
+      return :temporary_error
     end
 
-    #return unless transaction_receipt
     # If still no receipt (e.g. tx not mined yet), leave it pending; job will retry.
-    unless transaction_receipt
+    #unless transaction_receipt
+    #  BotEvent.create!(
+    #    bot: trade.bot,
+    #    event_type: 'receipt_missing',
+    #    payload: {
+    #      class:  "TradeConfirmationService",
+    #      method: "confirm_buy_trade",
+    #      trade_id: trade.id,
+    #      tx_hash:  trade.tx_hash
+    #    }
+    #  )
+    #  return
+    #end
+
+    if transaction_receipt.nil?
+      # Known tx, not mined yet
       BotEvent.create!(
         bot: trade.bot,
-        event_type: 'receipt_missing',
+        event_type: 'receipt_pending',
         payload: {
           class:  "TradeConfirmationService",
           method: "confirm_buy_trade",
           trade_id: trade.id,
-          tx_hash:  trade.tx_hash
+          tx_hash: trade.tx_hash
         }
       )
-      return
+      return :pending
+    end
+
+    if transaction_receipt.is_a?(Hash) && transaction_receipt["status"] == "not_found"
+      BotEvent.create!(
+        bot: trade.bot,
+        event_type: 'receipt_not_found',
+        payload: {
+          class:  "TradeConfirmationService",
+          method: "confirm_buy_trade",
+          trade_id: trade.id,
+          tx_hash: trade.tx_hash,
+          message: "RPC does not recognize tx hash"
+        }
+      )
+      return :not_found
     end
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
     unless valid_transaction?(transaction_receipt, amount_in, amount_out)
       update_trade(trade, amount_in, amount_out, token_pair.current_price, transaction_receipt, :failed)
-      return
+      return :failed
     end
 
     trade_price = amount_in / amount_out
@@ -67,6 +97,7 @@ class TradeConfirmationService
     
     trade.reload
     trade.bot.process_trade(trade)
+    return :completed
   end
 
   def self.confirm_sell_trade(trade, provider_url)
@@ -92,31 +123,60 @@ class TradeConfirmationService
       )
       #trade.update!(status: :failed, price: trade.token_pair.current_price)
       Rails.logger.warn "[TradeConfirmationService] temporary receipt failure for Trade##{trade.id}: #{e.class} - #{e.message}"
-      return
+      return :temporary_error
     end
 
-    #return unless transaction_receipt
     # If still no receipt (e.g. tx not mined yet), leave it pending; job will retry.
-    unless transaction_receipt
+    #unless transaction_receipt
+    #  BotEvent.create!(
+    #    bot: trade.bot,
+    #    event_type: 'receipt_missing',
+    #    payload: {
+    #      class:  "TradeConfirmationService",
+    #      method: "confirm_sell_trade",
+    #      trade_id: trade.id,
+    #      tx_hash: trade.tx_hash,
+    #      message: "Receipt unavailable (transaction not mined yet)"
+    #    }
+    #  )
+    #  return
+    #end
+
+    if transaction_receipt.nil?
+      # Known tx, not mined yet
       BotEvent.create!(
         bot: trade.bot,
-        event_type: 'receipt_missing',
+        event_type: 'receipt_pending',
+        payload: {
+          class:  "TradeConfirmationService",
+          method: "confirm_sell_trade",
+          trade_id: trade.id,
+          tx_hash: trade.tx_hash
+        }
+      )
+      return :pending
+    end
+
+    if transaction_receipt.is_a?(Hash) && transaction_receipt["status"] == "not_found"
+      BotEvent.create!(
+        bot: trade.bot,
+        event_type: 'receipt_not_found',
         payload: {
           class:  "TradeConfirmationService",
           method: "confirm_sell_trade",
           trade_id: trade.id,
           tx_hash: trade.tx_hash,
-          message: "Receipt unavailable (transaction not mined yet)"
+          message: "RPC does not recognize tx hash"
         }
       )
-      return
+      return :not_found
     end
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
     amount_out = BigDecimal(transaction_receipt["amountOut"].to_s)
     unless valid_transaction?(transaction_receipt, amount_in, amount_out)
       update_trade(trade, amount_in, amount_out, token_pair.current_price, transaction_receipt, :failed)
-      return
+      return :failed
     end
 
     trade_price = amount_out / amount_in
@@ -126,6 +186,7 @@ class TradeConfirmationService
     trade.reload
 
     trade.bot.process_trade(trade)
+    return :completed
   end
 
   def self.valid_transaction?(transaction_receipt, amount_in, amount_out)

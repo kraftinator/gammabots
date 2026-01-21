@@ -86,6 +86,20 @@ class Bot < ApplicationRecord
     bot
   end
 
+  def assign_token_ordinal!
+    with_lock do
+      return if token_ordinal.present?
+
+      last = Bot.where(token_pair_id: token_pair_id)
+                .where.not(token_ordinal: nil)
+                .lock
+                .order(token_ordinal: :desc)
+                .first
+
+      update!(token_ordinal: (last&.token_ordinal || 0) + 1)
+    end
+  end
+
   def latest_trade
     trades.order(created_at: :desc).first
   end
@@ -124,7 +138,6 @@ class Bot < ApplicationRecord
       process_initial_buy(trade)
     elsif trade.sell?
       process_sell(trade)
-      #process_reset if current_cycle.reset_requested_at
       PostSellService.call(self, trade)
     end
   end
@@ -135,33 +148,47 @@ class Bot < ApplicationRecord
     trade
   end
 
+  def can_run?
+    active && !%w[deactivating liquidating inactive].include?(status)
+  end
+
+  def request_deactivation
+    return if deactivation_requested_at.present?
+    update!(
+      status: "deactivating", 
+      deactivation_requested_at: Time.current
+    )
+  end
+
   def deactivate
-    #update!(active: false)
     mark_deactivated!
     reset
   end
 
   def forced_deactivate
-    #update!(active: false)
+    request_deactivation
     mark_deactivated!
-    take_profit(full_share: true)
-    current_cycle.update!(ended_at: Time.current)
+    #take_profit(full_share: true)
+    #current_cycle.update!(ended_at: Time.current)
     return_funds_to_user
   end
 
   #def mark_deactivated!
-  #  return if deactivated_at.present?
-  #
-  #  update!(
-  #    active: false,
-  #    deactivated_at: Time.current
-  #  )
+  #  attrs = { active: false }
+  #  attrs[:deactivated_at] = Time.current if deactivated_at.blank?
+  #  update!(attrs)
   #end
 
   def mark_deactivated!
-    attrs = { active: false }
-    attrs[:deactivated_at] = Time.current if deactivated_at.blank?
-    update!(attrs)
+    transaction do
+      update!(
+        active: false,
+        status: "inactive",
+        deactivated_at: deactivated_at || Time.current
+      )
+
+      current_cycle&.update!(ended_at: Time.current)
+    end
   end
 
   def return_funds_to_user
@@ -284,23 +311,6 @@ class Bot < ApplicationRecord
       funds_returned_amount + current_value
     end
   end
-
-=begin
-  def profit_percentage(include_profit_withdrawals: false)
-    # guard against divide-by-zero
-    return 0.0 if initial_buy_amount.to_f.zero?
-
-    change    = current_value - initial_buy_amount.to_f
-    change += profit_taken if include_profit_withdrawals
-    percent   = change / initial_buy_amount.to_f * 100
-    percent.round(2)
-  end
-
-  def profit_fraction
-    return 0.0 if initial_buy_amount.to_f.zero?
-    (current_value - initial_buy_amount.to_f) / initial_buy_amount.to_f
-  end
-=end
 
   #{ "c":"bcn>0 && lba>5 && bpp<=0 && cpr<ibp0.99","a":["sell all","reset"] },
   #{ "c":"bcn>0 && lba>5 && bpp>0  && cpr<bep",   "a":["sell all","reset"] }

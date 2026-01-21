@@ -5,8 +5,9 @@ class PostSellService
   def self.call(bot, trade)
     return unless trade.sell? && trade.completed?
     collect_fee(trade)
-    handle_reset(bot)
     handle_liquidation(bot, trade)
+    handle_deactivation(bot, trade)
+    handle_reset(bot)
     handle_fund_return(bot.reload)
   end
 
@@ -22,6 +23,20 @@ class PostSellService
         bot.update!(
           status:        "inactive",
           liquidated_at: Time.current
+        )
+
+        bot.current_cycle.update!(ended_at: Time.current)
+      end
+    end
+
+    def handle_deactivation(bot, trade)
+      return unless bot.status == "deactivating"
+
+      bot.transaction do
+        bot.mark_deactivated!
+
+        bot.update!(
+          status:        "inactive"
         )
 
         bot.current_cycle.update!(ended_at: Time.current)

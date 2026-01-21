@@ -33,17 +33,81 @@ module Api
       end
 
       # POST /api/v1/bots/:id/fund
-      def fund
-        bot = current_user.bots.find(params[:id])
-        tx_hash = params[:tx_hash]
+     # def fund
+     #   bot = current_user.bots.find(params[:id])
+     #   tx_hash = params[:tx_hash]
 
         # For now, just log / stub
-        Rails.logger.info "Attach tx #{tx_hash} to bot #{bot.id}"
-        bot.update!(funding_tx_hash: tx_hash.to_s.strip.downcase)
-        FundingManager.confirm_funding!(bot)
+     #   Rails.logger.info "Attach tx #{tx_hash} to bot #{bot.id}"
+     #   bot.update!(funding_tx_hash: tx_hash.to_s.strip.downcase)
+     #   bot.assign_token_ordinal!
+     #   FundingManager.confirm_funding!(bot)
 
-        render json: { ok: true, bot_id: bot.id, tx_hash: tx_hash }
+     #   render json: { ok: true, bot_id: bot.id, tx_hash: tx_hash }
+     # end
+
+    # POST /api/v1/bots/:id/fund
+    def fund
+      bot = current_user.bots.find(params[:id])
+      tx_hash = params[:tx_hash].to_s.strip.downcase
+
+      if tx_hash.blank?
+        return render json: { error: "Missing tx_hash", code: "MISSING_TX_HASH" }, status: :bad_request
       end
+
+      # Optional but recommended: only allow if it's in the right state
+      unless bot.pending_funding?
+        return render json: {
+          error: "Bot is not pending funding",
+          code:  "INVALID_FUND_STATE",
+          status: bot.status
+        }, status: :unprocessable_entity
+      end
+
+      Bot.transaction do
+        bot.lock!
+
+        # Don't allow re-submit if already has a tx hash
+        if bot.funding_tx_hash.present?
+          return render json: { error: "Bot already submitted for funding", code: "ALREADY_SUBMITTED" }, status: :unprocessable_entity
+        end
+
+        bot.assign_token_ordinal! # idempotent (returns if already set)
+        bot.update!(funding_tx_hash: tx_hash)
+      end
+
+      FundingManager.confirm_funding!(bot)
+
+      render json: { ok: true, bot_id: bot.id.to_s, tx_hash: tx_hash }
+    end
+
+      # POST /api/v1/bots/:id/cancel_funding
+      def cancel_funding
+        unless current_user
+          return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
+        end
+
+        bot = current_user.bots.find(params[:id])
+
+        # Only allow cancelling while it's still in the "pre-funded" phase.
+        # Adjust these statuses to match your app.
+        allowed_statuses = %w[pending_funding]
+        unless allowed_statuses.include?(bot.status)
+          return render json: {
+            error: "Bot cannot be cancelled in its current state",
+            code:  "INVALID_CANCEL_STATE",
+            status: bot.status
+          }, status: :unprocessable_entity
+        end
+
+        bot.update!(
+          status:  "funding_cancelled",
+          active:  false,
+          visible: false
+        )
+
+        render json: { ok: true, bot_id: bot.id.to_s, status: bot.status }
+      end      
 
       def deactivate
         unless current_user
@@ -140,12 +204,12 @@ module Api
 
         begin
           Bot.transaction do
-            last = Bot.where(token_pair_id: token_pair.id)
-                      .where.not(token_ordinal: nil)
-                      .order(token_ordinal: :desc)
-                      .first
+            #last = Bot.where(token_pair_id: token_pair.id)
+            #          .where.not(token_ordinal: nil)
+            #          .order(token_ordinal: :desc)
+            #          .first
 
-            next_ordinal = (last&.token_ordinal || 0) + 1
+            #next_ordinal = (last&.token_ordinal || 0) + 1
 
             bot_attrs = {
               chain: chain,
@@ -154,8 +218,8 @@ module Api
               user: current_user,
               token_pair: token_pair,
               initial_buy_amount: amount,
-              active: false,
-              token_ordinal: next_ordinal
+              active: false
+              #token_ordinal: next_ordinal
             }
 
             bot = Bot.create!(bot_attrs)
@@ -446,6 +510,8 @@ module Api
         return "unfunded" if bot.unfunded?
 
         if bot.active
+          bot.status
+        elsif %w[deactivating liquidating].include?(bot.status)
           bot.status
         elsif %w[active inactive].include?(bot.status)
           # Manually stopped vs completed

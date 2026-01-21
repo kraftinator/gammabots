@@ -13,6 +13,7 @@ Rails.application.routes.draw do
         get  :trades,  on: :member
         post :liquidate, on: :member 
         post :deactivate, on: :member 
+        post :cancel_funding, on: :member 
       end
       resources :users, only: [:show, :create] do
         collection do

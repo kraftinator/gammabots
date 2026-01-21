@@ -110,7 +110,8 @@ class TradingStrategyInterpreter
         has_bought = (@variables[:bcn] || 0).to_i > 0
         if has_bought
           if swap_executed
-            @variables[:bot].deactivate
+            #@variables[:bot].deactivate
+            @variables[:bot].request_deactivation
             Rails.logger.info "Bot #{@variables[:bot].id}: Deactivated."
           else
             Rails.logger.info "Bot #{@variables[:bot].id}: Swap did not occur; bot remains active."

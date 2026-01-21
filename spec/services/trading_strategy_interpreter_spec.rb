@@ -41,6 +41,7 @@ RSpec.describe TradingStrategyInterpreter do
   # Mock service that would normally handle the actual trading
   before do
     allow(bot).to receive(:forced_deactivate)
+    allow(bot).to receive(:request_deactivation)
     allow(TradeExecutionService).to receive(:sell).and_return(true)
     allow(TradeExecutionService).to receive(:buy).and_return(true)
     allow(Rails.logger).to receive(:error)
@@ -186,7 +187,7 @@ RSpec.describe TradingStrategyInterpreter do
         expect(TradeExecutionService).to receive(:sell).with(
           variables, 1.0, expected_min_amount_out
         ).and_return(true)
-        expect(bot).to receive(:deactivate)
+        expect(bot).to receive(:request_deactivation)
 
         interpreter.execute
       end
@@ -257,7 +258,7 @@ RSpec.describe TradingStrategyInterpreter do
         expect(TradeExecutionService).to receive(:sell).with(
           variables, 1.0, expected_min_amount_out
         ).and_return(true)
-        expect(bot).to receive(:deactivate)
+        expect(bot).to receive(:request_deactivation)
 
         interpreter.execute
       end
@@ -294,7 +295,7 @@ RSpec.describe TradingStrategyInterpreter do
           expect(min_amount_out).to be <= variables[:cpr]
         end.and_return(true)
 
-        expect(bot).to receive(:deactivate)
+        expect(bot).to receive(:request_deactivation)
 
         interpreter.execute
       end
@@ -375,7 +376,7 @@ RSpec.describe TradingStrategyInterpreter do
         expect(TradeExecutionService).to receive(:sell).with(
           variables, 1.0, expected_min_amount_out
         ).and_return(true)
-        expect(bot).to receive(:deactivate)
+        expect(bot).to receive(:request_deactivation)
 
         interpreter.execute
       end
@@ -457,7 +458,7 @@ RSpec.describe TradingStrategyInterpreter do
         expect(TradeExecutionService).to receive(:sell).with(
           variables, 1.0, expected_min_amount_out
         ).and_return(true)
-        expect(bot).to receive(:deactivate)
+        expect(bot).to receive(:request_deactivation)
 
         interpreter.execute
       end
