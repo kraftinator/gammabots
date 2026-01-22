@@ -64,16 +64,34 @@ class StrategiesValidate
         condition_str = normalize_leading_dot_floats(condition_str)
         action_arr    = rule["a"] || rule["actions"]
 
+        # ==========================================================
+        # INSERT THESE CHECKS **HERE**
+        # ==========================================================
+        if condition_str.match?(/\b(or|not)\b/i)
+          errors << "Rule #{i + 1} uses unsupported operator (or/not). Use only '&&' and comparisons like ==, !=, >, <."
+          next
+        end
+
+        if condition_str.include?("||")
+          errors << "Rule #{i + 1} uses unsupported operator '||'. Use '&&' only."
+          next
+        end
+
+        if condition_str.match?(/\band\b/i)
+          errors << "Rule #{i + 1} uses 'and'. Use '&&' instead."
+          next
+        end
+        # ==========================================================
+
         # --- Normalize logical operators for Dentaku ---
-        normalized = condition_str
-          .gsub("&&", " and ")
-          .gsub("||", " or ")
-          .gsub("!", " not ")
+        normalized = condition_str.gsub("&&", " and ")
+
 
         # --- Validate condition tokens (field existence) ---
         tokens = normalized.scan(/[a-zA-Z_][a-zA-Z0-9_]*/)
         tokens.each do |token|
-          next if %w[and or not true false].include?(token)
+          #next if %w[and].include?(token)
+          next if token == "and"
           unless VALID_FIELDS.key?(token)
             case_match = VALID_FIELDS.keys.find { |f| f.downcase == token.downcase }
             if case_match && case_match != token
@@ -88,8 +106,12 @@ class StrategiesValidate
         begin
           @calc.evaluate!(normalized)
         rescue Dentaku::ParseError, Dentaku::UnboundVariableError => e
-          errors << "Rule #{i + 1} invalid expression: #{e.message}"
+          #errors << "Rule #{i + 1} invalid expression: #{e.message}"
+          errors << "Rule #{i + 1} has an invalid condition."
+
         end
+
+
 
         # --- Validate actions ---
         unless action_arr.is_a?(Array)

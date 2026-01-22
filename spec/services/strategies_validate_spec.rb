@@ -83,7 +83,8 @@ RSpec.describe StrategiesValidate, type: :service do
       it "returns invalid and includes a Dentaku parse error" do
         result = described_class.call(bad_operator_json)
         expect(result[:valid]).to be(false)
-        expect(result[:errors].first).to match(/invalid expression/i)
+        #expect(result[:errors].first).to match(/invalid expression/i)
+        expect(result[:errors].first).to match(/invalid condition/i)
       end
     end
 
