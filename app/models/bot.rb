@@ -145,6 +145,7 @@ class Bot < ApplicationRecord
   def liquidate
     update!(status: "liquidating")
     trade = TradeExecutionService.sell(current_cycle.strategy_variables.merge({ step: 0 }), current_cycle.base_token_amount, 0)
+    update!(status: "active") unless trade
     trade
   end
 

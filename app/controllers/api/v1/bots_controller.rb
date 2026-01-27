@@ -189,7 +189,7 @@ module Api
           bot.reload
           render json: { bot_id: bot.id, status: bot.status, liquidation_tx_hash: trade.tx_hash }, status: :ok
         else
-          render json: { error: "Failed to liquidate", code: "LIQUIDATION_ERROR" }, status: :bad_request
+          render json: { error: "Failed to liquidate. Please contact support.", code: "LIQUIDATION_ERROR" }, status: :bad_request
         end
       end
 
