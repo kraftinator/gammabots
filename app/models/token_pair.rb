@@ -167,6 +167,30 @@ class TokenPair < ApplicationRecord
   end
 
   def rolling_high(minutes = 5, shift: 0)
+    # Exclude the current minute bucket by ending at the prior full minute.
+    # shift=0 => previous full minute
+    bucket_end   = (shift + 1).minutes.ago.end_of_minute
+    bucket_start = (minutes + shift).minutes.ago.beginning_of_minute
+
+    avg_prices = token_pair_prices
+      .where(created_at: bucket_start..bucket_end)
+      .group(Arel.sql("date_trunc('minute', created_at)"))
+      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
+      .limit(minutes)
+      .pluck(Arel.sql("AVG(price)"))
+
+    if avg_prices.size < minutes
+      # mimic moving_average behavior: try shifting back one more minute once
+      if shift == 0
+        return rolling_high(minutes, shift: 1)
+      end
+      return nil
+    end
+
+    avg_prices.max
+  end
+
+  def rolling_high_old(minutes = 5, shift: 0)
     # 1) End at the end of the minute `shift` minutes ago
     bucket_end   = shift.minutes.ago.end_of_minute
     # 2) Start at the beginning of the earliest minute bucket
@@ -208,7 +232,6 @@ class TokenPair < ApplicationRecord
   end
 
   def update_price
-    #TokenPriceService.update_price_for_pair(self)
     TokenPriceService.update_price(self)
   end
 end
