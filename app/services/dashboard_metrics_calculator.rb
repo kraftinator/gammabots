@@ -94,7 +94,7 @@ class DashboardMetricsCalculator
                   .where(bot: Bot.default_bots.visible)
                   .where(status: "completed")
                   .order(executed_at: :desc)
-                  .limit(5)
+                  .limit(8)
                   .includes(bot: [:user, :strategy, { token_pair: :base_token }], bot_cycle: [])
 
     trades.map do |trade|
