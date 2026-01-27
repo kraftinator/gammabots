@@ -46,7 +46,7 @@ class ConfirmTradeJob < ApplicationJob
 
   def handle_failed_sell(trade)
     bot = trade.bot.reload
-    return if bot.active?
+    #return if bot.active?
 
     Rails.logger.info "[ConfirmTradeJob] reactivating Bot##{bot.id} after failed sell Trade##{trade.id}"
     #bot.update!(active: true)
