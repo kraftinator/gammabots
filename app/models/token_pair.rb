@@ -82,6 +82,29 @@ class TokenPair < ApplicationRecord
   end
 
   def momentum_indicator(minutes = 5, shift: 0)
+    bucket_end   = shift.minutes.ago.end_of_minute
+    bucket_start = (minutes - 1 + shift).minutes.ago.beginning_of_minute
+
+    # One avg price per minute bucket, oldest -> newest
+    per_minute_avgs = token_pair_prices
+      .where(created_at: bucket_start..bucket_end)
+      .group(Arel.sql("date_trunc('minute', created_at)"))
+      .order(Arel.sql("date_trunc('minute', created_at) ASC"))
+      .limit(minutes)
+      .pluck(Arel.sql("AVG(price)"))
+
+    if per_minute_avgs.size < minutes
+      return momentum_indicator(minutes, shift: 1) if shift == 0
+      return nil
+    end
+
+    increasing_count = per_minute_avgs.each_cons(2).count { |prev, curr| curr > prev }
+    total_comparisons = per_minute_avgs.size - 1
+
+    increasing_count.to_f / total_comparisons
+  end
+
+  def momentum_indicator_old(minutes = 5, shift: 0)
     # 1) Determine end of the window: end of the minute `shift` minutes ago
     bucket_end   = shift.minutes.ago.end_of_minute
     # 2) Determine start of the earliest minute bucket you want
