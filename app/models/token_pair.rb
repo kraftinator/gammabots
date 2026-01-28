@@ -104,29 +104,6 @@ class TokenPair < ApplicationRecord
     increasing_count.to_f / total_comparisons
   end
 
-  def momentum_indicator_old(minutes = 5, shift: 0)
-    # 1) Determine end of the window: end of the minute `shift` minutes ago
-    bucket_end   = shift.minutes.ago.end_of_minute
-    # 2) Determine start of the earliest minute bucket you want
-    bucket_start = (minutes - 1 + shift).minutes.ago.beginning_of_minute
-
-    # 3) Fetch all raw ticks in that time range, oldest first
-    prices = token_pair_prices
-      .where(created_at: bucket_start..bucket_end)
-      .order(:created_at)
-      .pluck(:price)
-
-    # 4) Need at least two points to compute momentum
-    return nil if prices.size < 2
-
-    # 5) Count how many times price increased from one tick to the next
-    increasing_count = prices.each_cons(2).count { |prev, curr| curr > prev }
-    total_comparisons = prices.size - 1
-
-    # 6) Return the ratio of increases
-    increasing_count.to_f / total_comparisons
-  end
-
   # Calculate volatility over a window of `minutes` bars,
   # optionally shifted back by `shift` minutes (0 = include current bar).
   def volatility_by_range(minutes = 5, shift: 0)
@@ -209,26 +186,6 @@ class TokenPair < ApplicationRecord
       end
       return nil
     end
-
-    avg_prices.max
-  end
-
-  def rolling_high_old(minutes = 5, shift: 0)
-    # 1) End at the end of the minute `shift` minutes ago
-    bucket_end   = shift.minutes.ago.end_of_minute
-    # 2) Start at the beginning of the earliest minute bucket
-    bucket_start = (minutes + shift).minutes.ago.beginning_of_minute
-
-    # 3) Build one average per minute‐bucket
-    avg_prices = token_pair_prices
-      .where(created_at: bucket_start..bucket_end)
-      .group(Arel.sql("date_trunc('minute', created_at)"))
-      .order(Arel.sql("date_trunc('minute', created_at) DESC"))
-      .offset(1)                # drop the current minute
-      .limit(minutes)           # take the previous `minutes` buckets
-      .pluck(Arel.sql("AVG(price)"))
-
-    return nil if avg_prices.size < minutes
 
     avg_prices.max
   end
