@@ -929,8 +929,77 @@ end
     list_strategy(bot)
   end
 
-  private
+  desc "Stats"
+  # Usage:
+  #   rake bots:stats[2,1]
+  task :stats, [:bot_id, :human_readable] => :environment do |_t, args|
+    bot_id = args[:bot_id]
+    raise ArgumentError, "Missing bot_id" unless bot_id
 
+    bot = Bot.find_by(id: bot_id)
+    raise ArgumentError, "Invalid bot_id: #{bot_id}" unless bot
+
+    # show_analysis is true by default for this task
+    show_analysis = true
+    human_readable = args[:human_readable] == '1'
+
+    puts "\n== Cycles for Bot ##{bot.id} - Strategy: #{bot.strategy.nft_token_id} (#{bot.moving_avg_minutes}) =="
+
+    header = "%-6s %-20s %-20s %8s %12s %12s %10s %12s %12s" % [
+      "#", "Started At", "Ended At", "Duration", "ETH In", "ETH Out", "Profit %", "Profit Out", "Adj ETH"
+    ]
+    puts header
+    puts "-" * header.length
+
+    bot.bot_cycles.order(:started_at).each_with_index do |cycle, idx|
+      cycle_num  = idx + 1
+      started_at = cycle.started_at.strftime("%Y-%m-%d %H:%M:%S")
+      ended_at   = cycle.ended_at ? cycle.ended_at.strftime("%Y-%m-%d %H:%M:%S") : "open"
+
+      duration_minutes = (( (cycle.ended_at || Time.current) - cycle.started_at ) / 60).to_i
+
+      eth_in   = cycle.initial_buy_amount.to_f
+      adj_eth_out  = (!cycle.open? && cycle.initial_buy_made?) ? cycle.quote_token_amount.to_f : 0.0
+      eth_out = adj_eth_out + cycle.profit_taken
+      profit   = cycle.profit_percentage(include_profit_withdrawals: true).to_f
+
+      puts "%-6d %-20s %-20s %8d %12.6f %12.6f %9.2f%% %12.6f %12.6f" % [
+        cycle_num,
+        started_at,
+        ended_at,
+        duration_minutes,
+        eth_in,
+        eth_out,
+        profit,
+        cycle.profit_taken,
+        adj_eth_out
+      ]
+
+      if show_analysis
+        trade = cycle.initial_buy_trade
+        if trade
+          puts ""
+          puts "#{trade.analyze_metrics}"
+        end
+      end
+
+      # For each trade, in chronological order, show metrics
+      cycle.trades.order(:created_at).each do |t|
+        header_label = t.trade_type.to_s.upcase == "BUY" ? "BUY:" : "SELL:"
+        puts "\n#{header_label}"
+        
+        if human_readable && t.metrics.is_a?(Hash)
+          t.metrics.each do |key, value|
+            puts "#{key}: #{value}"
+          end
+        else
+          puts t.metrics
+        end
+      end
+    end
+  end
+
+  private
 
   def list_bots(bots)
     header_fmt = "%-6s %-14s %-8s %15s %10s %10s %10s %9s %10s %7s %6s %7s   %-8s  %-20s"
