@@ -2,7 +2,7 @@
 class GasReserveService
   # Hardcoded per-chain targets
   DEFAULT_TARGETS = {
-    'base_mainnet' => BigDecimal('0.00005')
+    'base_mainnet' => BigDecimal('0.0005')
     #'base_mainnet' => BigDecimal('0.0042')
   }.freeze
 
