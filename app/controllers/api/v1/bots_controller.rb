@@ -15,14 +15,14 @@ module Api
           return unauthorized!('User not found. Please ensure you have a valid Farcaster account.')
         end
 
-        status = params[:status]          
+        status = params[:status]
 
         if status == 'inactive'
           @bots = current_user.bots
             .inactive
             .default_bots
             .visible
-            .where(status: ["active", "inactive", "funding_failed"])
+            .where(status: ["active", "inactive", "funding_failed", "expired"])
             .order(Arel.sql("COALESCE(deactivated_at, updated_at) DESC"))
             .limit(100)
         else
