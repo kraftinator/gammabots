@@ -81,7 +81,13 @@ class TradeConfirmationService
           message: "RPC does not recognize tx hash"
         }
       )
-      return :not_found
+      #return :not_found
+      trade.update!(
+        status: :failed,
+        confirmed_at: Time.current,
+        price: token_pair.current_price
+      )
+      return :failed
     end
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
@@ -169,7 +175,13 @@ class TradeConfirmationService
           message: "RPC does not recognize tx hash"
         }
       )
-      return :not_found
+      #return :not_found
+      trade.update!(
+        status: :failed,
+        confirmed_at: Time.current,
+        price: token_pair.current_price
+      )
+      return :failed
     end
 
     amount_in = BigDecimal(transaction_receipt["amountIn"].to_s)
