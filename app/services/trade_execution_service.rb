@@ -172,7 +172,7 @@ class TradeExecutionService
         event_type: "trade_failed",
         payload: {
           class:            "TradeExecutionService",
-          method:           "buy",
+          method:           "sell",
           stage:            result["stage"],
           code:             result["code"],
           message:          result["message"],
